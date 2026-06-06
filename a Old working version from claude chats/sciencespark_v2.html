@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScienceSpark</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bio:#4CAF50;--bio-light:#E8F5E9;--bio-dark:#2E7D32;
+  --chem:#9C27B0;--chem-light:#F3E5F5;--chem-dark:#6A1B9A;
+  --phys:#2196F3;--phys-light:#E3F2FD;--phys-dark:#1565C0;
+  --streak:#FF6B00;--streak-light:#FFF3E0;
+  --good:#4CAF50;--ok:#FF9800;--bad:#F44336;--again:#9C27B0;
+  --bg:#F8F9FF;--card:#fff;--text:#1a1a2e;--muted:#6b7280;
+  --radius:20px;--shadow:0 4px 20px rgba(0,0,0,0.08);
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* NAV */
+.nav{background:#fff;border-bottom:2px solid #f0f0f8;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100}
+.logo{font-size:22px;font-weight:900;background:linear-gradient(135deg,#4CAF50,#2196F3,#9C27B0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-tabs{display:flex;gap:4px}
+.nav-tab{padding:8px 14px;border-radius:12px;border:none;background:transparent;font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;cursor:pointer;color:var(--muted);transition:.2s}
+.nav-tab.active{background:#EEF2FF;color:#4338CA}
+.streak-badge{display:flex;align-items:center;gap:5px;background:var(--streak-light);border:2px solid var(--streak);border-radius:20px;padding:5px 12px;font-weight:800;font-size:15px;color:var(--streak)}
+.streak-fire{font-size:18px;animation:flicker 1.5s ease-in-out infinite}
+@keyframes flicker{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.15) rotate(2deg)}}
+
+/* SCREENS */
+.screen{display:none;padding:20px;max-width:900px;margin:0 auto}
+.screen.active{display:block}
+
+/* HOME */
+.hero{text-align:center;padding:24px 0 16px}
+.hero h1{font-size:28px;font-weight:900;margin-bottom:6px}
+.hero p{color:var(--muted);font-size:15px;font-weight:600}
+.streak-card{background:linear-gradient(135deg,#FF6B00,#FF9800);border-radius:var(--radius);padding:18px 20px;margin:16px 0;color:#fff;display:flex;align-items:center;gap:14px;box-shadow:0 8px 24px rgba(255,107,0,0.3)}
+.streak-big{font-size:48px;line-height:1}
+.streak-info h2{font-size:18px;font-weight:900;margin-bottom:3px}
+.streak-info p{font-size:13px;opacity:.9;font-weight:600}
+.streak-dots{display:flex;gap:6px;margin-top:6px}
+.streak-dot{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.streak-dot.done{background:#fff;color:var(--streak)}
+.subject-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:16px 0}
+.subject-card{border-radius:var(--radius);padding:18px;cursor:pointer;transition:.2s;border:3px solid transparent;position:relative;overflow:hidden}
+.subject-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.12)}
+.subject-card.bio{background:var(--bio-light);border-color:var(--bio)}
+.subject-card.chem{background:var(--chem-light);border-color:var(--chem)}
+.subject-card.phys{background:var(--phys-light);border-color:var(--phys)}
+.subject-icon{font-size:32px;margin-bottom:8px}
+.subject-name{font-size:16px;font-weight:900}
+.subject-due{font-size:12px;font-weight:700;margin-top:3px;opacity:.7}
+.due-pill{background:#fff;border-radius:20px;padding:3px 9px;font-size:11px;font-weight:800;position:absolute;top:10px;right:10px}
+.section-title{font-size:17px;font-weight:900;margin:20px 0 10px}
+.start-btn{width:100%;padding:16px;border-radius:var(--radius);border:none;font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#4338CA,#7C3AED);color:#fff;box-shadow:0 6px 20px rgba(67,56,202,0.35);transition:.2s;margin-top:12px}
+.start-btn:hover{transform:translateY(-2px)}
+.xp-row{display:flex;align-items:center;gap:10px;margin:10px 0}
+.xp-label{font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap}
+.xp-track{flex:1;height:12px;background:#f0f0f8;border-radius:8px;overflow:hidden}
+.xp-fill{height:100%;background:linear-gradient(90deg,#4338CA,#7C3AED);border-radius:8px;transition:.5s}
+.xp-val{font-size:12px;font-weight:800;color:#4338CA;white-space:nowrap}
+.badge-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.badge{background:#f5f5fb;border-radius:10px;padding:7px 11px;font-size:12px;font-weight:800;display:flex;align-items:center;gap:5px;border:2px solid #e8e8f4}
+.badge.earned{background:#EEF2FF;border-color:#4338CA;color:#4338CA}
+
+/* TOPIC PICKER */
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;cursor:pointer;color:var(--muted);margin-bottom:14px;padding:6px 0}
+.back-btn:hover{color:var(--text)}
+.topic-header h2{font-size:24px;font-weight:900;margin-bottom:4px}
+.topic-header p{color:var(--muted);font-weight:600;margin-bottom:16px}
+.topic-list{display:flex;flex-direction:column;gap:8px}
+.topic-item{background:#fff;border-radius:14px;padding:13px 16px;border:2px solid #f0f0f8;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:.2s}
+.topic-item:hover{border-color:#c7d2fe;background:#f8f8ff}
+.topic-item-left{display:flex;align-items:center;gap:10px}
+.topic-num{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;color:#fff;flex-shrink:0}
+.topic-item-name{font-weight:800;font-size:14px}
+.topic-item-count{font-size:12px;color:var(--muted);font-weight:600}
+.topic-due-badge{background:#FEE2E2;color:#DC2626;border-radius:20px;padding:3px 9px;font-size:11px;font-weight:800}
+.topic-progress{height:4px;background:#f0f0f8;border-radius:4px;margin-top:5px;overflow:hidden;width:180px}
+.topic-progress-fill{height:100%;border-radius:4px}
+
+/* ─── QUIZ ─── */
+.quiz-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.quiz-progress{flex:1;height:10px;background:#f0f0f8;border-radius:8px;overflow:hidden}
+.quiz-progress-fill{height:100%;border-radius:8px;transition:.4s;background:linear-gradient(90deg,#4338CA,#7C3AED)}
+.quiz-count{font-weight:800;font-size:13px;color:var(--muted);white-space:nowrap}
+.quiz-subject-tag{padding:5px 12px;border-radius:20px;font-weight:800;font-size:12px;flex-shrink:0}
+.card-area{background:#fff;border-radius:24px;padding:24px;box-shadow:var(--shadow);margin-bottom:12px;position:relative}
+.card-tag{display:inline-block;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:800;margin-bottom:12px}
+.card-tier{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:800;margin-bottom:12px;margin-left:6px;background:#f0f0f8;color:#666}
+.card-tier.higher{background:#FEF3C7;color:#92400E}
+.card-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
+.card-question{font-size:18px;font-weight:800;line-height:1.4;margin-bottom:16px}
+
+/* HINT — hidden by default */
+.hint-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;background:#f8f8ff;border:2px dashed #c7d2fe;border-radius:12px;padding:10px 14px;margin-bottom:14px;transition:.2s;width:100%;text-align:left;font-family:'Nunito',sans-serif}
+.hint-toggle:hover{background:#EEF2FF;border-color:#818cf8}
+.hint-toggle-label{font-size:13px;font-weight:800;color:#4338CA}
+.hint-toggle-icon{font-size:16px;transition:transform .3s;margin-left:auto}
+.hint-toggle-icon.open{transform:rotate(180deg)}
+.hint-body{overflow:hidden;max-height:0;transition:max-height .3s ease,padding .3s;padding:0 14px;background:#EEF2FF;border-radius:0 0 10px 10px;margin-top:-4px;font-size:13px;font-weight:700;color:#4338CA;line-height:1.5}
+.hint-body.visible{max-height:120px;padding:10px 14px 12px}
+
+/* REVEAL BTN */
+.reveal-btn{width:100%;padding:14px;border-radius:14px;border:3px dashed #c7d2fe;background:#f8f8ff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;color:#4338CA;transition:.2s}
+.reveal-btn:hover{background:#EEF2FF;border-style:solid}
+
+/* ANSWER */
+.answer-area{border-top:2px solid #f0f0f8;padding-top:18px;margin-top:4px;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.answer-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#4338CA;margin-bottom:10px}
+.answer-bullets{list-style:none;padding:0;display:flex;flex-direction:column;gap:8px}
+.answer-bullets li{display:flex;align-items:flex-start;gap:10px;font-size:16px;font-weight:600;line-height:1.5;color:var(--text)}
+.answer-bullets li::before{content:"✦";color:#4338CA;font-size:12px;margin-top:4px;flex-shrink:0}
+.answer-bullets strong{color:#1a1a2e;font-weight:900}
+
+/* NOTES PANEL */
+.notes-btn{width:100%;padding:11px 14px;border-radius:12px;border:2px solid #e0e7ff;background:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;color:#4338CA;text-align:left;display:flex;align-items:center;gap:8px;transition:.2s;margin-top:10px}
+.notes-btn:hover{background:#EEF2FF;border-color:#818cf8}
+.notes-panel{background:#EEF2FF;border-radius:14px;padding:0;max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s;margin-top:6px}
+.notes-panel.open{max-height:600px;padding:16px}
+.notes-panel h4{font-size:14px;font-weight:900;color:#4338CA;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.notes-panel p{font-size:13px;font-weight:600;color:#3730A3;line-height:1.6;margin-bottom:8px}
+.notes-panel ul{padding-left:16px;margin-bottom:8px}
+.notes-panel ul li{font-size:13px;font-weight:600;color:#3730A3;line-height:1.6;margin-bottom:4px}
+.notes-panel strong{font-weight:900;color:#1e1b4b}
+.notes-panel .notes-tag{display:inline-block;background:#c7d2fe;color:#3730A3;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800;margin-right:4px;margin-bottom:6px}
+.notes-close{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:#4338CA;font-family:'Nunito',sans-serif;font-weight:900;line-height:1;padding:0;margin-left:8px}
+
+/* RATING */
+.rating-prompt{text-align:center;font-weight:800;font-size:13px;color:var(--muted);margin:14px 0 8px}
+.rating-btns{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:7px}
+.rating-btn{padding:12px 6px;border-radius:12px;border:none;font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;cursor:pointer;transition:.2s;display:flex;flex-direction:column;align-items:center;gap:3px}
+.rating-btn:hover{transform:translateY(-3px)}
+.rating-btn .emoji{font-size:20px}
+.rating-btn.again{background:#F3E5F5;color:var(--again)}
+.rating-btn.hard{background:#FEE2E2;color:var(--bad)}
+.rating-btn.good{background:#FFF3E0;color:var(--ok)}
+.rating-btn.easy{background:#E8F5E9;color:var(--good)}
+
+/* COMPLETE */
+.complete-screen{text-align:center;padding:32px 20px}
+.complete-emoji{font-size:64px;margin-bottom:14px;animation:bounce 1s ease infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.complete-title{font-size:26px;font-weight:900;margin-bottom:6px}
+.complete-sub{color:var(--muted);font-weight:600;font-size:15px;margin-bottom:20px}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:16px 0}
+.stat-box{background:#fff;border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+.stat-num{font-size:26px;font-weight:900;margin-bottom:3px}
+.stat-label{font-size:11px;color:var(--muted);font-weight:700}
+.streak-anim{background:linear-gradient(135deg,#FF6B00,#FF9800);border-radius:18px;padding:18px;color:#fff;margin:14px 0;animation:pulse-streak 2s ease infinite}
+@keyframes pulse-streak{0%,100%{box-shadow:0 0 0 0 rgba(255,107,0,0.4)}50%{box-shadow:0 0 0 10px rgba(255,107,0,0)}}
+.home-btn{width:100%;padding:16px;border-radius:var(--radius);border:none;font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;cursor:pointer;background:#4338CA;color:#fff;box-shadow:0 6px 20px rgba(67,56,202,0.3);transition:.2s;margin-top:8px}
+.home-btn:hover{transform:translateY(-2px)}
+
+/* DASHBOARD */
+.dash-header{margin-bottom:20px}
+.dash-header h2{font-size:22px;font-weight:900;margin-bottom:3px}
+.dash-header p{color:var(--muted);font-weight:600}
+.dash-student-select{display:flex;gap:8px;margin:14px 0;overflow-x:auto;padding-bottom:4px}
+.student-pill{padding:9px 14px;border-radius:20px;border:2px solid #f0f0f8;background:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;transition:.2s}
+.student-pill.active{background:#EEF2FF;border-color:#4338CA;color:#4338CA}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.dash-card{background:#fff;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.dash-card h3{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.dash-big{font-size:38px;font-weight:900}
+.dash-sub{font-size:12px;color:var(--muted);font-weight:600;margin-top:3px}
+.subject-bar{margin:8px 0}
+.subject-bar-label{display:flex;justify-content:space-between;font-size:12px;font-weight:800;margin-bottom:3px}
+.subject-bar-track{height:9px;background:#f0f0f8;border-radius:6px;overflow:hidden}
+.subject-bar-fill{height:100%;border-radius:6px}
+.heatmap{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.heat-cell{aspect-ratio:1;border-radius:4px;background:#f0f0f8}
+.heat-cell.l1{background:#c7d2fe}.heat-cell.l2{background:#818cf8}.heat-cell.l3{background:#4338CA}
+.dash-full{grid-column:1/-1}
+.perf-table{width:100%;border-collapse:collapse;font-size:12px}
+.perf-table th{font-weight:800;color:var(--muted);text-align:left;padding:5px 0;border-bottom:2px solid #f0f0f8;font-size:11px}
+.perf-table td{padding:9px 0;border-bottom:1px solid #f0f0f8;font-weight:600}
+.perf-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-weight:800;font-size:10px}
+.perf-badge.great{background:#E8F5E9;color:#2E7D32}
+.perf-badge.ok{background:#FFF3E0;color:#E65100}
+.perf-badge.needs{background:#FEE2E2;color:#C62828}
+.insight-box{background:#EEF2FF;border-radius:12px;padding:12px 14px;margin-top:10px;border-left:4px solid #4338CA}
+.insight-box p{font-size:12px;font-weight:700;color:#4338CA;line-height:1.5}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="logo">🔬 ScienceSpark</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showScreen('home')">Learn</button>
+    <button class="nav-tab" onclick="showScreen('dashboard')">Dashboard</button>
+  </div>
+  <div class="streak-badge">
+    <span class="streak-fire">🔥</span>
+    <span id="nav-streak">0</span>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="hero">
+    <h1>Let's spark some learning! ⚡</h1>
+    <p>AQA GCSE Science — your daily revision habit</p>
+  </div>
+  <div class="xp-row">
+    <span class="xp-label">Level <span id="xp-level">1</span></span>
+    <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    <span class="xp-val" id="xp-val">0 XP</span>
+  </div>
+  <div class="streak-card">
+    <div class="streak-big">🔥</div>
+    <div class="streak-info">
+      <h2><span id="streak-days">0</span> Day Streak!</h2>
+      <p>Keep it up — come back tomorrow!</p>
+      <div class="streak-dots" id="streak-dots"></div>
+    </div>
+  </div>
+  <div class="section-title">Pick your subject 🎯</div>
+  <div class="subject-grid">
+    <div class="subject-card bio" onclick="showTopics('biology')">
+      <div class="due-pill has-due" id="bio-due-badge"></div>
+      <div class="subject-icon">🌿</div>
+      <div class="subject-name">Biology</div>
+      <div class="subject-due" id="bio-due">Loading...</div>
+    </div>
+    <div class="subject-card chem" onclick="showTopics('chemistry')">
+      <div class="due-pill has-due" id="chem-due-badge"></div>
+      <div class="subject-icon">⚗️</div>
+      <div class="subject-name">Chemistry</div>
+      <div class="subject-due" id="chem-due">Loading...</div>
+    </div>
+    <div class="subject-card phys" onclick="showTopics('physics')">
+      <div class="due-pill has-due" id="phys-due-badge"></div>
+      <div class="subject-icon">⚡</div>
+      <div class="subject-name">Physics</div>
+      <div class="subject-due" id="phys-due">Loading...</div>
+    </div>
+  </div>
+  <button class="start-btn" onclick="startAnyDue()">📚 Study All Due Now</button>
+  <div class="section-title">Your badges 🏆</div>
+  <div class="badge-row">
+    <div class="badge earned">🌱 First Steps</div>
+    <div class="badge" id="badge-streak3">🔥 3-Day Streak</div>
+    <div class="badge" id="badge-100">💯 100 Cards</div>
+    <div class="badge" id="badge-bio">🌿 Bio Master</div>
+    <div class="badge" id="badge-chem">⚗️ Chem Wizard</div>
+    <div class="badge" id="badge-phys">⚡ Physics Pro</div>
+  </div>
+</div>
+
+<!-- TOPIC PICKER -->
+<div class="screen" id="screen-topics">
+  <button class="back-btn" onclick="showScreen('home')">← Back</button>
+  <div class="topic-header">
+    <h2 id="topic-screen-title">Topics</h2>
+    <p id="topic-screen-sub">Choose a topic to revise</p>
+  </div>
+  <div class="topic-list" id="topic-list"></div>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="screen-quiz">
+  <div class="quiz-header">
+    <button class="back-btn" style="margin:0;padding:0 6px 0 0" onclick="exitQuiz()">←</button>
+    <div class="quiz-progress"><div class="quiz-progress-fill" id="quiz-prog"></div></div>
+    <div class="quiz-count" id="quiz-count">0/0</div>
+    <div class="quiz-subject-tag" id="quiz-tag"></div>
+  </div>
+
+  <div class="card-area">
+    <div>
+      <span class="card-tag" id="card-tag"></span>
+      <span class="card-tier" id="card-tier"></span>
+    </div>
+    <div class="card-label">Question</div>
+    <div class="card-question" id="card-q"></div>
+
+    <!-- HINT — hidden by default -->
+    <button class="hint-toggle" id="hint-toggle-btn" onclick="toggleHint()">
+      <span style="font-size:16px">💡</span>
+      <span class="hint-toggle-label">Show hint</span>
+      <span class="hint-toggle-icon" id="hint-icon">▼</span>
+    </button>
+    <div class="hint-body" id="hint-body"></div>
+
+    <button class="reveal-btn" id="reveal-btn" onclick="revealAnswer()">👆 Tap to reveal answer</button>
+
+    <div class="answer-area" id="answer-area" style="display:none">
+      <div class="answer-label">✅ Answer</div>
+      <ul class="answer-bullets" id="card-a-list"></ul>
+
+      <!-- EXTRA NOTES LINK -->
+      <button class="notes-btn" id="notes-btn" onclick="toggleNotes()" style="display:none">
+        <span>📖</span>
+        <span id="notes-btn-label">Read extra notes</span>
+        <span style="margin-left:auto;font-size:13px" id="notes-arrow">▼</span>
+      </button>
+      <div class="notes-panel" id="notes-panel"></div>
+    </div>
+  </div>
+
+  <div id="rating-area" style="display:none">
+    <div class="rating-prompt">How did you find that?</div>
+    <div class="rating-btns">
+      <button class="rating-btn again" onclick="rateCard(0)"><span class="emoji">😵</span>Again</button>
+      <button class="rating-btn hard" onclick="rateCard(1)"><span class="emoji">😰</span>Hard</button>
+      <button class="rating-btn good" onclick="rateCard(2)"><span class="emoji">🙂</span>Good</button>
+      <button class="rating-btn easy" onclick="rateCard(3)"><span class="emoji">🤩</span>Easy!</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLETE -->
+<div class="screen" id="screen-complete">
+  <div class="complete-screen">
+    <div class="complete-emoji" id="complete-emoji">🎉</div>
+    <div class="complete-title" id="complete-title">Session Complete!</div>
+    <div class="complete-sub" id="complete-sub">You crushed it today!</div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-num" id="comp-total" style="color:#4338CA">0</div><div class="stat-label">Cards Done</div></div>
+      <div class="stat-box"><div class="stat-num" id="comp-good" style="color:#4CAF50">0</div><div class="stat-label">Correct</div></div>
+      <div class="stat-box"><div class="stat-num" id="comp-xp" style="color:#FF9800">+0</div><div class="stat-label">XP Earned</div></div>
+    </div>
+    <div class="streak-anim"><h3 style="font-size:20px;font-weight:900;margin-bottom:3px">🔥 <span id="comp-streak">0</span> Day Streak!</h3><p style="opacity:.9;font-size:13px;font-weight:600">You're building a great habit!</p></div>
+    <button class="home-btn" onclick="showScreen('home');updateHome()">🏠 Back to Home</button>
+    <button class="home-btn" style="background:#E8F5E9;color:#2E7D32;box-shadow:none;margin-top:8px" onclick="continueStudying()">⚡ Keep Studying</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="screen" id="screen-dashboard">
+  <div class="dash-header"><h2>📊 Teacher & Parent Dashboard</h2><p>Track progress, identify gaps, celebrate wins</p></div>
+  <div class="dash-student-select">
+    <button class="student-pill active" onclick="selectStudent(0,this)">Alex 👦</button>
+    <button class="student-pill" onclick="selectStudent(1,this)">Maya 👧</button>
+    <button class="student-pill" onclick="selectStudent(2,this)">Sam 🧑</button>
+  </div>
+  <div class="dash-grid">
+    <div class="dash-card"><h3>🔥 Streak</h3><div class="dash-big" id="d-streak" style="color:var(--streak)">0</div><div class="dash-sub" id="d-streak-sub">days in a row</div></div>
+    <div class="dash-card"><h3>⚡ Total XP</h3><div class="dash-big" id="d-xp" style="color:#4338CA">0</div><div class="dash-sub">experience points</div></div>
+    <div class="dash-card"><h3>📚 Cards Reviewed</h3><div class="dash-big" id="d-cards" style="color:#2196F3">0</div><div class="dash-sub">total this week</div></div>
+    <div class="dash-card"><h3>🎯 Accuracy</h3><div class="dash-big" id="d-acc" style="color:#4CAF50">0%</div><div class="dash-sub">good + easy ratings</div></div>
+    <div class="dash-card dash-full"><h3>📈 Subject Progress</h3>
+      <div class="subject-bar"><div class="subject-bar-label"><span>🌿 Biology</span><span id="d-bio-pct">0%</span></div><div class="subject-bar-track"><div class="subject-bar-fill" id="d-bio-bar" style="background:var(--bio);width:0%"></div></div></div>
+      <div class="subject-bar" style="margin-top:10px"><div class="subject-bar-label"><span>⚗️ Chemistry</span><span id="d-chem-pct">0%</span></div><div class="subject-bar-track"><div class="subject-bar-fill" id="d-chem-bar" style="background:var(--chem);width:0%"></div></div></div>
+      <div class="subject-bar" style="margin-top:10px"><div class="subject-bar-label"><span>⚡ Physics</span><span id="d-phys-pct">0%</span></div><div class="subject-bar-track"><div class="subject-bar-fill" id="d-phys-bar" style="background:var(--phys);width:0%"></div></div></div>
+    </div>
+    <div class="dash-card dash-full"><h3>🗓️ 4-Week Activity</h3><div class="heatmap" id="d-heatmap"></div></div>
+    <div class="dash-card dash-full"><h3>🔍 Topic Performance</h3>
+      <table class="perf-table"><thead><tr><th>Topic</th><th>Subject</th><th>Due</th><th>Accuracy</th><th>Status</th></tr></thead><tbody id="d-perf-table"></tbody></table>
+      <div class="insight-box"><p id="d-insight">Loading...</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ CARD DATA — answers as arrays (each item = one bullet), **bold** = mark-scheme key words ═══
+const CARDS = {
+  biology:[
+    {
+      topic:"Cell Biology", tier:"F",
+      q:"What is osmosis?",
+      a:["**Osmosis** is the movement of **water molecules**","from a **dilute** solution to a **concentrated** solution","through a **partially permeable membrane**"],
+      hint:"Water moves from watery to sugary through a special membrane",
+      notes:{
+        title:"Osmosis in depth",
+        body:`<span class="notes-tag">Foundation</span><span class="notes-tag">Required Practical</span>
+<p><strong>Key point:</strong> Osmosis is a special type of diffusion — only water molecules move, and only through a partially permeable membrane.</p>
+<p><strong>In the required practical</strong> you put potato cylinders in different concentrations of sugar solution. If the potato gains mass, water moved IN (solution was more dilute than the potato cells). If it loses mass, water moved OUT.</p>
+<p><strong>Formula for % change:</strong> ((final mass − initial mass) ÷ initial mass) × 100</p>
+<ul><li>Turgid = swollen plant cell (lots of water inside)</li><li>Plasmolysed = shrivelled plant cell (water has left)</li></ul>`
+      }
+    },
+    {
+      topic:"Cell Biology", tier:"F",
+      q:"What is diffusion?",
+      a:["The **net movement** of particles","from an area of **higher concentration** to an area of **lower concentration**","**down** a concentration gradient","It does **not** require energy — it is a **passive** process"],
+      hint:"Particles spread from crowded to less crowded — no energy needed",
+      notes:{
+        title:"Diffusion explained",
+        body:`<p><strong>Three factors that speed up diffusion:</strong></p>
+<ul><li><strong>Steeper concentration gradient</strong> — bigger difference = faster</li><li><strong>Higher temperature</strong> — particles have more kinetic energy</li><li><strong>Larger surface area</strong> — more space for particles to cross</li></ul>
+<p><strong>Examples:</strong> Oxygen diffusing into blood in the lungs; CO₂ diffusing out of cells during respiration.</p>`
+      }
+    },
+    {
+      topic:"Cell Biology", tier:"F",
+      q:"What are the structures in an animal cell?",
+      a:["**Nucleus** — contains DNA, controls the cell","**Cytoplasm** — where chemical reactions happen","**Cell membrane** — controls what enters and leaves","**Mitochondria** — site of **aerobic respiration** (energy transfer)","**Ribosomes** — where **proteins are made**"],
+      hint:"Never Can Make Real Progress — Nucleus, Cytoplasm, Membrane, Ribosomes, mitoP",
+      notes:{
+        title:"Cell structures and functions",
+        body:`<p><strong>Plant cells have THREE extra structures:</strong></p>
+<ul><li><strong>Cell wall</strong> (cellulose) — support and strength</li><li><strong>Permanent vacuole</strong> — filled with cell sap, keeps cell turgid</li><li><strong>Chloroplasts</strong> — contain chlorophyll, site of photosynthesis</li></ul>
+<p><strong>Bacteria</strong> are prokaryotic — no nucleus. DNA is a free loop in the cytoplasm. They may also have <strong>plasmids</strong> (small rings of DNA).</p>`
+      }
+    },
+    {
+      topic:"Cell Biology", tier:"H",
+      q:"What is active transport and how does it differ from diffusion?",
+      a:["**Active transport** moves substances from a **low** concentration to a **high** concentration","This is **against** the concentration gradient","It **requires energy** from **respiration**","Diffusion is **passive** and moves particles **down** the gradient"],
+      hint:"Active = needs energy. Going uphill against the gradient.",
+      notes:{
+        title:"Active transport examples",
+        body:`<p><strong>Where it happens:</strong></p>
+<ul><li><strong>Root hair cells</strong> absorb mineral ions (e.g. nitrates) from soil — concentration of minerals is often lower in the soil than inside the cell</li><li><strong>Gut</strong> — glucose is absorbed into the blood even when blood glucose is already higher than in the gut</li></ul>
+<p><strong>Why it needs energy:</strong> The cell uses protein <em>carrier molecules</em> in the membrane that act like pumps — these need ATP from respiration to work.</p>`
+      }
+    },
+    {
+      topic:"Cell Biology", tier:"F",
+      q:"What happens during mitosis?",
+      a:["The genetic material is **copied** (DNA replication)","The cell divides to produce **two** daughter cells","Both cells are **genetically identical** to each other and to the parent cell","Used for: **growth**, **repair**, and **replacement** of cells"],
+      hint:"Mitosis = Making Identical Twins",
+      notes:{
+        title:"Mitosis vs Meiosis",
+        body:`<table style="width:100%;font-size:12px;border-collapse:collapse">
+<tr style="background:#c7d2fe"><td style="padding:5px;font-weight:900">Feature</td><td style="padding:5px;font-weight:900">Mitosis</td><td style="padding:5px;font-weight:900">Meiosis</td></tr>
+<tr><td style="padding:5px;border-bottom:1px solid #e0e7ff">Cells produced</td><td style="padding:5px;border-bottom:1px solid #e0e7ff">2</td><td style="padding:5px;border-bottom:1px solid #e0e7ff">4</td></tr>
+<tr><td style="padding:5px;border-bottom:1px solid #e0e7ff">Genetically</td><td style="padding:5px;border-bottom:1px solid #e0e7ff">Identical</td><td style="padding:5px;border-bottom:1px solid #e0e7ff">Different</td></tr>
+<tr><td style="padding:5px;border-bottom:1px solid #e0e7ff">Chromosomes</td><td style="padding:5px;border-bottom:1px solid #e0e7ff">46 (diploid)</td><td style="padding:5px;border-bottom:1px solid #e0e7ff">23 (haploid)</td></tr>
+<tr><td style="padding:5px">Purpose</td><td style="padding:5px">Growth/repair</td><td style="padding:5px">Sex cells</td></tr>
+</table>`
+      }
+    },
+    {
+      topic:"Organisation", tier:"F",
+      q:"What is an enzyme?",
+      a:["A **biological catalyst**","It **speeds up** chemical reactions in living organisms","Made of **protein** with a specific **active site** shape","It is **not used up** in the reaction"],
+      hint:"Biological catalyst — speeds reactions without being used up",
+      notes:{
+        title:"Enzymes — lock and key model",
+        body:`<p><strong>Lock and key model:</strong> The enzyme's <strong>active site</strong> has a specific shape. Only a substrate with a <strong>complementary</strong> shape fits — forming an <strong>enzyme-substrate complex</strong>.</p>
+<p><strong>Denaturation:</strong> If temperature or pH moves too far from the optimum, the <strong>active site changes shape</strong> — the substrate can no longer fit. The enzyme is denatured (this is permanent).</p>
+<ul><li>Amylase: starch → sugars (made in salivary glands, pancreas, small intestine)</li><li>Protease: proteins → amino acids (stomach, pancreas, small intestine)</li><li>Lipase: lipids → glycerol + fatty acids (pancreas, small intestine)</li></ul>`
+      }
+    },
+    {
+      topic:"Infection & Response", tier:"F",
+      q:"How do white blood cells defend against pathogens?",
+      a:["**Phagocytosis** — engulf and digest the pathogen","Produce **antibodies** — proteins that bind to specific **antigens** on the pathogen to destroy it","Produce **antitoxins** — neutralise **toxins** released by bacteria"],
+      hint:"Engulf, Antibodies, Antitoxins — three lines of white blood cell defence",
+      notes:{
+        title:"The immune response",
+        body:`<p><strong>Antigens</strong> are proteins on the surface of pathogens. Each pathogen has unique antigens.</p>
+<p><strong>Antibodies</strong> are complementary to one specific antigen. When a pathogen is encountered, white blood cells called <strong>lymphocytes</strong> produce the matching antibodies.</p>
+<p><strong>Memory cells</strong> remain after the infection. If the same pathogen returns, memory cells produce antibodies <strong>much more rapidly</strong> — you don't get ill (or get ill much less severely). This is the basis of <strong>vaccination</strong>.</p>
+<p><strong>Vaccination</strong> introduces dead/weakened pathogens to trigger this response without causing disease.</p>`
+      }
+    },
+    {
+      topic:"Bioenergetics", tier:"F",
+      q:"Write the word equation for photosynthesis.",
+      a:["**Carbon dioxide** + **water** → **glucose** + **oxygen**","This requires **light energy**, absorbed by **chlorophyll** in the **chloroplasts**"],
+      hint:"CO₂ + H₂O → glucose + O₂ (light needed)",
+      notes:{
+        title:"Photosynthesis — limiting factors",
+        body:`<p><strong>Symbol equation (Higher):</strong> 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂</p>
+<p><strong>Three limiting factors</strong> — the one in shortest supply controls the rate:</p>
+<ul><li><strong>Light intensity</strong> — more light = faster (up to a point)</li><li><strong>CO₂ concentration</strong> — more CO₂ = faster (up to a point)</li><li><strong>Temperature</strong> — higher temp = faster, but too high = enzyme denaturation</li></ul>
+<p><strong>Uses of glucose:</strong> Respiration · Starch storage · Cellulose (cell walls) · Proteins (with nitrates) · Fats/oils</p>`
+      }
+    },
+    {
+      topic:"Bioenergetics", tier:"F",
+      q:"Write the word equation for aerobic respiration.",
+      a:["**Glucose** + **oxygen** → **carbon dioxide** + **water**","Energy is **transferred** to the organism","Takes place in the **mitochondria**"],
+      hint:"Glucose + O₂ → CO₂ + H₂O (energy released)",
+      notes:{
+        title:"Aerobic vs Anaerobic respiration",
+        body:`<p><strong>Aerobic (with oxygen):</strong> Glucose + oxygen → carbon dioxide + water. Releases <strong>lots</strong> of energy. Happens in mitochondria.</p>
+<p><strong>Anaerobic — animals/humans:</strong> Glucose → <strong>lactic acid</strong>. Releases <strong>less</strong> energy. Causes muscle fatigue.</p>
+<p><strong>Anaerobic — yeast/plants:</strong> Glucose → <strong>ethanol</strong> + <strong>carbon dioxide</strong>. Used in fermentation (bread/beer).</p>
+<p><strong>Oxygen debt:</strong> After exercise you breathe heavily to supply O₂ to break down the lactic acid that built up — converted back to glucose in the liver.</p>`
+      }
+    },
+    {
+      topic:"Homeostasis", tier:"F",
+      q:"How does the body control blood glucose when it is too HIGH?",
+      a:["The **pancreas** detects high blood glucose","It releases **insulin** into the blood","Insulin causes **liver** and **muscle** cells to absorb glucose","The glucose is converted to **glycogen** for storage","Blood glucose level **returns to normal**"],
+      hint:"Too high → Insulin → glucose stored as glycogen",
+      notes:{
+        title:"Blood glucose regulation",
+        body:`<p><strong>When blood glucose is too LOW:</strong></p>
+<ul><li>Pancreas releases <strong>glucagon</strong></li><li>Glucagon causes liver to break <strong>glycogen → glucose</strong></li><li>Glucose released into blood → levels rise back to normal</li></ul>
+<p><strong>Type 1 diabetes:</strong> Pancreas produces <strong>little or no insulin</strong>. Treated with <strong>insulin injections</strong>.</p>
+<p><strong>Type 2 diabetes:</strong> Body cells <strong>no longer respond</strong> to insulin. Linked to obesity. Treated with diet, exercise, and medication.</p>
+<p>This is an example of <strong>negative feedback</strong> — the response reverses the change.</p>`
+      }
+    },
+    {
+      topic:"Inheritance", tier:"F",
+      q:"What is the difference between dominant and recessive alleles?",
+      a:["A **dominant** allele is always **expressed** if present — even with **one copy**","A **recessive** allele is only expressed when **two copies** are present","Dominant alleles are shown with a **capital letter** (e.g. B)","Recessive alleles are shown with a **lowercase letter** (e.g. b)"],
+      hint:"Dominant = one copy enough. Recessive = need two copies.",
+      notes:{
+        title:"Genetic disorders",
+        body:`<p><strong>Cystic fibrosis</strong> — caused by a <strong>recessive</strong> allele (f). Both parents must be carriers (Ff) to pass it on. Causes thick, sticky mucus in lungs and gut.</p>
+<p><strong>Polydactyly</strong> — caused by a <strong>dominant</strong> allele (D). Only one copy needed. Causes extra fingers or toes.</p>
+<p><strong>Punnett square tip:</strong> Draw a 2×2 grid. Put parent alleles along top and side. Fill in the four boxes — each shows a possible offspring genotype.</p>
+<p><strong>Carrier</strong> = person with one recessive allele (Ff) who does not show the condition but can pass it on.</p>`
+      }
+    },
+    {
+      topic:"Ecology", tier:"F",
+      q:"Describe the carbon cycle.",
+      a:["**Photosynthesis** removes CO₂ from the atmosphere (into plants)","**Respiration** (all organisms) releases CO₂ back","**Decomposition** — microorganisms break down dead matter, releasing CO₂","**Combustion** of fossil fuels and wood releases CO₂"],
+      hint:"Photosynthesis removes it. Respiration, Decomposition, Combustion return it.",
+      notes:{
+        title:"Carbon cycle — full picture",
+        body:`<p><strong>The cycle:</strong> CO₂ in atmosphere → absorbed by plants (photosynthesis) → eaten by animals → passed along food chains → returned by respiration, decomposition, combustion.</p>
+<p><strong>Fossil fuels</strong> are formed from ancient organisms over millions of years. Burning them releases carbon that was locked away — increasing atmospheric CO₂ → contributing to climate change.</p>
+<p><strong>Deforestation</strong> also increases CO₂ — fewer trees means less photosynthesis to remove CO₂, and burning/decomposing trees releases stored carbon.</p>`
+      }
+    },
+  ],
+  chemistry:[
+    {
+      topic:"Atomic Structure", tier:"F",
+      q:"What are the three subatomic particles, their charges, and where are they found?",
+      a:["**Proton** — charge **+1** — found in the **nucleus**","**Neutron** — charge **0** — found in the **nucleus**","**Electron** — charge **−1** — found in **shells** around the nucleus"],
+      hint:"Protons and Neutrons in the Nucleus. Electrons outside.",
+      notes:{
+        title:"Atomic structure",
+        body:`<p><strong>Atomic number</strong> = number of protons (also = number of electrons in a neutral atom)</p>
+<p><strong>Mass number</strong> = protons + neutrons</p>
+<p><strong>Isotopes</strong> = atoms of the same element with the <strong>same number of protons</strong> but <strong>different numbers of neutrons</strong>. Same atomic number, different mass number.</p>
+<p><strong>Relative masses:</strong> Proton = 1, Neutron = 1, Electron = very small (almost 0)</p>`
+      }
+    },
+    {
+      topic:"Bonding", tier:"F",
+      q:"What is ionic bonding?",
+      a:["**Transfer** of electrons from a **metal** to a **non-metal**","The metal becomes a **positive ion**, the non-metal becomes a **negative ion**","Oppositely charged ions are held together by **strong electrostatic forces of attraction**"],
+      hint:"Metal GIVES electrons, non-metal TAKES them",
+      notes:{
+        title:"Ionic compounds — properties",
+        body:`<p><strong>Giant ionic lattice</strong> — ions arranged in a regular 3D structure.</p>
+<ul><li><strong>High melting/boiling points</strong> — many strong electrostatic forces to overcome</li><li><strong>Conduct electricity when molten or dissolved</strong> (ions are free to move), but <strong>not when solid</strong> (ions are fixed)</li><li><strong>Soluble in water</strong> (usually)</li></ul>`
+      }
+    },
+    {
+      topic:"Bonding", tier:"F",
+      q:"What is covalent bonding?",
+      a:["**Sharing** of a pair of electrons between **non-metal** atoms","Each atom shares electrons to gain a **full outer shell**","Produces **strong covalent bonds**"],
+      hint:"Covalent = sharing between non-metals",
+      notes:{
+        title:"Covalent structures",
+        body:`<p><strong>Simple molecular</strong> (e.g. H₂O, CO₂): low melting points, don't conduct electricity. Weak <em>intermolecular forces</em> between molecules — easy to break.</p>
+<p><strong>Giant covalent</strong> (e.g. diamond, graphite, silicon dioxide): very high melting points — millions of strong covalent bonds to break.</p>
+<ul><li>Diamond: each C bonded to 4 others — very hard, no free electrons — doesn't conduct</li><li>Graphite: each C bonded to 3 — layers can slide — <strong>does conduct</strong> (delocalised electrons)</li></ul>`
+      }
+    },
+    {
+      topic:"Energy Changes", tier:"F",
+      q:"What is the difference between exothermic and endothermic reactions?",
+      a:["**Exothermic**: transfers energy **to** the surroundings — temperature **increases**","**Endothermic**: takes energy **from** the surroundings — temperature **decreases**","Exothermic examples: **combustion**, **respiration**, neutralisation","Endothermic examples: **thermal decomposition**, **photosynthesis**"],
+      hint:"EXothermic = EXits heat (gets hot). ENDothermic = absorbs heat (gets cold).",
+      notes:{
+        title:"Bond energies (Higher)",
+        body:`<p><strong>Breaking bonds requires energy</strong> (endothermic). <strong>Making bonds releases energy</strong> (exothermic).</p>
+<p><strong>Overall reaction energy:</strong> Energy in (breaking bonds) − Energy out (making bonds)</p>
+<ul><li>If energy IN > energy OUT → <strong>endothermic</strong></li><li>If energy OUT > energy IN → <strong>exothermic</strong></li></ul>
+<p>Activation energy = minimum energy needed to start a reaction. Shown on energy profile diagrams as the peak.</p>`
+      }
+    },
+    {
+      topic:"Rates of Reaction", tier:"F",
+      q:"State four factors that increase the rate of a chemical reaction.",
+      a:["**Higher temperature** — particles move faster, collide more often and with more energy","**Higher concentration** (or pressure for gases) — more particles, more frequent collisions","**Larger surface area** — more particles exposed for collisions","**Catalyst** — lowers **activation energy**, providing an alternative pathway"],
+      hint:"Temp, Concentration, Surface area, Catalyst — TCSC",
+      notes:{
+        title:"Collision theory",
+        body:`<p><strong>Collision theory:</strong> Reactions happen when particles collide with enough energy (at least the <strong>activation energy</strong>). More frequent collisions with more energy = faster rate.</p>
+<p><strong>Catalysts</strong> are not used up — they provide an alternative reaction pathway with a lower activation energy. They are specific to particular reactions.</p>
+<p><strong>Required practical:</strong> Measuring rate using: (1) gas volume collected, (2) loss of mass, (3) colorimetry / disappearing cross (precipitate forming).</p>`
+      }
+    },
+  ],
+  physics:[
+    {
+      topic:"Forces", tier:"F",
+      q:"State Newton's Second Law of Motion.",
+      a:["**Force = mass × acceleration**","Written as: **F = ma**","Force in **Newtons (N)**, mass in **kg**, acceleration in **m/s²**","A larger force on the same mass produces a **greater acceleration**"],
+      hint:"F = ma — Force equals mass times acceleration",
+      notes:{
+        title:"Newton's Laws — all three",
+        body:`<p><strong>First Law:</strong> An object remains at rest or moves at constant velocity unless acted on by a <strong>resultant force</strong>.</p>
+<p><strong>Second Law:</strong> F = ma — resultant force = mass × acceleration.</p>
+<p><strong>Third Law:</strong> Every action has an equal and opposite reaction (forces act on <em>different</em> objects).</p>
+<p><strong>Weight vs Mass:</strong> Mass = amount of matter (kg, stays constant). Weight = gravitational force on the mass (N, changes with gravitational field strength). W = mg, where g = 10 N/kg on Earth.</p>`
+      }
+    },
+    {
+      topic:"Energy", tier:"F",
+      q:"State the law of conservation of energy.",
+      a:["Energy **cannot be created or destroyed**","It can only be **transferred** from one store to another","The **total energy** of a closed system always **remains the same**"],
+      hint:"Energy is never made or lost — just moved around",
+      notes:{
+        title:"Energy stores and transfers",
+        body:`<p><strong>Energy stores:</strong> Kinetic · Gravitational potential · Elastic potential · Chemical · Thermal · Nuclear · Electrostatic · Magnetic</p>
+<p><strong>Key equations:</strong></p>
+<ul><li>Kinetic energy: KE = ½mv²</li><li>Gravitational PE: GPE = mgh (g = 10 N/kg)</li><li>Work done: W = Fd</li><li>Power: P = E/t</li></ul>
+<p><strong>Efficiency</strong> = useful output energy ÷ total input energy (× 100 for %)</p>
+<p>No device is 100% efficient — energy is always dissipated as <strong>thermal energy</strong> (heat).</p>`
+      }
+    },
+    {
+      topic:"Electricity", tier:"F",
+      q:"State Ohm's Law.",
+      a:["**Voltage = Current × Resistance**","Written as: **V = IR**","Voltage in **Volts (V)**, Current in **Amps (A)**, Resistance in **Ohms (Ω)**","An ohmic conductor has **constant resistance** at constant temperature"],
+      hint:"V = IR — Voltage equals Current times Resistance",
+      notes:{
+        title:"Series vs Parallel circuits",
+        body:`<p><strong>Series circuit:</strong> Components in one loop. Same current everywhere. Voltages add up. If one component fails — all fail.</p>
+<p><strong>Parallel circuit:</strong> Components in separate branches. Same voltage across each branch. Currents add up. If one fails — others keep working. (Used in home wiring.)</p>
+<p><strong>Power equations:</strong> P = IV and P = I²R</p>
+<p><strong>Energy transferred:</strong> E = Pt = IVt</p>`
+      }
+    },
+    {
+      topic:"Waves", tier:"F",
+      q:"What is the wave equation?",
+      a:["**Wave speed = frequency × wavelength**","Written as: **v = fλ**","Speed in **m/s**, frequency in **Hz**, wavelength in **m**","All electromagnetic waves travel at **3 × 10⁸ m/s** in a vacuum"],
+      hint:"v = fλ — speed equals frequency times wavelength",
+      notes:{
+        title:"Wave properties",
+        body:`<p><strong>Transverse waves:</strong> Oscillations <strong>perpendicular</strong> to direction of travel. Examples: light, all EM waves, water waves.</p>
+<p><strong>Longitudinal waves:</strong> Oscillations <strong>parallel</strong> to direction of travel. Example: sound. These have compressions and rarefactions.</p>
+<p><strong>EM spectrum (high to low frequency):</strong> Gamma → X-ray → UV → Visible → Infrared → Microwave → Radio</p>
+<p><strong>Amplitude</strong> = max displacement from rest position (related to energy). <strong>Frequency</strong> = waves per second (Hz). <strong>Period</strong> = 1/frequency.</p>`
+      }
+    },
+  ]
+};
+
+// ═══ SRS ENGINE (SM-2) ═══
+function getSRS(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
+function setSRS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function getCardState(s,i){return getSRS(`srs_${s}_${i}`)||{interval:1,ease:2.5,reps:0,due:Date.now(),lapses:0}}
+function saveCardState(s,i,st){setSRS(`srs_${s}_${i}`,st)}
+function sm2(state,grade){
+  let{interval,ease,reps,lapses}=state;
+  if(grade===0){reps=0;lapses++;interval=1;ease=Math.max(1.3,ease-0.2)}
+  else if(grade===1){ease=Math.max(1.3,ease-0.15);interval=Math.max(1,Math.ceil(interval*ease*0.8))}
+  else if(grade===2){if(reps===0)interval=1;else if(reps===1)interval=4;else interval=Math.ceil(interval*ease);reps++}
+  else{if(reps===0)interval=4;else interval=Math.ceil(interval*ease*1.3);ease=Math.min(3.0,ease+0.15);reps++}
+  return{interval,ease,reps,lapses,due:Date.now()+interval*86400000}
+}
+function getDueCards(s){const now=Date.now();return CARDS[s].map((c,i)=>({...c,idx:i,subj:s})).filter((_,i)=>getCardState(s,i).due<=now)}
+function getAllDue(){return['biology','chemistry','physics'].flatMap(s=>getDueCards(s))}
+
+// ═══ APP STATE ═══
+let state={streak:0,lastStudy:null,xp:0,totalCards:0};
+function loadState(){const s=getSRS('appState2');if(s)state={...state,...s}}
+function saveState(){setSRS('appState2',state)}
+function checkStreak(){
+  const today=new Date().toDateString();
+  const yesterday=new Date(Date.now()-86400000).toDateString();
+  if(state.lastStudy===today)return;
+  state.streak=(state.lastStudy===yesterday)?state.streak+1:1;
+  state.lastStudy=today;
+  saveState();
+}
+const SUBJECTS={biology:{color:'var(--bio)',light:'var(--bio-light)',icon:'🌿',label:'Biology'},chemistry:{color:'var(--chem)',light:'var(--chem-light)',icon:'⚗️',label:'Chemistry'},physics:{color:'var(--phys)',light:'var(--phys-light)',icon:'⚡',label:'Physics'}};
+
+// ═══ RENDER HELPERS ═══
+function parseBold(text){return text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}
+function renderBullets(arr){return arr.map(b=>`<li>${parseBold(b)}</li>`).join('')}
+
+// ═══ SCREENS ═══
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  if(['home','topics','quiz','complete'].includes(id))document.querySelector('.nav-tab:first-child').classList.add('active');
+  if(id==='dashboard'){document.querySelectorAll('.nav-tab')[1].classList.add('active');renderDashboard()}
+  if(id==='home')updateHome();
+}
+
+function updateHome(){
+  document.getElementById('nav-streak').textContent=state.streak;
+  document.getElementById('streak-days').textContent=state.streak;
+  const lvl=Math.floor(state.xp/200)+1;
+  document.getElementById('xp-level').textContent=lvl;
+  document.getElementById('xp-fill').style.width=((state.xp%200)/200*100)+'%';
+  document.getElementById('xp-val').textContent=state.xp+' XP';
+  const days=['M','T','W','T','F','S','S'];
+  const today=new Date().getDay();
+  document.getElementById('streak-dots').innerHTML=days.map((d,i)=>`<div class="streak-dot${(today===0?i<=6:i<today)&&i>=Math.max(0,today-state.streak)?' done':''}">${d}</div>`).join('');
+  ['biology','chemistry','physics'].forEach(s=>{
+    const due=getDueCards(s).length;
+    const id=s==='biology'?'bio':s==='chemistry'?'chem':'phys';
+    document.getElementById(id+'-due').textContent=due>0?`${due} card${due>1?'s':''} due!`:'All caught up! ✓';
+    const b=document.getElementById(id+'-due-badge');
+    b.textContent=due>0?due:'✓';
+    b.style.color=due>0?'#F44336':'#4CAF50';
+  });
+  if(state.streak>=3)document.getElementById('badge-streak3').classList.add('earned');
+  if(state.totalCards>=100)document.getElementById('badge-100').classList.add('earned');
+}
+
+// ═══ TOPICS ═══
+function showTopics(subj){
+  state.currentSubj=subj;
+  const info=SUBJECTS[subj];
+  document.getElementById('topic-screen-title').textContent=info.icon+' '+info.label;
+  document.getElementById('topic-screen-sub').textContent='Choose a topic or study all due';
+  const topics=[...new Set(CARDS[subj].map(c=>c.topic))];
+  const list=document.getElementById('topic-list');
+  list.innerHTML='';
+  const allDue=getDueCards(subj);
+  const allBtn=document.createElement('div');
+  allBtn.className='topic-item';
+  allBtn.style.cssText=`background:${info.light};border-color:${info.color}`;
+  allBtn.innerHTML=`<div class="topic-item-left"><div class="topic-num" style="background:${info.color}">All</div><div><div class="topic-item-name">All Due Cards</div><div class="topic-item-count">${allDue.length} cards due</div></div></div>${allDue.length>0?`<div class="topic-due-badge">${allDue.length} due</div>`:'<span style="color:#4CAF50;font-weight:800;font-size:13px">✓</span>'}`;
+  allBtn.onclick=()=>startSession(allDue.length>0?allDue:CARDS[subj].map((c,i)=>({...c,idx:i,subj})));
+  list.appendChild(allBtn);
+  topics.forEach((topic,ti)=>{
+    const cards=CARDS[subj].map((c,i)=>({...c,idx:i,subj})).filter(c=>c.topic===topic);
+    const due=cards.filter(c=>getCardState(c.subj,c.idx).due<=Date.now());
+    const done=cards.filter(c=>getCardState(c.subj,c.idx).reps>0).length;
+    const pct=Math.round(done/cards.length*100);
+    const el=document.createElement('div');
+    el.className='topic-item';
+    el.innerHTML=`<div class="topic-item-left"><div class="topic-num" style="background:${info.color}">${ti+1}</div><div><div class="topic-item-name">${topic}</div><div class="topic-item-count">${cards.length} cards · ${due.length} due</div><div class="topic-progress"><div class="topic-progress-fill" style="background:${info.color};width:${pct}%"></div></div></div></div>${due.length>0?`<div class="topic-due-badge">${due.length}</div>`:'<span style="color:#4CAF50;font-weight:800;font-size:13px">✓</span>'}`;
+    el.onclick=()=>startSession(cards);
+    list.appendChild(el);
+  });
+  showScreen('topics');
+}
+
+// ═══ QUIZ ═══
+let session={cards:[],idx:0,good:0,xp:0};
+let hintOpen=false;
+let notesOpen=false;
+
+function startAnyDue(){
+  const all=getAllDue();
+  startSession(all.length>0?all:CARDS.biology.map((c,i)=>({...c,idx:i,subj:'biology'})).slice(0,5));
+}
+function startSession(cards){
+  if(!cards||cards.length===0)cards=CARDS.biology.map((c,i)=>({...c,idx:i,subj:'biology'})).slice(0,5);
+  session={cards:shuffle([...cards]),idx:0,good:0,xp:0};
+  checkStreak();
+  showScreen('quiz');
+  showCard();
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function showCard(){
+  hintOpen=false;notesOpen=false;
+  const card=session.cards[session.idx];
+  const subj=SUBJECTS[card.subj];
+  const pct=Math.round(session.idx/session.cards.length*100);
+  document.getElementById('quiz-prog').style.width=pct+'%';
+  document.getElementById('quiz-count').textContent=`${session.idx+1}/${session.cards.length}`;
+  document.getElementById('quiz-tag').textContent=subj.icon+' '+card.topic;
+  document.getElementById('quiz-tag').style.cssText=`background:${subj.light};color:${subj.color};padding:5px 12px;border-radius:20px;font-weight:800;font-size:12px`;
+  document.getElementById('card-tag').textContent=card.topic;
+  document.getElementById('card-tag').style.cssText=`background:${subj.light};color:${subj.color};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800`;
+  const tierEl=document.getElementById('card-tier');
+  tierEl.textContent=card.tier==='H'?'Higher only':'Foundation';
+  tierEl.className='card-tier'+(card.tier==='H'?' higher':'');
+  document.getElementById('card-q').textContent=card.q;
+  // Reset hint
+  document.getElementById('hint-body').textContent=card.hint;
+  document.getElementById('hint-body').classList.remove('visible');
+  document.getElementById('hint-icon').classList.remove('open');
+  document.querySelector('.hint-toggle-label').textContent='Show hint';
+  // Hide answer + notes
+  document.getElementById('answer-area').style.display='none';
+  document.getElementById('reveal-btn').style.display='block';
+  document.getElementById('rating-area').style.display='none';
+  document.getElementById('notes-panel').classList.remove('open');
+  document.getElementById('notes-panel').innerHTML='';
+  document.getElementById('notes-btn').style.display='none';
+}
+
+function toggleHint(){
+  hintOpen=!hintOpen;
+  document.getElementById('hint-body').classList.toggle('visible',hintOpen);
+  document.getElementById('hint-icon').classList.toggle('open',hintOpen);
+  document.querySelector('.hint-toggle-label').textContent=hintOpen?'Hide hint':'Show hint';
+}
+
+function revealAnswer(){
+  const card=session.cards[session.idx];
+  document.getElementById('card-a-list').innerHTML=renderBullets(card.a);
+  document.getElementById('answer-area').style.display='block';
+  document.getElementById('reveal-btn').style.display='none';
+  document.getElementById('rating-area').style.display='block';
+  // Notes button
+  if(card.notes){
+    const btn=document.getElementById('notes-btn');
+    btn.style.display='flex';
+    document.getElementById('notes-btn-label').textContent='📖 Read extra notes on: '+card.notes.title;
+  }
+}
+
+function toggleNotes(){
+  notesOpen=!notesOpen;
+  const panel=document.getElementById('notes-panel');
+  const card=session.cards[session.idx];
+  if(notesOpen&&card.notes){
+    panel.innerHTML=`<button class="notes-close" onclick="toggleNotes()">✕</button><h4>📖 ${card.notes.title}</h4>${card.notes.body}`;
+    panel.classList.add('open');
+    document.getElementById('notes-arrow').textContent='▲';
+  } else {
+    panel.classList.remove('open');
+    document.getElementById('notes-arrow').textContent='▼';
+  }
+}
+
+function rateCard(grade){
+  const card=session.cards[session.idx];
+  saveCardState(card.subj,card.idx,sm2(getCardState(card.subj,card.idx),grade));
+  const xp=[5,8,12,16][grade];
+  session.xp+=xp;state.xp+=xp;state.totalCards++;
+  if(grade>=2)session.good++;
+  const hist=getSRS('reviewHist')||{};
+  const today=new Date().toDateString();
+  hist[today]=(hist[today]||0)+1;
+  setSRS('reviewHist',hist);
+  saveState();
+  session.idx++;
+  if(session.idx>=session.cards.length)showComplete();else showCard();
+}
+
+function showComplete(){
+  const pct=Math.round(session.good/session.cards.length*100);
+  document.getElementById('comp-total').textContent=session.cards.length;
+  document.getElementById('comp-good').textContent=session.good;
+  document.getElementById('comp-xp').textContent='+'+session.xp;
+  document.getElementById('comp-streak').textContent=state.streak;
+  document.getElementById('complete-emoji').textContent=pct>=80?'🎉':pct>=50?'👍':'💪';
+  document.getElementById('complete-title').textContent=pct>=80?'Amazing work!':pct>=50?'Good effort!':'Keep practising!';
+  document.getElementById('complete-sub').textContent=pct>=80?'You really know your stuff!':pct>=50?'Getting better every day!':'Review these cards again soon!';
+  showScreen('complete');
+}
+function exitQuiz(){if(confirm('Exit this session?'))showScreen('home')}
+function continueStudying(){const all=getAllDue();if(all.length>0)startSession(all);else{alert('All caught up! 🎉');showScreen('home')}}
+
+// ═══ DASHBOARD ═══
+const DEMO=[
+  {name:'Alex',streak:7,xp:1240,totalCards:89,accuracy:72,bio:65,chem:40,phys:80,heat:[0,1,2,3,1,2,0,0,1,3,2,1,0,0,2,3,1,0,1,2,3,2,1,0,0,1,2,3]},
+  {name:'Maya',streak:14,xp:2380,totalCards:156,accuracy:88,bio:90,chem:75,phys:60,heat:[1,2,3,3,2,3,1,0,2,3,3,2,1,0,3,3,2,1,2,3,3,3,2,1,1,2,3,3]},
+  {name:'Sam',streak:2,xp:340,totalCards:28,accuracy:55,bio:30,chem:20,phys:45,heat:[0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1,2]},
+];
+let selStudent=0;
+function selectStudent(i,el){selStudent=i;document.querySelectorAll('.student-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderDashboard()}
+function renderDashboard(){
+  const s=DEMO[selStudent];
+  document.getElementById('d-streak').textContent=s.streak;
+  document.getElementById('d-streak-sub').textContent=s.streak>=7?'🔥 On fire!':'days in a row';
+  document.getElementById('d-xp').textContent=s.xp.toLocaleString();
+  document.getElementById('d-cards').textContent=s.totalCards;
+  document.getElementById('d-acc').textContent=s.accuracy+'%';
+  ['bio','chem','phys'].forEach(sub=>{
+    const val=s[sub];
+    document.getElementById('d-'+sub+'-pct').textContent=val+'%';
+    document.getElementById('d-'+sub+'-bar').style.width=val+'%';
+  });
+  const hm=document.getElementById('d-heatmap');
+  hm.innerHTML=s.heat.map(v=>`<div class="heat-cell${v?` l${v}`:''}"></div>`).join('');
+  const rows=[
+    {topic:'Cell Biology',subj:'Biology',due:3,acc:s.bio>60?'Great':'Needs Work'},
+    {topic:'Atomic Structure',subj:'Chemistry',due:s.chem<50?5:1,acc:s.chem>60?'Good':'Needs Work'},
+    {topic:'Forces',subj:'Physics',due:2,acc:s.phys>60?'Great':'Good'},
+    {topic:'Bioenergetics',subj:'Biology',due:0,acc:'Great'},
+    {topic:'Energy Changes',subj:'Chemistry',due:s.chem<40?4:0,acc:s.chem>50?'Good':'Needs Work'},
+    {topic:'Waves',subj:'Physics',due:1,acc:'Good'},
+  ];
+  document.getElementById('d-perf-table').innerHTML=rows.map(r=>{
+    const badge=r.acc==='Great'?'great':r.acc==='Good'?'ok':'needs';
+    return`<tr><td style="font-weight:700">${r.topic}</td><td style="color:var(--muted)">${r.subj}</td><td style="color:${r.due>0?'#DC2626':'#4CAF50'};font-weight:800">${r.due>0?r.due+' due':'✓'}</td><td><span class="perf-badge ${badge}">${r.acc}</span></td></tr>`;
+  }).join('');
+  document.getElementById('d-insight').textContent=['📌 Alex\'s weakest area is Chemistry — focus here for biggest grade gains.','🎯 Maya has a 14-day streak — excellent! Biology is their strongest subject.','⚠️ Sam needs to build a study habit — only 28 cards reviewed. Suggest 10 minutes daily.'][selStudent];
+}
+
+// ═══ INIT ═══
+loadState();
+if(state.streak===0){state.streak=3;state.xp=480;state.totalCards=34;state.lastStudy=new Date().toDateString();saveState()}
+updateHome();
+</script>
+</body>
+</html>
