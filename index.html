@@ -1689,7 +1689,7 @@ const SB = {
 // ============================================================
 async function callClaude(systemPrompt, userMessage, maxTokens=500) {
   try {
-    const res = await fetch('/.netlify/functions/claude', {
+    const res = await fetch('https://sciencespark-worker.sciencespark.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -3056,7 +3056,7 @@ async function sendTutorMessage(message) {
   const messages = STATE.tutorHistory.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }));
 
   try {
-    const res = await fetch('/.netlify/functions/claude', {
+    const res = await fetch('https://sciencespark-worker.sciencespark.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
