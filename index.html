@@ -2037,16 +2037,42 @@ async function doLogin() {
   }
 
   showToast('Logging in...');
-  const res = await SB.signIn(email, password);
-  if (res.access_token) {
-    const profile = await SB.select('profiles', `user_id=eq.${res.user.id}`, res.access_token);
-    if (profile?.[0]) {
-      STATE.user = { ...res.user, ...profile[0], token: res.access_token };
-      STATE.role = profile[0].role;
-      afterLogin();
+  try {
+    const res = await SB.signIn(email, password);
+    if (res.access_token) {
+      try {
+        const profile = await SB.select('profiles', `user_id=eq.${res.user.id}`, res.access_token);
+        if (profile?.[0]) {
+          STATE.user = { ...res.user, ...profile[0], token: res.access_token };
+          STATE.role = profile[0].role;
+          afterLogin();
+        } else {
+          const meta = res.user.user_metadata || {};
+          const newProfile = {
+            user_id: res.user.id,
+            role: meta.role || 'student',
+            display_name: meta.display_name || email,
+            year_group: meta.year_group || null,
+            tier: meta.tier || null,
+            exam_board: meta.exam_board || 'AQA',
+            class_code: meta.class_code || null,
+            parent_code: meta.parent_code || null,
+            xp: 0, streak: 0, level: 1,
+            ai_mode: true, ai_mode_locked: false,
+          };
+          await SB.insert('profiles', newProfile, res.access_token);
+          STATE.user = { ...res.user, ...newProfile, token: res.access_token };
+          STATE.role = newProfile.role;
+          afterLogin();
+        }
+      } catch(profileErr) {
+        showToast('Login error — please try again');
+      }
+    } else {
+      showToast(res.error_description || res.msg || 'Login failed — check your email and password');
     }
-  } else {
-    showToast(res.error_description || res.msg || "Login failed — check your email and password");
+  } catch(err) {
+    showToast('Connection error — please try again');
   }
 }
 
