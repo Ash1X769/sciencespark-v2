@@ -2048,9 +2048,18 @@ async function doLogin() {
   const token = res.access_token;
   const userId = res.user.id;
 
-  const profileRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + userId + '&select=*', {
-    headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
-  }).then(r => r.json()).catch(() => []);
+  let profileRes;
+  try {
+    const rawRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + userId + '&select=*', {
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
+    });
+    console.log('Profile fetch status:', rawRes.status);
+    profileRes = await rawRes.json();
+    console.log('Profile data:', JSON.stringify(profileRes));
+  } catch(e) {
+    console.error('Profile fetch error:', e);
+    profileRes = [];
+  }
 
   let profile = Array.isArray(profileRes) && profileRes.length > 0 ? profileRes[0] : null;
 
