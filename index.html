@@ -2139,7 +2139,33 @@ async function doSignup() {
 
   const res = await SB.signUp(email, password, meta);
   if (res.user) {
-    showToast('Account created! Please check your email to verify.');
+    showToast('Account created! Logging you in...');
+    const loginRes = await fetch(CONFIG.SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email, password })
+    }).then(r => r.json()).catch(() => ({}));
+    if (loginRes.access_token) {
+      const m = loginRes.user.user_metadata || {};
+      STATE.user = {
+        id: loginRes.user.id,
+        email: loginRes.user.email,
+        token: loginRes.access_token,
+        display_name: m.display_name || email,
+        role: m.role || 'student',
+        year_group: m.year_group || null,
+        tier: m.tier || null,
+        exam_board: m.exam_board || 'AQA',
+        class_code: m.class_code || null,
+        parent_code: m.parent_code || null,
+        xp: 0, streak: 0, level: 1,
+        ai_mode: true, ai_mode_locked: false,
+      };
+      STATE.role = m.role || 'student';
+      afterLogin();
+    } else {
+      showToast('Account created! Please log in.');
+    }
   } else {
     showToast(res.error?.message || 'Signup failed');
   }
