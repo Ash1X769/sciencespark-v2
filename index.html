@@ -1668,7 +1668,7 @@ const SB = {
   },
 
   async select(table, filter='', token=null) {
-    return this.request(`/rest/v1/${table}?${filter}&select=*`, 'GET', null, token);
+    return this.request(`/rest/v1/${table}?${filter}&select=*`, 'GET', null, token).catch(() => []);
   },
 
   async insert(table, data, token=null) {
