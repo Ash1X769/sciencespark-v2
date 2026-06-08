@@ -2046,46 +2046,23 @@ async function doLogin() {
   }
 
   const token = res.access_token;
-  const userId = res.user.id;
-
-  let profileRes;
-  try {
-    const rawRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + userId + '&select=*', {
-      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
-    });
-    console.log('Profile fetch status:', rawRes.status);
-    profileRes = await rawRes.json();
-    console.log('Profile data:', JSON.stringify(profileRes));
-  } catch(e) {
-    console.error('Profile fetch error:', e);
-    profileRes = [];
-  }
-
-  let profile = Array.isArray(profileRes) && profileRes.length > 0 ? profileRes[0] : null;
-
-  if (!profile) {
-    const meta = res.user.user_metadata || {};
-    profile = {
-      user_id: userId,
-      role: meta.role || 'student',
-      display_name: meta.display_name || email,
-      year_group: meta.year_group || null,
-      tier: meta.tier || null,
-      exam_board: meta.exam_board || 'AQA',
-      class_code: meta.class_code || null,
-      parent_code: meta.parent_code || null,
-      xp: 0, streak: 0, level: 1,
-      ai_mode: true, ai_mode_locked: false,
-    };
-    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles', {
-      method: 'POST',
-      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body: JSON.stringify(profile)
-    }).catch(() => {});
-  }
-
-  STATE.user = Object.assign({}, res.user, profile, { token });
-  STATE.role = profile.role;
+  const meta = res.user.user_metadata || {};
+  
+  STATE.user = {
+    id: res.user.id,
+    email: res.user.email,
+    token,
+    display_name: meta.display_name || email,
+    role: meta.role || 'student',
+    year_group: meta.year_group || 11,
+    tier: meta.tier || 'combined_higher',
+    exam_board: meta.exam_board || 'AQA',
+    class_code: meta.class_code || null,
+    parent_code: meta.parent_code || null,
+    xp: 0, streak: 0, level: 1,
+    ai_mode: true, ai_mode_locked: false,
+  };
+  STATE.role = meta.role || 'student';
   afterLogin();
 }
 
