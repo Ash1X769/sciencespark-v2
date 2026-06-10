@@ -1339,6 +1339,51 @@ textarea.input { resize: vertical; min-height: 100px; }
   }
 }
 
+@media (min-width: 768px) {
+  #app { max-width: 768px; margin: 0 auto; }
+  .nav-bar { max-width: 768px; }
+  .card { padding: 20px; }
+}
+
+@media (min-width: 1024px) {
+  body { background: #F0F4F8; }
+  #app { max-width: 100%; display: grid; grid-template-columns: 240px 1fr; border: none; box-shadow: none; }
+  .nav-bar {
+    position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+    flex-direction: column; justify-content: flex-start; align-items: stretch;
+    padding: 0; border-top: none; border-right: 1px solid var(--border);
+    background: white; box-shadow: 2px 0 12px rgba(0,0,0,0.06);
+    max-width: none; transform: none;
+  }
+  .nav-bar::before {
+    content: '⚡ ScienceSpark';
+    display: block; padding: 24px 20px 20px;
+    font-size: 18px; font-weight: 800; color: var(--ss-green);
+    border-bottom: 1px solid var(--border); margin-bottom: 8px;
+  }
+  .nav-item {
+    flex-direction: row; justify-content: flex-start; gap: 12px;
+    padding: 14px 20px; border-radius: 0; font-size: 14px;
+    border-left: 3px solid transparent; margin: 2px 0;
+  }
+  .nav-item:hover { background: var(--bg); border-left-color: var(--ss-green); }
+  .nav-item.active { background: #F0FBF7; border-left-color: var(--ss-green); color: var(--ss-green); font-weight: 700; }
+  .screen { margin-left: 240px; max-width: calc(100vw - 240px); padding-bottom: 0 !important; }
+  #screen-auth { margin-left: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #2D6A4F 0%, #00C896 100%); }
+  #screen-auth > div { background: white; border-radius: 24px; padding: 48px; width: 480px; box-shadow: 0 24px 80px rgba(0,0,0,0.15); }
+  #screen-home, #screen-flashcards, #screen-session, #screen-embed,
+  #screen-apply, #screen-tutor, #screen-teacher, #screen-profile,
+  #screen-ko, #screen-ko-detail, #screen-history { padding: 32px; background: #F0F4F8; }
+  .card { padding: 24px; border-radius: 16px; }
+  .btn-lg { padding: 16px 32px; font-size: 16px; }
+  .input { padding: 14px 16px; font-size: 16px; }
+}
+
+@media (min-width: 1280px) {
+  .nav-bar { width: 260px; }
+  .screen { margin-left: 260px; }
+}
+
 /* ============================================================
    COMING SOON BADGE
 ============================================================ */
