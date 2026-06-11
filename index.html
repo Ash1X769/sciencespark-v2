@@ -1721,7 +1721,8 @@ Rules:
 - Compare student answer to the mark scheme answer
 - Consider time taken: if answer came in under 3 seconds, flag as possible copy-paste
 - Return ONLY valid JSON: {"grade": "again"|"hard"|"good"|"easy", "feedback": "brief encouraging feedback under 20 words", "copy_paste_suspected": boolean}
-- again = clearly wrong/blank, hard = partially right, good = mostly right, easy = perfect/complete`;
+- "I don't know", blank, vague = again. Partial = hard. Mostly right = good. Complete = easy.
+- NEVER give good/easy to vague or uncertain answers. Be strict.`;
 
   const userMsg = `Question: ${question}
 Correct answer: ${correctAnswer}
@@ -1825,7 +1826,7 @@ function formatTime(secs) {
 }
 
 function subjectColor(subj) {
-  if (subj === 'Biology') return '#4CAF82';
+  if (subj === 'Biology') return '#00C896';
   if (subj === 'Chemistry') return '#8B5CF6';
   return '#4F8EF7';
 }
@@ -2201,7 +2202,8 @@ function showHome() {
   const todayIdx = today === 0 ? 6 : today - 1;
 
   const activityDays = days.map((d, i) => {
-    const isDone = i < todayIdx;
+    const history = LS.get('card_history') || [];
+    const isDone = i < todayIdx && history.length > 0;
     const isToday = i === todayIdx;
     return `<div class="activity-day">
       <div class="activity-dot ${isDone ? 'done' : isToday ? 'today' : ''}"></div>
@@ -2658,7 +2660,8 @@ function renderMCQs() {
 
   return cards.map((card, i) => {
     // Generate wrong options from other cards
-    const others = SAMPLE_CARDS.filter(c => c.id !== card.id).slice(0, 3).map(c => c.answer);
+    const pool = SAMPLE_CARDS.filter(c => c.id !== card.id && c.topic === card.topic);
+    const others = (pool.length >= 3 ? pool : SAMPLE_CARDS.filter(c => c.id !== card.id)).slice(0, 3).map(c => c.answer);
     const opts = shuffle([card.answer, ...others]);
     mcqState[`q${i}`] = { correct: card.answer, done: false };
 
