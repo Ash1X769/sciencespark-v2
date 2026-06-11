@@ -80,8 +80,6 @@ body {
   position: relative;
 }
 
-
-
 .screen {
   flex: 1;
   display: flex;
@@ -1341,12 +1339,6 @@ textarea.input { resize: vertical; min-height: 100px; }
   }
 }
 
-
-
-
-
-
-
 /* ============================================================
    COMING SOON BADGE
 ============================================================ */
@@ -1509,7 +1501,10 @@ let STATE = {
 // from Supabase in production
 // ============================================================
 const SAMPLE_CARDS = [
-  // Biology B1 — Cell Biology
+
+  // ============================================================
+  // BIOLOGY B1 — Cell Biology
+  // ============================================================
   { id: 'b1_001', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'F', exam_board: 'AQA',
     question: 'What is the function of the cell membrane?',
     answer: 'Controls what enters and exits the cell — it is selectively permeable.',
@@ -1530,34 +1525,727 @@ const SAMPLE_CARDS = [
     answer: 'Cell wall, chloroplasts, permanent vacuole.',
     exam_q: 'Give three structures found in plant cells but not animal cells. [3 marks]',
     mark_scheme: '1 mark each: cell wall / chloroplasts / permanent vacuole.' },
-  { id: 'b1_005', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'H', exam_board: 'AQA',
+  { id: 'b1_005', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'F', exam_board: 'AQA',
+    question: 'What is the function of the cell wall in plant cells?',
+    answer: 'Provides structural support and strength to the cell. Made of cellulose.',
+    exam_q: 'State the function of the cell wall in plant cells. [1 mark]',
+    mark_scheme: '1 mark: provides structural support / strength / made of cellulose.' },
+  { id: 'b1_006', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'F', exam_board: 'AQA',
+    question: 'What is the function of chloroplasts?',
+    answer: 'Site of photosynthesis — absorb light energy to make glucose.',
+    exam_q: 'State the function of chloroplasts. [1 mark]',
+    mark_scheme: '1 mark: site of photosynthesis / absorb light to produce glucose.' },
+  { id: 'b1_007', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'F', exam_board: 'AQA',
+    question: 'What is the function of the vacuole in plant cells?',
+    answer: 'Contains cell sap. Helps maintain turgor pressure to keep the cell rigid.',
+    exam_q: 'State the function of the vacuole in plant cells. [1 mark]',
+    mark_scheme: '1 mark: contains cell sap / maintains turgor / keeps cell firm.' },
+  { id: 'b1_008', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'H', exam_board: 'AQA',
     question: 'What is the function of ribosomes?',
     answer: 'Site of protein synthesis — where proteins are made.',
     exam_q: 'Describe the function of ribosomes. [1 mark]',
     mark_scheme: '1 mark: site of protein synthesis.' },
-  // Chemistry C1 — Atomic Structure
+  { id: 'b1_009', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'H', exam_board: 'AQA',
+    question: 'What is the difference between a prokaryotic and eukaryotic cell?',
+    answer: 'Prokaryotic cells have no nucleus (DNA is free in cytoplasm) and are smaller. Eukaryotic cells have a nucleus.',
+    exam_q: 'State two differences between prokaryotic and eukaryotic cells. [2 marks]',
+    mark_scheme: '1 mark each: prokaryotic has no nucleus / prokaryotic is smaller / prokaryotic DNA is circular.' },
+  { id: 'b1_010', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'H', exam_board: 'AQA',
+    question: 'What is a plasmid?',
+    answer: 'A small loop of DNA found in prokaryotic cells, separate from the chromosomal DNA.',
+    exam_q: 'What is a plasmid? [1 mark]',
+    mark_scheme: '1 mark: small loop/circle of DNA found in prokaryotes / bacteria.' },
+  { id: 'b1_011', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'F', exam_board: 'AQA',
+    question: 'What is diffusion?',
+    answer: 'The movement of molecules from an area of high concentration to an area of low concentration — down a concentration gradient.',
+    exam_q: 'Define diffusion. [2 marks]',
+    mark_scheme: '1 mark: movement of molecules/particles. 1 mark: from high to low concentration / down a concentration gradient.' },
+  { id: 'b1_012', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'F', exam_board: 'AQA',
+    question: 'What is osmosis?',
+    answer: 'The movement of water molecules from a dilute solution to a concentrated solution through a partially permeable membrane.',
+    exam_q: 'Define osmosis. [2 marks]',
+    mark_scheme: '1 mark: movement of water molecules. 1 mark: through partially permeable membrane from dilute to concentrated solution.' },
+  { id: 'b1_013', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'F', exam_board: 'AQA',
+    question: 'What is active transport?',
+    answer: 'The movement of substances against a concentration gradient (low to high), using energy from respiration.',
+    exam_q: 'Define active transport. [2 marks]',
+    mark_scheme: '1 mark: movement against concentration gradient (low to high). 1 mark: requires energy from respiration.' },
+  { id: 'b1_014', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'H', exam_board: 'AQA',
+    question: 'What factors affect the rate of diffusion?',
+    answer: 'Concentration gradient, surface area, temperature, and the distance over which diffusion occurs.',
+    exam_q: 'State three factors that affect the rate of diffusion. [3 marks]',
+    mark_scheme: '1 mark each: concentration gradient / surface area / temperature / diffusion distance / thickness of membrane.' },
+  { id: 'b1_015', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'H', exam_board: 'AQA',
+    question: 'What is a stem cell?',
+    answer: 'An undifferentiated cell that can divide and develop into many different types of specialised cells.',
+    exam_q: 'What is a stem cell? [2 marks]',
+    mark_scheme: '1 mark: undifferentiated cell. 1 mark: can differentiate into specialised cells / can divide to produce more cells.' },
+
+  // ============================================================
+  // BIOLOGY B2 — Organisation
+  // ============================================================
+  { id: 'b2_001', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'F', exam_board: 'AQA',
+    question: 'What is the order of organisation from cell to organism?',
+    answer: 'Cell → Tissue → Organ → Organ system → Organism.',
+    exam_q: 'State the correct order of organisation, starting from cell. [1 mark]',
+    mark_scheme: '1 mark: cell, tissue, organ, organ system, organism (all in correct order).' },
+  { id: 'b2_002', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'F', exam_board: 'AQA',
+    question: 'What is the role of enzymes?',
+    answer: 'Biological catalysts that speed up chemical reactions in living organisms without being used up.',
+    exam_q: 'What is the role of enzymes in the body? [2 marks]',
+    mark_scheme: '1 mark: biological catalyst. 1 mark: speeds up chemical reactions / not used up in the reaction.' },
+  { id: 'b2_003', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'F', exam_board: 'AQA',
+    question: 'What is the lock and key model of enzyme action?',
+    answer: 'The substrate fits into the active site of the enzyme like a key into a lock. Only the specific substrate fits the specific enzyme.',
+    exam_q: 'Explain the lock and key model of enzyme action. [2 marks]',
+    mark_scheme: '1 mark: substrate fits into active site. 1 mark: specific shape / only complementary substrate fits.' },
+  { id: 'b2_004', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'F', exam_board: 'AQA',
+    question: 'What happens to an enzyme when it is denatured?',
+    answer: 'The active site changes shape so the substrate can no longer fit. The enzyme can no longer function.',
+    exam_q: 'Explain what happens when an enzyme is denatured. [2 marks]',
+    mark_scheme: '1 mark: active site changes shape. 1 mark: substrate no longer fits / enzyme no longer works.' },
+  { id: 'b2_005', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'F', exam_board: 'AQA',
+    question: 'Where is amylase produced and what does it do?',
+    answer: 'Produced in the salivary glands and pancreas. Breaks down starch into sugars (maltose).',
+    exam_q: 'State where amylase is produced and what it digests. [2 marks]',
+    mark_scheme: '1 mark: salivary glands / pancreas. 1 mark: breaks down starch into sugars/maltose.' },
+  { id: 'b2_006', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'F', exam_board: 'AQA',
+    question: 'Where is protease produced and what does it do?',
+    answer: 'Produced in the stomach and pancreas. Breaks down proteins into amino acids.',
+    exam_q: 'State where protease is produced and what it digests. [2 marks]',
+    mark_scheme: '1 mark: stomach / pancreas. 1 mark: breaks down proteins into amino acids.' },
+  { id: 'b2_007', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'F', exam_board: 'AQA',
+    question: 'Where is lipase produced and what does it do?',
+    answer: 'Produced in the pancreas. Breaks down fats (lipids) into fatty acids and glycerol.',
+    exam_q: 'State where lipase is produced and what it digests. [2 marks]',
+    mark_scheme: '1 mark: pancreas. 1 mark: breaks down fats/lipids into fatty acids and glycerol.' },
+  { id: 'b2_008', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'F', exam_board: 'AQA',
+    question: 'What is the role of bile?',
+    answer: 'Produced by the liver, stored in the gall bladder. Emulsifies fats (breaks them into small droplets) to increase surface area for lipase.',
+    exam_q: 'State two roles of bile in digestion. [2 marks]',
+    mark_scheme: '1 mark: emulsifies fats / breaks fats into small droplets. 1 mark: neutralises stomach acid / increases surface area for lipase.' },
+  { id: 'b2_009', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'H', exam_board: 'AQA',
+    question: 'What are the four chambers of the heart?',
+    answer: 'Right atrium, right ventricle, left atrium, left ventricle.',
+    exam_q: 'Name the four chambers of the heart. [2 marks]',
+    mark_scheme: '2 marks: all four correct. 1 mark: two or three correct. Right atrium, right ventricle, left atrium, left ventricle.' },
+  { id: 'b2_010', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'F', exam_board: 'AQA',
+    question: 'What is the difference between arteries, veins and capillaries?',
+    answer: 'Arteries carry blood away from the heart (thick walls, high pressure). Veins carry blood to the heart (valves, low pressure). Capillaries are tiny vessels for exchange of substances.',
+    exam_q: 'State one difference between arteries and veins. [1 mark]',
+    mark_scheme: '1 mark: arteries carry blood away from heart / have thicker walls / higher pressure. Veins carry blood to heart / have valves / lower pressure.' },
+
+  // ============================================================
+  // BIOLOGY B3 — Infection and Response
+  // ============================================================
+  { id: 'b3_001', subject: 'Biology', topic: 'B3', topic_name: 'Infection and Response', tier: 'F', exam_board: 'AQA',
+    question: 'What are the four types of pathogen?',
+    answer: 'Bacteria, viruses, fungi, and protists.',
+    exam_q: 'Name four types of pathogen. [2 marks]',
+    mark_scheme: '1 mark for two correct, 2 marks for all four: bacteria, viruses, fungi, protists.' },
+  { id: 'b3_002', subject: 'Biology', topic: 'B3', topic_name: 'Infection and Response', tier: 'F', exam_board: 'AQA',
+    question: 'How do viruses cause disease?',
+    answer: 'Viruses invade cells and use the cell machinery to replicate. The cell eventually bursts, releasing new viruses.',
+    exam_q: 'Explain how viruses cause damage to the body. [2 marks]',
+    mark_scheme: '1 mark: invade/enter cells. 1 mark: replicate inside cells / cells burst / cell damage.' },
+  { id: 'b3_003', subject: 'Biology', topic: 'B3', topic_name: 'Infection and Response', tier: 'F', exam_board: 'AQA',
+    question: 'What does the immune system do when a pathogen enters the body?',
+    answer: 'White blood cells (lymphocytes) produce antibodies that bind to antigens on the pathogen, destroying it. Memory cells remain for future infections.',
+    exam_q: 'Describe how the immune system responds to a pathogen. [3 marks]',
+    mark_scheme: '1 mark each: white blood cells detect pathogen / antibodies produced / antibodies bind to antigens / memory cells produced.' },
+  { id: 'b3_004', subject: 'Biology', topic: 'B3', topic_name: 'Infection and Response', tier: 'F', exam_board: 'AQA',
+    question: 'How do vaccines work?',
+    answer: 'A small amount of dead or weakened pathogen is introduced. The immune system produces antibodies and memory cells. If the real pathogen enters later, the response is faster.',
+    exam_q: 'Explain how vaccines protect against disease. [3 marks]',
+    mark_scheme: '1 mark each: dead/weakened pathogen introduced / immune system produces antibodies / memory cells formed / faster response on re-exposure.' },
+  { id: 'b3_005', subject: 'Biology', topic: 'B3', topic_name: 'Infection and Response', tier: 'F', exam_board: 'AQA',
+    question: 'What is the difference between antibiotics and antivirals?',
+    answer: 'Antibiotics kill or stop the growth of bacteria. Antivirals are used to treat viral infections. Antibiotics do not work on viruses.',
+    exam_q: 'State why antibiotics cannot be used to treat viral infections. [1 mark]',
+    mark_scheme: '1 mark: antibiotics only work on bacteria / viruses have no cell structures for antibiotics to target.' },
+
+  // ============================================================
+  // BIOLOGY B4 — Bioenergetics
+  // ============================================================
+  { id: 'b4_001', subject: 'Biology', topic: 'B4', topic_name: 'Bioenergetics', tier: 'F', exam_board: 'AQA',
+    question: 'What is the equation for photosynthesis?',
+    answer: 'Carbon dioxide + water → glucose + oxygen (using light energy).',
+    exam_q: 'Write the word equation for photosynthesis. [2 marks]',
+    mark_scheme: '1 mark: correct reactants (CO2 + water). 1 mark: correct products (glucose + oxygen).' },
+  { id: 'b4_002', subject: 'Biology', topic: 'B4', topic_name: 'Bioenergetics', tier: 'F', exam_board: 'AQA',
+    question: 'What are the three factors that limit the rate of photosynthesis?',
+    answer: 'Light intensity, carbon dioxide concentration, and temperature.',
+    exam_q: 'State three limiting factors of photosynthesis. [3 marks]',
+    mark_scheme: '1 mark each: light intensity / CO2 concentration / temperature.' },
+  { id: 'b4_003', subject: 'Biology', topic: 'B4', topic_name: 'Bioenergetics', tier: 'F', exam_board: 'AQA',
+    question: 'What is the word equation for aerobic respiration?',
+    answer: 'Glucose + oxygen → carbon dioxide + water (+ energy released as ATP).',
+    exam_q: 'Write the word equation for aerobic respiration. [2 marks]',
+    mark_scheme: '1 mark: correct reactants (glucose + oxygen). 1 mark: correct products (CO2 + water).' },
+  { id: 'b4_004', subject: 'Biology', topic: 'B4', topic_name: 'Bioenergetics', tier: 'F', exam_board: 'AQA',
+    question: 'What is the word equation for anaerobic respiration in animals?',
+    answer: 'Glucose → lactic acid (+ small amount of energy).',
+    exam_q: 'Write the word equation for anaerobic respiration in animal cells. [1 mark]',
+    mark_scheme: '1 mark: glucose → lactic acid.' },
+  { id: 'b4_005', subject: 'Biology', topic: 'B4', topic_name: 'Bioenergetics', tier: 'F', exam_board: 'AQA',
+    question: 'What is the word equation for anaerobic respiration in yeast?',
+    answer: 'Glucose → ethanol + carbon dioxide (+ small amount of energy).',
+    exam_q: 'Write the word equation for anaerobic respiration in yeast. [1 mark]',
+    mark_scheme: '1 mark: glucose → ethanol + carbon dioxide.' },
+  { id: 'b4_006', subject: 'Biology', topic: 'B4', topic_name: 'Bioenergetics', tier: 'H', exam_board: 'AQA',
+    question: 'What is oxygen debt?',
+    answer: 'The amount of extra oxygen needed after exercise to break down the lactic acid that built up during anaerobic respiration.',
+    exam_q: 'Explain what is meant by oxygen debt. [2 marks]',
+    mark_scheme: '1 mark: extra oxygen needed after exercise. 1 mark: to oxidise/break down lactic acid that built up.' },
+
+  // ============================================================
+  // BIOLOGY B5 — Homeostasis and Response
+  // ============================================================
+  { id: 'b5_001', subject: 'Biology', topic: 'B5', topic_name: 'Homeostasis and Response', tier: 'F', exam_board: 'AQA',
+    question: 'What is homeostasis?',
+    answer: 'The regulation of internal conditions in the body to maintain a stable internal environment, in response to internal and external changes.',
+    exam_q: 'Define homeostasis. [2 marks]',
+    mark_scheme: '1 mark: regulation of internal conditions / maintaining stable internal environment. 1 mark: in response to changes / to maintain optimal conditions.' },
+  { id: 'b5_002', subject: 'Biology', topic: 'B5', topic_name: 'Homeostasis and Response', tier: 'F', exam_board: 'AQA',
+    question: 'What conditions are controlled by homeostasis?',
+    answer: 'Blood glucose concentration, body temperature, water levels.',
+    exam_q: 'State three conditions controlled by homeostasis in the body. [3 marks]',
+    mark_scheme: '1 mark each: blood glucose / body temperature / water content / ion content.' },
+  { id: 'b5_003', subject: 'Biology', topic: 'B5', topic_name: 'Homeostasis and Response', tier: 'F', exam_board: 'AQA',
+    question: 'What is the role of the nervous system?',
+    answer: 'Detects stimuli and coordinates a rapid response using electrical impulses sent via neurones.',
+    exam_q: 'State the role of the nervous system in responding to stimuli. [2 marks]',
+    mark_scheme: '1 mark: detects stimuli via receptors. 1 mark: sends electrical impulses / coordinates response.' },
+  { id: 'b5_004', subject: 'Biology', topic: 'B5', topic_name: 'Homeostasis and Response', tier: 'F', exam_board: 'AQA',
+    question: 'What is a reflex arc?',
+    answer: 'A rapid, automatic response to a stimulus that bypasses the brain. Path: stimulus → receptor → sensory neurone → relay neurone (spinal cord) → motor neurone → effector → response.',
+    exam_q: 'Describe the pathway of a reflex arc. [3 marks]',
+    mark_scheme: '1 mark each: receptor detects stimulus / sensory neurone carries impulse to spinal cord / relay neurone in spinal cord / motor neurone to effector / response.' },
+  { id: 'b5_005', subject: 'Biology', topic: 'B5', topic_name: 'Homeostasis and Response', tier: 'H', exam_board: 'AQA',
+    question: 'What is the role of insulin and glucagon in blood glucose control?',
+    answer: 'Insulin (from pancreas) lowers blood glucose by converting glucose to glycogen in the liver. Glucagon raises blood glucose by converting glycogen back to glucose.',
+    exam_q: 'Explain how insulin and glucagon regulate blood glucose concentration. [4 marks]',
+    mark_scheme: '1 mark each: insulin released when glucose too high / insulin converts glucose to glycogen / glucagon released when glucose too low / glucagon converts glycogen to glucose.' },
+
+  // ============================================================
+  // BIOLOGY B6 — Inheritance, Variation and Evolution
+  // ============================================================
+  { id: 'b6_001', subject: 'Biology', topic: 'B6', topic_name: 'Inheritance, Variation and Evolution', tier: 'F', exam_board: 'AQA',
+    question: 'What is a gene?',
+    answer: 'A section of DNA that codes for a specific protein (or characteristic).',
+    exam_q: 'What is a gene? [1 mark]',
+    mark_scheme: '1 mark: a section of DNA that codes for a protein / characteristic / instructions for a trait.' },
+  { id: 'b6_002', subject: 'Biology', topic: 'B6', topic_name: 'Inheritance, Variation and Evolution', tier: 'F', exam_board: 'AQA',
+    question: 'What is the difference between dominant and recessive alleles?',
+    answer: 'A dominant allele is always expressed if present (even one copy). A recessive allele is only expressed if two copies are present (homozygous recessive).',
+    exam_q: 'Explain the difference between a dominant and recessive allele. [2 marks]',
+    mark_scheme: '1 mark: dominant expressed with one copy / masks recessive. 1 mark: recessive only expressed when two copies present / homozygous.' },
+  { id: 'b6_003', subject: 'Biology', topic: 'B6', topic_name: 'Inheritance, Variation and Evolution', tier: 'F', exam_board: 'AQA',
+    question: 'What is the difference between genotype and phenotype?',
+    answer: 'Genotype is the genetic makeup (alleles present). Phenotype is the physical characteristics shown.',
+    exam_q: 'Distinguish between genotype and phenotype. [2 marks]',
+    mark_scheme: '1 mark: genotype is the alleles/genes an organism has. 1 mark: phenotype is the physical appearance/observable characteristics.' },
+  { id: 'b6_004', subject: 'Biology', topic: 'B6', topic_name: 'Inheritance, Variation and Evolution', tier: 'F', exam_board: 'AQA',
+    question: 'What is natural selection?',
+    answer: 'Individuals with characteristics best suited to their environment are more likely to survive, reproduce and pass on their advantageous genes to offspring.',
+    exam_q: 'Describe the process of natural selection. [3 marks]',
+    mark_scheme: '1 mark each: variation exists in population / individuals with advantageous characteristics more likely to survive / pass on genes to offspring / over time frequency of advantageous allele increases.' },
+  { id: 'b6_005', subject: 'Biology', topic: 'B6', topic_name: 'Inheritance, Variation and Evolution', tier: 'H', exam_board: 'AQA',
+    question: 'What is the structure of DNA?',
+    answer: 'DNA is a double helix made of two strands of nucleotides. Each nucleotide contains a sugar (deoxyribose), a phosphate group, and a base (A, T, C or G). Bases pair: A-T and C-G.',
+    exam_q: 'Describe the structure of DNA. [3 marks]',
+    mark_scheme: '1 mark each: double helix / made of nucleotides / each nucleotide has sugar, phosphate and base / complementary base pairing A-T and C-G.' },
+
+  // ============================================================
+  // BIOLOGY B7 — Ecology
+  // ============================================================
+  { id: 'b7_001', subject: 'Biology', topic: 'B7', topic_name: 'Ecology', tier: 'F', exam_board: 'AQA',
+    question: 'What is a food chain?',
+    answer: 'A sequence showing how energy is transferred from one organism to another through feeding. Starts with a producer.',
+    exam_q: 'What does a food chain show? [2 marks]',
+    mark_scheme: '1 mark: feeding relationships between organisms. 1 mark: direction of energy transfer / starts with a producer.' },
+  { id: 'b7_002', subject: 'Biology', topic: 'B7', topic_name: 'Ecology', tier: 'F', exam_board: 'AQA',
+    question: 'What is a producer?',
+    answer: 'An organism that makes its own food through photosynthesis, e.g. a plant.',
+    exam_q: 'What is a producer? Give an example. [2 marks]',
+    mark_scheme: '1 mark: organism that produces its own food / photosynthesises. 1 mark: example e.g. plant / algae / grass.' },
+  { id: 'b7_003', subject: 'Biology', topic: 'B7', topic_name: 'Ecology', tier: 'F', exam_board: 'AQA',
+    question: 'What is biodiversity?',
+    answer: 'The variety of living organisms in an area — including the range of different species.',
+    exam_q: 'What is meant by biodiversity? [1 mark]',
+    mark_scheme: '1 mark: variety of different species / organisms in an area.' },
+  { id: 'b7_004', subject: 'Biology', topic: 'B7', topic_name: 'Ecology', tier: 'F', exam_board: 'AQA',
+    question: 'What is the carbon cycle?',
+    answer: 'The process by which carbon is recycled through living organisms and the environment. Carbon is removed from air by photosynthesis and returned by respiration, decomposition and combustion.',
+    exam_q: 'Describe how carbon is recycled in the carbon cycle. [3 marks]',
+    mark_scheme: '1 mark each: photosynthesis removes CO2 from atmosphere / respiration releases CO2 / decomposition releases CO2 / combustion releases CO2.' },
+  { id: 'b7_005', subject: 'Biology', topic: 'B7', topic_name: 'Ecology', tier: 'H', exam_board: 'AQA',
+    question: 'What is the greenhouse effect?',
+    answer: 'Greenhouse gases (CO2, methane) trap heat from the sun in the atmosphere, causing the Earth to warm up.',
+    exam_q: 'Explain the greenhouse effect. [2 marks]',
+    mark_scheme: '1 mark: greenhouse gases absorb/trap heat/radiation. 1 mark: causing Earth to warm up / global warming.' },
+
+  // ============================================================
+  // CHEMISTRY C1 — Atomic Structure and the Periodic Table
+  // ============================================================
   { id: 'c1_001', subject: 'Chemistry', topic: 'C1', topic_name: 'Atomic Structure', tier: 'F', exam_board: 'AQA',
-    question: 'What are the three subatomic particles?',
-    answer: 'Protons (positive), neutrons (neutral), electrons (negative).',
+    question: 'What are the three subatomic particles and their charges?',
+    answer: 'Proton (positive, +1), neutron (neutral, 0), electron (negative, -1).',
     exam_q: 'Name the three subatomic particles and state their charges. [3 marks]',
     mark_scheme: '1 mark each: proton (+1) / neutron (0) / electron (-1).' },
   { id: 'c1_002', subject: 'Chemistry', topic: 'C1', topic_name: 'Atomic Structure', tier: 'F', exam_board: 'AQA',
     question: 'Where is the mass of an atom concentrated?',
-    answer: 'In the nucleus (protons + neutrons have mass; electrons have negligible mass).',
+    answer: 'In the nucleus — protons and neutrons have mass. Electrons have negligible mass.',
     exam_q: 'State where most of the mass of an atom is found. [1 mark]',
     mark_scheme: '1 mark: in the nucleus.' },
-  // Physics P1 — Energy
+  { id: 'c1_003', subject: 'Chemistry', topic: 'C1', topic_name: 'Atomic Structure', tier: 'F', exam_board: 'AQA',
+    question: 'What is the atomic number of an element?',
+    answer: 'The number of protons in the nucleus of an atom.',
+    exam_q: 'What does the atomic number of an element tell you? [1 mark]',
+    mark_scheme: '1 mark: number of protons in the nucleus.' },
+  { id: 'c1_004', subject: 'Chemistry', topic: 'C1', topic_name: 'Atomic Structure', tier: 'F', exam_board: 'AQA',
+    question: 'What is the mass number of an atom?',
+    answer: 'The total number of protons and neutrons in the nucleus.',
+    exam_q: 'What is the mass number of an atom? [1 mark]',
+    mark_scheme: '1 mark: total number of protons and neutrons.' },
+  { id: 'c1_005', subject: 'Chemistry', topic: 'C1', topic_name: 'Atomic Structure', tier: 'F', exam_board: 'AQA',
+    question: 'What are isotopes?',
+    answer: 'Atoms of the same element with the same number of protons but different numbers of neutrons (different mass numbers).',
+    exam_q: 'Define isotopes. [2 marks]',
+    mark_scheme: '1 mark: same element / same atomic number. 1 mark: different number of neutrons / different mass number.' },
+  { id: 'c1_006', subject: 'Chemistry', topic: 'C1', topic_name: 'Atomic Structure', tier: 'F', exam_board: 'AQA',
+    question: 'How are elements arranged in the periodic table?',
+    answer: 'In order of increasing atomic number. Elements in the same group have similar chemical properties.',
+    exam_q: 'Describe how elements are arranged in the periodic table. [2 marks]',
+    mark_scheme: '1 mark: in order of atomic number. 1 mark: elements in same group have similar properties / same number of outer electrons.' },
+  { id: 'c1_007', subject: 'Chemistry', topic: 'C1', topic_name: 'Atomic Structure', tier: 'F', exam_board: 'AQA',
+    question: 'What does the group number in the periodic table tell you?',
+    answer: 'The number of electrons in the outer shell of the atom.',
+    exam_q: 'What does the group number of an element tell you about its atoms? [1 mark]',
+    mark_scheme: '1 mark: number of electrons in the outer shell.' },
+  { id: 'c1_008', subject: 'Chemistry', topic: 'C1', topic_name: 'Atomic Structure', tier: 'H', exam_board: 'AQA',
+    question: 'What is the electronic configuration of sodium (atomic number 11)?',
+    answer: '2, 8, 1 — two electrons in the first shell, eight in the second, one in the third.',
+    exam_q: 'Write the electronic configuration of sodium (atomic number 11). [1 mark]',
+    mark_scheme: '1 mark: 2, 8, 1.' },
+
+  // ============================================================
+  // CHEMISTRY C2 — Bonding, Structure and Properties
+  // ============================================================
+  { id: 'c2_001', subject: 'Chemistry', topic: 'C2', topic_name: 'Bonding, Structure and Properties', tier: 'F', exam_board: 'AQA',
+    question: 'What is ionic bonding?',
+    answer: 'The electrostatic attraction between oppositely charged ions. Formed when electrons are transferred from a metal to a non-metal.',
+    exam_q: 'Describe ionic bonding. [2 marks]',
+    mark_scheme: '1 mark: electrons transferred from metal to non-metal. 1 mark: electrostatic attraction between oppositely charged ions.' },
+  { id: 'c2_002', subject: 'Chemistry', topic: 'C2', topic_name: 'Bonding, Structure and Properties', tier: 'F', exam_board: 'AQA',
+    question: 'What is covalent bonding?',
+    answer: 'A shared pair of electrons between two non-metal atoms. Both atoms gain a full outer shell.',
+    exam_q: 'Describe covalent bonding. [2 marks]',
+    mark_scheme: '1 mark: shared pair of electrons. 1 mark: between non-metal atoms / both atoms gain full outer shell.' },
+  { id: 'c2_003', subject: 'Chemistry', topic: 'C2', topic_name: 'Bonding, Structure and Properties', tier: 'F', exam_board: 'AQA',
+    question: 'What is metallic bonding?',
+    answer: 'A lattice of positive metal ions surrounded by a sea of delocalised electrons. The electrostatic attraction holds the structure together.',
+    exam_q: 'Describe metallic bonding. [2 marks]',
+    mark_scheme: '1 mark: lattice of positive ions. 1 mark: sea of delocalised electrons / electrostatic attraction between ions and electrons.' },
+  { id: 'c2_004', subject: 'Chemistry', topic: 'C2', topic_name: 'Bonding, Structure and Properties', tier: 'F', exam_board: 'AQA',
+    question: 'Why do ionic compounds have high melting points?',
+    answer: 'Because they have a giant ionic lattice structure with strong electrostatic forces between ions that require a lot of energy to break.',
+    exam_q: 'Explain why ionic compounds have high melting points. [2 marks]',
+    mark_scheme: '1 mark: giant ionic lattice / strong electrostatic forces between ions. 1 mark: requires a lot of energy to break these forces.' },
+  { id: 'c2_005', subject: 'Chemistry', topic: 'C2', topic_name: 'Bonding, Structure and Properties', tier: 'F', exam_board: 'AQA',
+    question: 'Why can ionic compounds conduct electricity when dissolved in water or molten?',
+    answer: 'Because the ions are free to move and carry charge. In solid form, ions are in fixed positions and cannot move.',
+    exam_q: 'Explain why ionic compounds conduct electricity when molten but not when solid. [2 marks]',
+    mark_scheme: '1 mark: ions free to move when molten/dissolved. 1 mark: ions in fixed positions in solid / cannot carry charge.' },
+  { id: 'c2_006', subject: 'Chemistry', topic: 'C2', topic_name: 'Bonding, Structure and Properties', tier: 'H', exam_board: 'AQA',
+    question: 'What is a giant covalent structure? Give two examples.',
+    answer: 'A structure where all atoms are joined by covalent bonds in a giant lattice. Examples: diamond and graphite (both forms of carbon), silicon dioxide.',
+    exam_q: 'What is a giant covalent structure? Give two examples. [3 marks]',
+    mark_scheme: '1 mark: all atoms covalently bonded in giant lattice. 2 marks: two correct examples e.g. diamond, graphite, silicon dioxide.' },
+
+  // ============================================================
+  // CHEMISTRY C3 — Quantitative Chemistry
+  // ============================================================
+  { id: 'c3_001', subject: 'Chemistry', topic: 'C3', topic_name: 'Quantitative Chemistry', tier: 'F', exam_board: 'AQA',
+    question: 'What is the law of conservation of mass?',
+    answer: 'In a chemical reaction, the total mass of reactants equals the total mass of products — mass is neither created nor destroyed.',
+    exam_q: 'State the law of conservation of mass. [1 mark]',
+    mark_scheme: '1 mark: total mass of reactants equals total mass of products / mass is conserved.' },
+  { id: 'c3_002', subject: 'Chemistry', topic: 'C3', topic_name: 'Quantitative Chemistry', tier: 'H', exam_board: 'AQA',
+    question: 'What is a mole?',
+    answer: 'A mole is 6.02 × 10²³ particles (Avogadro\'s number). The mass of one mole equals the relative atomic/formula mass in grams.',
+    exam_q: 'What is meant by one mole of a substance? [2 marks]',
+    mark_scheme: '1 mark: 6.02 × 10²³ particles. 1 mark: mass equal to relative atomic/formula mass in grams.' },
+  { id: 'c3_003', subject: 'Chemistry', topic: 'C3', topic_name: 'Quantitative Chemistry', tier: 'H', exam_board: 'AQA',
+    question: 'What is the formula for calculating moles?',
+    answer: 'Moles = mass (g) ÷ relative formula mass (Mr)',
+    exam_q: 'Write the formula used to calculate the number of moles of a substance. [1 mark]',
+    mark_scheme: '1 mark: moles = mass / Mr (relative formula mass).' },
+
+  // ============================================================
+  // CHEMISTRY C4 — Chemical Changes
+  // ============================================================
+  { id: 'c4_001', subject: 'Chemistry', topic: 'C4', topic_name: 'Chemical Changes', tier: 'F', exam_board: 'AQA',
+    question: 'What is the reactivity series?',
+    answer: 'A list of metals in order of reactivity, from most reactive (potassium) to least reactive (gold). More reactive metals displace less reactive metals from compounds.',
+    exam_q: 'What does the reactivity series show? [2 marks]',
+    mark_scheme: '1 mark: metals in order of reactivity. 1 mark: more reactive metals displace less reactive ones / used to predict displacement reactions.' },
+  { id: 'c4_002', subject: 'Chemistry', topic: 'C4', topic_name: 'Chemical Changes', tier: 'F', exam_board: 'AQA',
+    question: 'What is oxidation and reduction in terms of electrons?',
+    answer: 'Oxidation is the loss of electrons. Reduction is the gain of electrons. (OIL RIG)',
+    exam_q: 'Define oxidation and reduction in terms of electron transfer. [2 marks]',
+    mark_scheme: '1 mark: oxidation is loss of electrons. 1 mark: reduction is gain of electrons.' },
+  { id: 'c4_003', subject: 'Chemistry', topic: 'C4', topic_name: 'Chemical Changes', tier: 'F', exam_board: 'AQA',
+    question: 'What are acids and alkalis in terms of pH?',
+    answer: 'Acids have pH below 7. Alkalis have pH above 7. Neutral substances have pH 7.',
+    exam_q: 'State the pH range for acids and for alkalis. [2 marks]',
+    mark_scheme: '1 mark: acids pH below 7. 1 mark: alkalis pH above 7.' },
+  { id: 'c4_004', subject: 'Chemistry', topic: 'C4', topic_name: 'Chemical Changes', tier: 'F', exam_board: 'AQA',
+    question: 'What are the products of neutralisation?',
+    answer: 'Acid + alkali → salt + water.',
+    exam_q: 'State the products formed when an acid reacts with an alkali. [1 mark]',
+    mark_scheme: '1 mark: salt and water.' },
+  { id: 'c4_005', subject: 'Chemistry', topic: 'C4', topic_name: 'Chemical Changes', tier: 'H', exam_board: 'AQA',
+    question: 'What happens during electrolysis?',
+    answer: 'An electric current is passed through a molten or dissolved ionic compound, causing it to decompose. Positive ions move to the cathode (negative electrode) and negative ions move to the anode (positive electrode).',
+    exam_q: 'Describe what happens during electrolysis. [3 marks]',
+    mark_scheme: '1 mark each: electric current passed through ionic compound / positive ions attracted to cathode / negative ions attracted to anode / decomposition occurs.' },
+
+  // ============================================================
+  // CHEMISTRY C5 — Energy Changes
+  // ============================================================
+  { id: 'c5_001', subject: 'Chemistry', topic: 'C5', topic_name: 'Energy Changes', tier: 'F', exam_board: 'AQA',
+    question: 'What is an exothermic reaction?',
+    answer: 'A reaction that releases energy to the surroundings — the temperature of the surroundings increases.',
+    exam_q: 'What is an exothermic reaction? [2 marks]',
+    mark_scheme: '1 mark: releases energy to surroundings. 1 mark: temperature increases / examples: combustion, neutralisation, respiration.' },
+  { id: 'c5_002', subject: 'Chemistry', topic: 'C5', topic_name: 'Energy Changes', tier: 'F', exam_board: 'AQA',
+    question: 'What is an endothermic reaction?',
+    answer: 'A reaction that absorbs energy from the surroundings — the temperature of the surroundings decreases.',
+    exam_q: 'What is an endothermic reaction? [2 marks]',
+    mark_scheme: '1 mark: absorbs energy from surroundings. 1 mark: temperature decreases / examples: thermal decomposition, photosynthesis.' },
+  { id: 'c5_003', subject: 'Chemistry', topic: 'C5', topic_name: 'Energy Changes', tier: 'H', exam_board: 'AQA',
+    question: 'What is activation energy?',
+    answer: 'The minimum energy required for a reaction to start — the energy needed to break bonds in the reactants.',
+    exam_q: 'Define activation energy. [1 mark]',
+    mark_scheme: '1 mark: minimum energy needed for a reaction to occur / to break bonds in reactants.' },
+
+  // ============================================================
+  // CHEMISTRY C6 — The Rate and Extent of Chemical Change
+  // ============================================================
+  { id: 'c6_001', subject: 'Chemistry', topic: 'C6', topic_name: 'Rate and Extent of Chemical Change', tier: 'F', exam_board: 'AQA',
+    question: 'What four factors affect the rate of a chemical reaction?',
+    answer: 'Temperature, concentration (or pressure for gases), surface area, and catalysts.',
+    exam_q: 'State four factors that affect the rate of a chemical reaction. [4 marks]',
+    mark_scheme: '1 mark each: temperature / concentration / surface area / catalyst.' },
+  { id: 'c6_002', subject: 'Chemistry', topic: 'C6', topic_name: 'Rate and Extent of Chemical Change', tier: 'F', exam_board: 'AQA',
+    question: 'Explain why increasing temperature increases the rate of reaction.',
+    answer: 'Particles have more kinetic energy, move faster, collide more frequently and with more energy. More collisions exceed the activation energy.',
+    exam_q: 'Explain why increasing temperature increases the rate of reaction. [3 marks]',
+    mark_scheme: '1 mark each: particles have more kinetic energy / move faster / more frequent collisions / more collisions with sufficient energy / more successful collisions.' },
+  { id: 'c6_003', subject: 'Chemistry', topic: 'C6', topic_name: 'Rate and Extent of Chemical Change', tier: 'F', exam_board: 'AQA',
+    question: 'What is a catalyst?',
+    answer: 'A substance that speeds up a chemical reaction without being used up. It provides an alternative reaction pathway with lower activation energy.',
+    exam_q: 'Define a catalyst. [2 marks]',
+    mark_scheme: '1 mark: speeds up reaction. 1 mark: not used up / not consumed in the reaction.' },
+
+  // ============================================================
+  // CHEMISTRY C7 — Organic Chemistry
+  // ============================================================
+  { id: 'c7_001', subject: 'Chemistry', topic: 'C7', topic_name: 'Organic Chemistry', tier: 'F', exam_board: 'AQA',
+    question: 'What are hydrocarbons?',
+    answer: 'Compounds that contain only hydrogen and carbon atoms.',
+    exam_q: 'What is a hydrocarbon? [1 mark]',
+    mark_scheme: '1 mark: compound containing only hydrogen and carbon.' },
+  { id: 'c7_002', subject: 'Chemistry', topic: 'C7', topic_name: 'Organic Chemistry', tier: 'F', exam_board: 'AQA',
+    question: 'What is crude oil and how is it separated?',
+    answer: 'Crude oil is a mixture of hydrocarbons. It is separated by fractional distillation — different fractions boil off at different temperatures.',
+    exam_q: 'Describe how crude oil is separated into fractions. [2 marks]',
+    mark_scheme: '1 mark: fractional distillation. 1 mark: different fractions have different boiling points / heated and fractions condense at different levels.' },
+  { id: 'c7_003', subject: 'Chemistry', topic: 'C7', topic_name: 'Organic Chemistry', tier: 'F', exam_board: 'AQA',
+    question: 'What is the general formula for alkanes?',
+    answer: 'CₙH₂ₙ₊₂. Alkanes are saturated hydrocarbons — they only have single C-C bonds.',
+    exam_q: 'State the general formula for alkanes. [1 mark]',
+    mark_scheme: '1 mark: CnH2n+2.' },
+  { id: 'c7_004', subject: 'Chemistry', topic: 'C7', topic_name: 'Organic Chemistry', tier: 'F', exam_board: 'AQA',
+    question: 'What is cracking and why is it done?',
+    answer: 'Breaking down large hydrocarbon molecules into smaller, more useful ones using heat (and a catalyst). Done because there is more demand for smaller fractions like petrol.',
+    exam_q: 'Explain why cracking is carried out in the petrochemical industry. [2 marks]',
+    mark_scheme: '1 mark: breaks large hydrocarbons into smaller ones. 1 mark: greater demand for smaller molecules / produces alkenes for plastics.' },
+
+  // ============================================================
+  // CHEMISTRY C8 — Chemical Analysis
+  // ============================================================
+  { id: 'c8_001', subject: 'Chemistry', topic: 'C8', topic_name: 'Chemical Analysis', tier: 'F', exam_board: 'AQA',
+    question: 'What is a pure substance?',
+    answer: 'A single element or compound, not mixed with any other substance. It melts and boils at specific temperatures.',
+    exam_q: 'What is meant by a pure substance in chemistry? [1 mark]',
+    mark_scheme: '1 mark: single element or compound / not mixed with other substances / has fixed melting and boiling point.' },
+  { id: 'c8_002', subject: 'Chemistry', topic: 'C8', topic_name: 'Chemical Analysis', tier: 'F', exam_board: 'AQA',
+    question: 'What is chromatography used for?',
+    answer: 'To separate and identify mixtures of substances based on how they travel through a stationary phase carried by a mobile phase.',
+    exam_q: 'State what chromatography is used for. [1 mark]',
+    mark_scheme: '1 mark: to separate mixtures / identify substances in a mixture.' },
+  { id: 'c8_003', subject: 'Chemistry', topic: 'C8', topic_name: 'Chemical Analysis', tier: 'H', exam_board: 'AQA',
+    question: 'What is the Rf value in chromatography?',
+    answer: 'Rf = distance travelled by substance ÷ distance travelled by solvent. Used to identify substances.',
+    exam_q: 'How is the Rf value calculated? [1 mark]',
+    mark_scheme: '1 mark: Rf = distance moved by substance / distance moved by solvent.' },
+
+  // ============================================================
+  // CHEMISTRY C9 — Chemistry of the Atmosphere
+  // ============================================================
+  { id: 'c9_001', subject: 'Chemistry', topic: 'C9', topic_name: 'Chemistry of the Atmosphere', tier: 'F', exam_board: 'AQA',
+    question: 'What is the approximate composition of the atmosphere today?',
+    answer: 'About 78% nitrogen, 21% oxygen, and approximately 1% argon and other gases (including 0.04% CO2).',
+    exam_q: 'State the approximate proportions of nitrogen and oxygen in the atmosphere. [2 marks]',
+    mark_scheme: '1 mark: approximately 78% nitrogen. 1 mark: approximately 21% oxygen.' },
+  { id: 'c9_002', subject: 'Chemistry', topic: 'C9', topic_name: 'Chemistry of the Atmosphere', tier: 'F', exam_board: 'AQA',
+    question: 'What are the main greenhouse gases?',
+    answer: 'Carbon dioxide (CO2), methane (CH4), and water vapour.',
+    exam_q: 'Name two greenhouse gases. [2 marks]',
+    mark_scheme: '1 mark each: carbon dioxide / methane / water vapour (any two).' },
+  { id: 'c9_003', subject: 'Chemistry', topic: 'C9', topic_name: 'Chemistry of the Atmosphere', tier: 'F', exam_board: 'AQA',
+    question: 'How does human activity increase greenhouse gases?',
+    answer: 'Burning fossil fuels releases CO2. Cattle farming and landfill sites release methane. Deforestation reduces CO2 absorption.',
+    exam_q: 'Describe two ways human activity increases the amount of greenhouse gases. [2 marks]',
+    mark_scheme: '1 mark each: burning fossil fuels releases CO2 / deforestation reduces CO2 absorption / cattle/rice farming releases methane / landfill releases methane.' },
+
+  // ============================================================
+  // CHEMISTRY C10 — Using Resources
+  // ============================================================
+  { id: 'c10_001', subject: 'Chemistry', topic: 'C10', topic_name: 'Using Resources', tier: 'F', exam_board: 'AQA',
+    question: 'What is the difference between renewable and finite resources?',
+    answer: 'Renewable resources can be replenished naturally and will not run out. Finite (non-renewable) resources cannot be replaced once used.',
+    exam_q: 'Distinguish between a renewable and a finite resource. [2 marks]',
+    mark_scheme: '1 mark: renewable can be replaced/replenished. 1 mark: finite cannot be replaced / will run out.' },
+  { id: 'c10_002', subject: 'Chemistry', topic: 'C10', topic_name: 'Using Resources', tier: 'F', exam_board: 'AQA',
+    question: 'How is drinking water produced from fresh water?',
+    answer: 'By filtration (to remove solids) and sterilisation (to kill microorganisms, using chlorine or UV light).',
+    exam_q: 'Describe how fresh water is treated to make it safe to drink. [2 marks]',
+    mark_scheme: '1 mark: filtration to remove solids/particles. 1 mark: sterilisation/chlorination/UV to kill microorganisms.' },
+  { id: 'c10_003', subject: 'Chemistry', topic: 'C10', topic_name: 'Using Resources', tier: 'H', exam_board: 'AQA',
+    question: 'What is the Haber process used to make?',
+    answer: 'Ammonia (NH3) — from nitrogen (from the air) and hydrogen (from natural gas), using an iron catalyst at 450°C and 200 atm pressure.',
+    exam_q: 'State the conditions used in the Haber process. [3 marks]',
+    mark_scheme: '1 mark each: iron catalyst / 450°C (high temperature) / 200 atmospheres (high pressure).' },
+
+  // ============================================================
+  // PHYSICS P1 — Energy
+  // ============================================================
   { id: 'p1_001', subject: 'Physics', topic: 'P1', topic_name: 'Energy', tier: 'F', exam_board: 'AQA',
     question: 'State the principle of conservation of energy.',
-    answer: 'Energy cannot be created or destroyed, only transferred between stores.',
+    answer: 'Energy cannot be created or destroyed, only transferred between stores or dissipated.',
     exam_q: 'State the law of conservation of energy. [1 mark]',
     mark_scheme: '1 mark: energy cannot be created or destroyed / total energy remains constant.' },
-  { id: 'p1_002', subject: 'Physics', topic: 'P1', topic_name: 'Energy', tier: 'H', exam_board: 'AQA',
+  { id: 'p1_002', subject: 'Physics', topic: 'P1', topic_name: 'Energy', tier: 'F', exam_board: 'AQA',
+    question: 'What are the main energy stores?',
+    answer: 'Kinetic, gravitational potential, elastic potential, chemical, thermal, nuclear, magnetic, electrostatic.',
+    exam_q: 'Name four different energy stores. [4 marks]',
+    mark_scheme: '1 mark each for any four: kinetic / gravitational potential / elastic potential / chemical / thermal / nuclear / magnetic / electrostatic.' },
+  { id: 'p1_003', subject: 'Physics', topic: 'P1', topic_name: 'Energy', tier: 'F', exam_board: 'AQA',
     question: 'What is the formula for kinetic energy?',
-    answer: 'KE = ½mv² where m = mass (kg) and v = speed (m/s)',
-    exam_q: 'Calculate the kinetic energy of a 2 kg ball moving at 3 m/s. [2 marks]',
-    mark_scheme: '1 mark: KE = ½ × 2 × 3² = ½ × 2 × 9. 1 mark: = 9 J.' },
+    answer: 'KE = ½mv² where m = mass (kg) and v = speed (m/s). Unit: joules (J).',
+    exam_q: 'Write the formula for kinetic energy. State the units. [2 marks]',
+    mark_scheme: '1 mark: KE = ½mv². 1 mark: joules (J).' },
+  { id: 'p1_004', subject: 'Physics', topic: 'P1', topic_name: 'Energy', tier: 'F', exam_board: 'AQA',
+    question: 'What is the formula for gravitational potential energy?',
+    answer: 'GPE = mgh where m = mass (kg), g = gravitational field strength (N/kg), h = height (m). Unit: joules (J).',
+    exam_q: 'Write the formula for gravitational potential energy. [1 mark]',
+    mark_scheme: '1 mark: GPE = mgh.' },
+  { id: 'p1_005', subject: 'Physics', topic: 'P1', topic_name: 'Energy', tier: 'F', exam_board: 'AQA',
+    question: 'What is efficiency?',
+    answer: 'Efficiency = useful output energy ÷ total input energy (× 100 for percentage). No device can be more than 100% efficient.',
+    exam_q: 'Write the formula for efficiency. [1 mark]',
+    mark_scheme: '1 mark: efficiency = useful output energy / total input energy.' },
+  { id: 'p1_006', subject: 'Physics', topic: 'P1', topic_name: 'Energy', tier: 'F', exam_board: 'AQA',
+    question: 'What is wasted energy and where does it usually go?',
+    answer: 'Energy that is not usefully transferred — usually dissipated as heat (thermal energy) to the surroundings.',
+    exam_q: 'What happens to the wasted energy in most energy transfers? [1 mark]',
+    mark_scheme: '1 mark: dissipated as heat/thermal energy to the surroundings.' },
+  { id: 'p1_007', subject: 'Physics', topic: 'P1', topic_name: 'Energy', tier: 'H', exam_board: 'AQA',
+    question: 'What is the formula for elastic potential energy?',
+    answer: 'EPE = ½ke² where k = spring constant (N/m) and e = extension (m).',
+    exam_q: 'Write the formula for elastic potential energy. [1 mark]',
+    mark_scheme: '1 mark: EPE = ½ke².' },
+  { id: 'p1_008', subject: 'Physics', topic: 'P1', topic_name: 'Energy', tier: 'F', exam_board: 'AQA',
+    question: 'What is power?',
+    answer: 'Power = energy transferred ÷ time. Measured in watts (W). 1 watt = 1 joule per second.',
+    exam_q: 'Write the formula for power and state its unit. [2 marks]',
+    mark_scheme: '1 mark: P = E/t (or W = E/t). 1 mark: watts (W).' },
+
+  // ============================================================
+  // PHYSICS P2 — Electricity
+  // ============================================================
+  { id: 'p2_001', subject: 'Physics', topic: 'P2', topic_name: 'Electricity', tier: 'F', exam_board: 'AQA',
+    question: 'What is the formula linking voltage, current and resistance?',
+    answer: 'V = IR where V = voltage (volts), I = current (amps), R = resistance (ohms).',
+    exam_q: 'Write the formula linking voltage, current and resistance. [1 mark]',
+    mark_scheme: '1 mark: V = IR.' },
+  { id: 'p2_002', subject: 'Physics', topic: 'P2', topic_name: 'Electricity', tier: 'F', exam_board: 'AQA',
+    question: 'What is the difference between series and parallel circuits?',
+    answer: 'In series: all components in one loop, same current through each, voltages add up. In parallel: components in separate branches, same voltage across each, currents add up.',
+    exam_q: 'State one difference between components connected in series and in parallel. [1 mark]',
+    mark_scheme: '1 mark: in series same current through each / voltages add up. In parallel same voltage across each / currents add up.' },
+  { id: 'p2_003', subject: 'Physics', topic: 'P2', topic_name: 'Electricity', tier: 'F', exam_board: 'AQA',
+    question: 'What is the formula for electrical power?',
+    answer: 'P = IV (power = current × voltage). Also P = I²R.',
+    exam_q: 'Write the formula for electrical power. [1 mark]',
+    mark_scheme: '1 mark: P = IV or P = I²R.' },
+  { id: 'p2_004', subject: 'Physics', topic: 'P2', topic_name: 'Electricity', tier: 'F', exam_board: 'AQA',
+    question: 'What is the formula for electrical energy?',
+    answer: 'E = QV (energy = charge × voltage). Also E = IVt (current × voltage × time).',
+    exam_q: 'Write the formula for electrical energy transferred. [1 mark]',
+    mark_scheme: '1 mark: E = QV or E = IVt or E = Pt.' },
+  { id: 'p2_005', subject: 'Physics', topic: 'P2', topic_name: 'Electricity', tier: 'H', exam_board: 'AQA',
+    question: 'What is static electricity?',
+    answer: 'A build-up of electric charge on an insulating surface, caused by friction transferring electrons. Like charges repel, unlike charges attract.',
+    exam_q: 'Explain how static electricity builds up on an insulating object. [2 marks]',
+    mark_scheme: '1 mark: friction causes electrons to be transferred. 1 mark: charge builds up on surface / insulator cannot conduct charge away.' },
+  { id: 'p2_006', subject: 'Physics', topic: 'P2', topic_name: 'Electricity', tier: 'F', exam_board: 'AQA',
+    question: 'What is the national grid and why is electricity transmitted at high voltage?',
+    answer: 'A system of cables and transformers that distributes electricity across the country. High voltage reduces the current, which reduces energy lost as heat in the cables.',
+    exam_q: 'Explain why electricity is transmitted at high voltage in the national grid. [2 marks]',
+    mark_scheme: '1 mark: high voltage means low current. 1 mark: less energy lost as heat in cables.' },
+
+  // ============================================================
+  // PHYSICS P3 — Particle Model of Matter
+  // ============================================================
+  { id: 'p3_001', subject: 'Physics', topic: 'P3', topic_name: 'Particle Model of Matter', tier: 'F', exam_board: 'AQA',
+    question: 'Describe the arrangement and movement of particles in a solid, liquid and gas.',
+    answer: 'Solid: particles in fixed positions, vibrate only. Liquid: particles close together, can flow/move. Gas: particles far apart, move randomly and at high speed.',
+    exam_q: 'Describe the arrangement of particles in a solid. [2 marks]',
+    mark_scheme: '1 mark: regular/fixed arrangement. 1 mark: vibrate in fixed positions / held by strong forces.' },
+  { id: 'p3_002', subject: 'Physics', topic: 'P3', topic_name: 'Particle Model of Matter', tier: 'F', exam_board: 'AQA',
+    question: 'What is density and what is the formula?',
+    answer: 'Density = mass ÷ volume. Measured in kg/m³ or g/cm³. Dense materials have particles packed closely together.',
+    exam_q: 'Write the formula for density and state the unit. [2 marks]',
+    mark_scheme: '1 mark: density = mass / volume. 1 mark: kg/m³ or g/cm³.' },
+  { id: 'p3_003', subject: 'Physics', topic: 'P3', topic_name: 'Particle Model of Matter', tier: 'F', exam_board: 'AQA',
+    question: 'What is specific heat capacity?',
+    answer: 'The energy needed to raise the temperature of 1 kg of a substance by 1°C. Formula: Q = mcΔT.',
+    exam_q: 'Define specific heat capacity. [1 mark]',
+    mark_scheme: '1 mark: energy required to raise temperature of 1 kg of substance by 1°C / J/kg°C.' },
+  { id: 'p3_004', subject: 'Physics', topic: 'P3', topic_name: 'Particle Model of Matter', tier: 'H', exam_board: 'AQA',
+    question: 'What is specific latent heat?',
+    answer: 'The energy needed to change the state of 1 kg of a substance without changing its temperature. Formula: Q = mL.',
+    exam_q: 'Define specific latent heat. [2 marks]',
+    mark_scheme: '1 mark: energy needed to change state of 1 kg. 1 mark: without changing temperature / Q = mL.' },
+
+  // ============================================================
+  // PHYSICS P4 — Atomic Structure (Radioactivity)
+  // ============================================================
+  { id: 'p4_001', subject: 'Physics', topic: 'P4', topic_name: 'Atomic Structure', tier: 'F', exam_board: 'AQA',
+    question: 'What are the three types of nuclear radiation?',
+    answer: 'Alpha (α) — helium nucleus (2 protons, 2 neutrons). Beta (β) — fast electron. Gamma (γ) — electromagnetic wave.',
+    exam_q: 'Name the three types of nuclear radiation. [3 marks]',
+    mark_scheme: '1 mark each: alpha / beta / gamma.' },
+  { id: 'p4_002', subject: 'Physics', topic: 'P4', topic_name: 'Atomic Structure', tier: 'F', exam_board: 'AQA',
+    question: 'What stops alpha, beta and gamma radiation?',
+    answer: 'Alpha — stopped by a few cm of air or paper. Beta — stopped by a few mm of aluminium. Gamma — reduced by thick lead or concrete.',
+    exam_q: 'State what material is needed to stop each type of nuclear radiation. [3 marks]',
+    mark_scheme: '1 mark each: alpha stopped by paper/few cm air / beta by aluminium / gamma by thick lead or concrete.' },
+  { id: 'p4_003', subject: 'Physics', topic: 'P4', topic_name: 'Atomic Structure', tier: 'F', exam_board: 'AQA',
+    question: 'What is half-life?',
+    answer: 'The time it takes for half the radioactive nuclei in a sample to decay. After one half-life, the activity halves.',
+    exam_q: 'Define half-life. [2 marks]',
+    mark_scheme: '1 mark: time for half the radioactive nuclei to decay. 1 mark: activity halves / count rate halves.' },
+  { id: 'p4_004', subject: 'Physics', topic: 'P4', topic_name: 'Atomic Structure', tier: 'H', exam_board: 'AQA',
+    question: 'What is nuclear fission?',
+    answer: 'A large nucleus (e.g. uranium-235) absorbs a neutron and splits into two smaller nuclei, releasing energy and more neutrons — which can cause a chain reaction.',
+    exam_q: 'Describe what happens in nuclear fission. [3 marks]',
+    mark_scheme: '1 mark each: large nucleus absorbs neutron / splits into two smaller nuclei / releases energy / releases neutrons / chain reaction possible.' },
+  { id: 'p4_005', subject: 'Physics', topic: 'P4', topic_name: 'Atomic Structure', tier: 'H', exam_board: 'AQA',
+    question: 'What is nuclear fusion?',
+    answer: 'Two small nuclei (e.g. hydrogen) join together to form a larger nucleus, releasing large amounts of energy. Requires extremely high temperatures.',
+    exam_q: 'Describe what happens in nuclear fusion. [2 marks]',
+    mark_scheme: '1 mark: two small nuclei join/fuse together. 1 mark: releases large amount of energy / requires high temperature.' },
+
+  // ============================================================
+  // PHYSICS P5 — Forces
+  // ============================================================
+  { id: 'p5_001', subject: 'Physics', topic: 'P5', topic_name: 'Forces', tier: 'F', exam_board: 'AQA',
+    question: 'What is Newton\'s First Law?',
+    answer: 'An object remains at rest or continues moving at constant velocity unless acted on by a resultant force.',
+    exam_q: 'State Newton\'s First Law of Motion. [1 mark]',
+    mark_scheme: '1 mark: object stays at rest or moves at constant velocity unless a resultant force acts on it.' },
+  { id: 'p5_002', subject: 'Physics', topic: 'P5', topic_name: 'Forces', tier: 'F', exam_board: 'AQA',
+    question: 'What is Newton\'s Second Law?',
+    answer: 'Force = mass × acceleration (F = ma). The resultant force on an object equals its mass multiplied by its acceleration.',
+    exam_q: 'State Newton\'s Second Law of Motion. [1 mark]',
+    mark_scheme: '1 mark: F = ma / resultant force = mass × acceleration.' },
+  { id: 'p5_003', subject: 'Physics', topic: 'P5', topic_name: 'Forces', tier: 'F', exam_board: 'AQA',
+    question: 'What is Newton\'s Third Law?',
+    answer: 'Every action has an equal and opposite reaction — when object A exerts a force on object B, object B exerts an equal and opposite force on object A.',
+    exam_q: 'State Newton\'s Third Law of Motion. [1 mark]',
+    mark_scheme: '1 mark: equal and opposite forces act on two interacting objects / for every action there is an equal and opposite reaction.' },
+  { id: 'p5_004', subject: 'Physics', topic: 'P5', topic_name: 'Forces', tier: 'F', exam_board: 'AQA',
+    question: 'What is the formula for weight?',
+    answer: 'Weight = mass × gravitational field strength (W = mg). On Earth, g = 9.8 N/kg. Weight is measured in newtons.',
+    exam_q: 'Write the formula for weight. [1 mark]',
+    mark_scheme: '1 mark: W = mg.' },
+  { id: 'p5_005', subject: 'Physics', topic: 'P5', topic_name: 'Forces', tier: 'F', exam_board: 'AQA',
+    question: 'What is the stopping distance of a vehicle?',
+    answer: 'Stopping distance = thinking distance + braking distance. Thinking distance depends on reaction time; braking distance depends on speed, road conditions and brakes.',
+    exam_q: 'What two distances make up the total stopping distance of a car? [2 marks]',
+    mark_scheme: '1 mark: thinking distance. 1 mark: braking distance.' },
+  { id: 'p5_006', subject: 'Physics', topic: 'P5', topic_name: 'Forces', tier: 'H', exam_board: 'AQA',
+    question: 'What is momentum and what is the formula?',
+    answer: 'Momentum = mass × velocity (p = mv). Measured in kg m/s. Momentum is conserved in collisions.',
+    exam_q: 'Write the formula for momentum and state its unit. [2 marks]',
+    mark_scheme: '1 mark: p = mv. 1 mark: kg m/s.' },
+
+  // ============================================================
+  // PHYSICS P6 — Waves
+  // ============================================================
+  { id: 'p6_001', subject: 'Physics', topic: 'P6', topic_name: 'Waves', tier: 'F', exam_board: 'AQA',
+    question: 'What is the wave equation?',
+    answer: 'Wave speed = frequency × wavelength (v = fλ). Speed in m/s, frequency in Hz, wavelength in m.',
+    exam_q: 'Write the wave equation. [1 mark]',
+    mark_scheme: '1 mark: v = fλ (wave speed = frequency × wavelength).' },
+  { id: 'p6_002', subject: 'Physics', topic: 'P6', topic_name: 'Waves', tier: 'F', exam_board: 'AQA',
+    question: 'What is the difference between transverse and longitudinal waves?',
+    answer: 'Transverse waves: oscillations are perpendicular to the direction of travel (e.g. light). Longitudinal waves: oscillations are parallel to the direction of travel (e.g. sound).',
+    exam_q: 'State the difference between transverse and longitudinal waves. [2 marks]',
+    mark_scheme: '1 mark: transverse — oscillations perpendicular to direction of travel. 1 mark: longitudinal — oscillations parallel to direction of travel.' },
+  { id: 'p6_003', subject: 'Physics', topic: 'P6', topic_name: 'Waves', tier: 'F', exam_board: 'AQA',
+    question: 'What is the electromagnetic spectrum in order of increasing frequency?',
+    answer: 'Radio waves → microwaves → infrared → visible light → ultraviolet → X-rays → gamma rays.',
+    exam_q: 'List the electromagnetic spectrum in order of increasing frequency. [2 marks]',
+    mark_scheme: '2 marks: all in correct order. 1 mark: at least 5 correct in order. Radio, microwave, infrared, visible, ultraviolet, X-ray, gamma.' },
+  { id: 'p6_004', subject: 'Physics', topic: 'P6', topic_name: 'Waves', tier: 'F', exam_board: 'AQA',
+    question: 'What are the uses of X-rays and gamma rays?',
+    answer: 'X-rays: medical imaging, airport security. Gamma rays: sterilising medical equipment, cancer treatment (radiotherapy), medical tracers.',
+    exam_q: 'State one medical use of X-rays and one medical use of gamma rays. [2 marks]',
+    mark_scheme: '1 mark: X-rays for medical imaging / checking bones. 1 mark: gamma for radiotherapy / sterilising equipment / medical tracers.' },
+
+  // ============================================================
+  // PHYSICS P7 — Magnetism and Electromagnetism
+  // ============================================================
+  { id: 'p7_001', subject: 'Physics', topic: 'P7', topic_name: 'Magnetism and Electromagnetism', tier: 'F', exam_board: 'AQA',
+    question: 'What is the motor effect?',
+    answer: 'When a current-carrying conductor is placed in a magnetic field, it experiences a force. This is used in electric motors.',
+    exam_q: 'Describe the motor effect. [2 marks]',
+    mark_scheme: '1 mark: current-carrying conductor in magnetic field experiences a force. 1 mark: direction depends on direction of current and field / used in motors.' },
+  { id: 'p7_002', subject: 'Physics', topic: 'P7', topic_name: 'Magnetism and Electromagnetism', tier: 'F', exam_board: 'AQA',
+    question: 'What is electromagnetic induction?',
+    answer: 'When a conductor moves through a magnetic field (or the field changes), a voltage (and current if in a circuit) is induced. Used in generators.',
+    exam_q: 'Describe electromagnetic induction. [2 marks]',
+    mark_scheme: '1 mark: movement of conductor relative to magnetic field. 1 mark: induces a voltage/current / used in generators.' },
+  { id: 'p7_003', subject: 'Physics', topic: 'P7', topic_name: 'Magnetism and Electromagnetism', tier: 'F', exam_board: 'AQA',
+    question: 'What does a transformer do?',
+    answer: 'Changes the voltage of an alternating current. Step-up transformers increase voltage. Step-down transformers decrease voltage.',
+    exam_q: 'What is the purpose of a transformer? [1 mark]',
+    mark_scheme: '1 mark: changes/transforms voltage (of AC supply).' },
+  { id: 'p7_004', subject: 'Physics', topic: 'P7', topic_name: 'Magnetism and Electromagnetism', tier: 'H', exam_board: 'AQA',
+    question: 'What is the transformer equation?',
+    answer: 'Vp/Vs = Np/Ns where Vp = primary voltage, Vs = secondary voltage, Np = primary turns, Ns = secondary turns.',
+    exam_q: 'Write the transformer equation. [1 mark]',
+    mark_scheme: '1 mark: Vp/Vs = Np/Ns.' },
+
 ];
+
+
 
 // ============================================================
 // KNOWLEDGE ORGANISER DATA (mock — real uploads replace)
@@ -1566,40 +2254,405 @@ const KNOWLEDGE_ORGANISERS = {
   'B1': {
     topic: 'B1 — Cell Biology',
     subject: 'Biology',
-    is_mock: true,
+    is_mock: false,
     pairs: [
       { q: 'Cell membrane function', a: 'Controls what enters and exits — selectively permeable' },
       { q: 'Nucleus function', a: 'Contains DNA; controls cell activities' },
       { q: 'Mitochondria function', a: 'Site of aerobic respiration; releases energy (ATP)' },
-      { q: 'Ribosomes function', a: 'Site of protein synthesis' },
-      { q: 'Plant cell structures (not in animal)', a: 'Cell wall, chloroplasts, permanent vacuole' },
-      { q: 'Prokaryotic vs eukaryotic', a: 'Prokaryotic: no nucleus, smaller. Eukaryotic: nucleus present' },
+      { q: 'Ribosomes function', a: 'Site of protein synthesis (where proteins are made)' },
+      { q: 'Cell wall function', a: 'Provides structural support; made of cellulose (plant cells only)' },
+      { q: 'Chloroplasts function', a: 'Site of photosynthesis; absorb light to make glucose (plant cells only)' },
+      { q: 'Vacuole function', a: 'Contains cell sap; maintains turgor pressure (plant cells only)' },
+      { q: 'Plant cell only structures', a: 'Cell wall, chloroplasts, permanent vacuole' },
+      { q: 'Prokaryotic vs eukaryotic', a: 'Prokaryotic: no nucleus, smaller, DNA is circular. Eukaryotic: has nucleus' },
+      { q: 'Plasmid', a: 'Small loop of DNA found in prokaryotic cells' },
+      { q: 'Diffusion', a: 'Movement of molecules from high to low concentration (down a concentration gradient)' },
+      { q: 'Osmosis', a: 'Movement of water through partially permeable membrane from dilute to concentrated solution' },
+      { q: 'Active transport', a: 'Movement against concentration gradient (low to high) using energy from respiration' },
+      { q: 'Factors affecting diffusion rate', a: 'Concentration gradient, surface area, temperature, diffusion distance' },
+      { q: 'Stem cell', a: 'Undifferentiated cell that can divide and become many specialised cell types' },
+    ]
+  },
+  'B2': {
+    topic: 'B2 — Organisation',
+    subject: 'Biology',
+    is_mock: false,
+    pairs: [
+      { q: 'Order of organisation', a: 'Cell → Tissue → Organ → Organ system → Organism' },
+      { q: 'Enzyme role', a: 'Biological catalyst — speeds up reactions without being used up' },
+      { q: 'Lock and key model', a: 'Substrate fits into the specific active site of the enzyme' },
+      { q: 'Denatured enzyme', a: 'Active site changes shape — substrate no longer fits; enzyme stops working' },
+      { q: 'Amylase', a: 'Breaks starch into sugars (maltose) — produced in salivary glands and pancreas' },
+      { q: 'Protease', a: 'Breaks proteins into amino acids — produced in stomach and pancreas' },
+      { q: 'Lipase', a: 'Breaks fats into fatty acids and glycerol — produced in pancreas' },
+      { q: 'Bile', a: 'Emulsifies fats (breaks into droplets); neutralises stomach acid — made in liver, stored in gall bladder' },
+      { q: 'Four chambers of heart', a: 'Right atrium, right ventricle, left atrium, left ventricle' },
+      { q: 'Arteries vs veins', a: 'Arteries: away from heart, thick walls, high pressure. Veins: to heart, valves, low pressure' },
+      { q: 'Capillaries', a: 'Tiny vessels one cell thick — site of exchange of substances with tissues' },
+    ]
+  },
+  'B3': {
+    topic: 'B3 — Infection and Response',
+    subject: 'Biology',
+    is_mock: false,
+    pairs: [
+      { q: 'Four types of pathogen', a: 'Bacteria, viruses, fungi, protists' },
+      { q: 'How viruses cause disease', a: 'Invade cells, replicate inside, cells burst releasing more viruses' },
+      { q: 'White blood cells', a: 'Lymphocytes produce antibodies; phagocytes engulf and destroy pathogens' },
+      { q: 'Antibodies', a: 'Proteins that bind to specific antigens on pathogens, destroying them' },
+      { q: 'Memory cells', a: 'Remain after infection; allow faster response if same pathogen returns' },
+      { q: 'How vaccines work', a: 'Dead/weakened pathogen → immune system produces antibodies and memory cells → faster response on re-exposure' },
+      { q: 'Antibiotics', a: 'Kill or stop growth of bacteria — do NOT work on viruses' },
+      { q: 'Antibiotic resistance', a: 'Overuse of antibiotics allows resistant bacteria to survive and reproduce' },
+      { q: 'Skin defence', a: 'Physical barrier — prevents pathogens entering the body' },
+      { q: 'Stomach acid defence', a: 'Kills pathogens in food and drink (pH 2)' },
+    ]
+  },
+  'B4': {
+    topic: 'B4 — Bioenergetics',
+    subject: 'Biology',
+    is_mock: false,
+    pairs: [
+      { q: 'Photosynthesis equation', a: 'CO2 + water → glucose + oxygen (using light energy)' },
+      { q: 'Three limiting factors of photosynthesis', a: 'Light intensity, CO2 concentration, temperature' },
+      { q: 'Aerobic respiration equation', a: 'Glucose + oxygen → CO2 + water (+ energy/ATP)' },
+      { q: 'Anaerobic respiration (animals)', a: 'Glucose → lactic acid (small amount of energy)' },
+      { q: 'Anaerobic respiration (yeast)', a: 'Glucose → ethanol + CO2 (small amount of energy)' },
+      { q: 'Oxygen debt', a: 'Extra oxygen needed after exercise to break down lactic acid that built up' },
+      { q: 'Why plants need glucose', a: 'For respiration, making cellulose (cell walls), making proteins, stored as starch' },
+      { q: 'Aerobic vs anaerobic', a: 'Aerobic: uses oxygen, more energy released. Anaerobic: no oxygen, less energy' },
+    ]
+  },
+  'B5': {
+    topic: 'B5 — Homeostasis and Response',
+    subject: 'Biology',
+    is_mock: false,
+    pairs: [
+      { q: 'Homeostasis definition', a: 'Regulation of internal conditions to maintain a stable internal environment' },
+      { q: 'Conditions controlled by homeostasis', a: 'Blood glucose, body temperature, water levels, ion content' },
+      { q: 'Nervous system role', a: 'Detects stimuli; sends electrical impulses via neurones for rapid response' },
+      { q: 'Reflex arc pathway', a: 'Stimulus → receptor → sensory neurone → relay neurone (spinal cord) → motor neurone → effector → response' },
+      { q: 'Why reflexes bypass brain', a: 'Faster response — automatic, no conscious thought needed' },
+      { q: 'Insulin role', a: 'Lowers blood glucose — converts glucose to glycogen in the liver (released when glucose too high)' },
+      { q: 'Glucagon role', a: 'Raises blood glucose — converts glycogen back to glucose (released when glucose too low)' },
+      { q: 'Type 1 diabetes', a: 'Pancreas does not produce insulin — treated with insulin injections' },
+      { q: 'Type 2 diabetes', a: 'Body cells do not respond to insulin — managed by diet and exercise' },
+      { q: 'ADH role', a: 'Controls water reabsorption in kidneys — released when blood too concentrated' },
+    ]
+  },
+  'B6': {
+    topic: 'B6 — Inheritance, Variation and Evolution',
+    subject: 'Biology',
+    is_mock: false,
+    pairs: [
+      { q: 'Gene', a: 'Section of DNA that codes for a specific protein or characteristic' },
+      { q: 'Allele', a: 'Different versions of the same gene' },
+      { q: 'Dominant allele', a: 'Always expressed if present — only one copy needed' },
+      { q: 'Recessive allele', a: 'Only expressed when two copies present (homozygous recessive)' },
+      { q: 'Genotype vs phenotype', a: 'Genotype: alleles present. Phenotype: physical characteristics shown' },
+      { q: 'Homozygous vs heterozygous', a: 'Homozygous: two identical alleles. Heterozygous: two different alleles' },
+      { q: 'Natural selection', a: 'Variation → best adapted survive and reproduce → pass on advantageous genes → over time, population changes' },
+      { q: 'DNA structure', a: 'Double helix; nucleotides with sugar, phosphate and base; base pairs: A-T and C-G' },
+      { q: 'Mutation', a: 'Change in DNA sequence — can be beneficial, harmful or neutral' },
+      { q: 'Meiosis produces', a: '4 genetically different gametes (sex cells) — egg and sperm' },
+      { q: 'Mitosis produces', a: '2 genetically identical cells — for growth and repair' },
+    ]
+  },
+  'B7': {
+    topic: 'B7 — Ecology',
+    subject: 'Biology',
+    is_mock: false,
+    pairs: [
+      { q: 'Producer', a: 'Organism that makes own food by photosynthesis (e.g. plant, algae)' },
+      { q: 'Consumer', a: 'Organism that eats other organisms for energy' },
+      { q: 'Decomposer', a: 'Breaks down dead organisms — returns nutrients to soil (e.g. bacteria, fungi)' },
+      { q: 'Food chain', a: 'Shows direction of energy transfer from producer through consumers' },
+      { q: 'Biodiversity', a: 'Variety of different species/organisms in an area' },
+      { q: 'Carbon cycle — removal from air', a: 'Photosynthesis (plants absorb CO2)' },
+      { q: 'Carbon cycle — release to air', a: 'Respiration, decomposition, combustion' },
+      { q: 'Greenhouse effect', a: 'Greenhouse gases (CO2, methane) trap heat — causing Earth to warm up' },
+      { q: 'Threats to biodiversity', a: 'Habitat destruction, pollution, climate change, invasive species, hunting' },
+      { q: 'Nitrogen cycle', a: 'Nitrogen fixed by bacteria → absorbed by plants → eaten by animals → returned by decomposers/denitrifying bacteria' },
     ]
   },
   'C1': {
     topic: 'C1 — Atomic Structure',
     subject: 'Chemistry',
-    is_mock: true,
+    is_mock: false,
     pairs: [
-      { q: 'Proton', a: 'Positive charge (+1), found in nucleus' },
-      { q: 'Neutron', a: 'Neutral (0), found in nucleus' },
-      { q: 'Electron', a: 'Negative charge (-1), orbits nucleus in shells' },
+      { q: 'Proton', a: 'Positive charge (+1), found in nucleus, relative mass 1' },
+      { q: 'Neutron', a: 'Neutral (0), found in nucleus, relative mass 1' },
+      { q: 'Electron', a: 'Negative charge (-1), orbits nucleus in shells, negligible mass' },
       { q: 'Atomic number', a: 'Number of protons in the nucleus' },
       { q: 'Mass number', a: 'Total protons + neutrons' },
+      { q: 'Isotopes', a: 'Same element, same protons, different neutrons (different mass number)' },
+      { q: 'Group number tells you', a: 'Number of electrons in the outer shell' },
+      { q: 'Period number tells you', a: 'Number of electron shells' },
+      { q: 'Electronic config of Na (11)', a: '2, 8, 1' },
+      { q: 'Electronic config of Mg (12)', a: '2, 8, 2' },
+      { q: 'Arrangement in periodic table', a: 'In order of increasing atomic number; same group = similar properties' },
+    ]
+  },
+  'C2': {
+    topic: 'C2 — Bonding, Structure and Properties',
+    subject: 'Chemistry',
+    is_mock: false,
+    pairs: [
+      { q: 'Ionic bonding', a: 'Electrons transferred from metal to non-metal → oppositely charged ions attract' },
+      { q: 'Covalent bonding', a: 'Shared pair of electrons between non-metal atoms' },
+      { q: 'Metallic bonding', a: 'Lattice of positive ions in a sea of delocalised electrons' },
+      { q: 'Why ionic compounds have high melting points', a: 'Giant ionic lattice with strong electrostatic forces — lots of energy to break' },
+      { q: 'Ionic compounds conduct electricity when...', a: 'Molten or dissolved in water — ions free to move and carry charge' },
+      { q: 'Simple molecular structures', a: 'Low melting points (weak intermolecular forces); do not conduct electricity' },
+      { q: 'Giant covalent structures', a: 'All atoms covalently bonded in giant lattice — very high melting points; e.g. diamond, graphite, silicon dioxide' },
+      { q: 'Diamond properties', a: 'Very hard, high melting point, does not conduct electricity — each carbon bonded to 4 others' },
+      { q: 'Graphite properties', a: 'Soft/slippery, conducts electricity — layers of carbon, one delocalised electron per atom' },
+      { q: 'Metals conduct because', a: 'Delocalised electrons free to move and carry charge' },
+    ]
+  },
+  'C3': {
+    topic: 'C3 — Quantitative Chemistry',
+    subject: 'Chemistry',
+    is_mock: false,
+    pairs: [
+      { q: 'Law of conservation of mass', a: 'Total mass of reactants = total mass of products; mass is neither created nor destroyed' },
+      { q: 'Relative formula mass (Mr)', a: 'Sum of relative atomic masses of all atoms in a formula' },
+      { q: 'Moles formula', a: 'Moles = mass (g) ÷ Mr (relative formula mass)' },
+      { q: 'One mole', a: '6.02 × 10²³ particles; mass = Mr in grams' },
+      { q: 'Concentration formula', a: 'Concentration (mol/dm³) = moles ÷ volume (dm³)' },
+      { q: 'Percentage yield', a: '(actual yield ÷ theoretical yield) × 100' },
+      { q: 'Atom economy', a: '(mass of desired product ÷ total mass of all products) × 100' },
+    ]
+  },
+  'C4': {
+    topic: 'C4 — Chemical Changes',
+    subject: 'Chemistry',
+    is_mock: false,
+    pairs: [
+      { q: 'Reactivity series (top 6)', a: 'Potassium, Sodium, Calcium, Magnesium, Aluminium, Zinc, Iron, Copper' },
+      { q: 'Displacement reaction', a: 'More reactive metal displaces less reactive metal from its compound' },
+      { q: 'OIL RIG', a: 'Oxidation Is Loss (of electrons), Reduction Is Gain (of electrons)' },
+      { q: 'Acid + alkali products', a: 'Salt + water (neutralisation)' },
+      { q: 'Acid + metal products', a: 'Salt + hydrogen gas' },
+      { q: 'Acid + metal carbonate products', a: 'Salt + water + carbon dioxide' },
+      { q: 'pH of acids', a: 'Below 7' },
+      { q: 'pH of alkalis', a: 'Above 7' },
+      { q: 'Strong vs weak acids', a: 'Strong acids fully ionise (e.g. HCl). Weak acids partially ionise (e.g. ethanoic acid)' },
+      { q: 'Electrolysis', a: 'Electric current through molten/dissolved ionic compound → decomposition. Positive ions to cathode, negative ions to anode' },
+    ]
+  },
+  'C5': {
+    topic: 'C5 — Energy Changes',
+    subject: 'Chemistry',
+    is_mock: false,
+    pairs: [
+      { q: 'Exothermic reaction', a: 'Releases energy to surroundings — temperature increases; e.g. combustion, neutralisation, respiration' },
+      { q: 'Endothermic reaction', a: 'Absorbs energy from surroundings — temperature decreases; e.g. thermal decomposition, photosynthesis' },
+      { q: 'Activation energy', a: 'Minimum energy needed for a reaction to occur — to break bonds in reactants' },
+      { q: 'Catalyst effect on activation energy', a: 'Lowers the activation energy — provides alternative reaction pathway' },
+      { q: 'Bond breaking', a: 'Requires energy (endothermic)' },
+      { q: 'Bond forming', a: 'Releases energy (exothermic)' },
+      { q: 'Overall energy change', a: 'Exothermic if more energy released than taken in; endothermic if more energy taken in than released' },
+    ]
+  },
+  'C6': {
+    topic: 'C6 — Rate and Extent of Chemical Change',
+    subject: 'Chemistry',
+    is_mock: false,
+    pairs: [
+      { q: 'Four factors affecting rate of reaction', a: 'Temperature, concentration (or pressure for gases), surface area, catalyst' },
+      { q: 'Why temperature increases rate', a: 'More kinetic energy → faster movement → more frequent collisions with more energy → more successful collisions' },
+      { q: 'Why concentration increases rate', a: 'More particles in same volume → more frequent collisions' },
+      { q: 'Why surface area increases rate', a: 'More particles exposed → more collisions possible' },
+      { q: 'Catalyst definition', a: 'Speeds up reaction without being used up; lowers activation energy' },
+      { q: 'Reversible reaction', a: 'Products can react to reform reactants (shown by ⇌)' },
+      { q: 'Equilibrium', a: 'Forward and reverse reaction rates are equal — concentrations stay constant' },
+      { q: 'Le Chatelier\'s principle', a: 'If conditions change, equilibrium shifts to oppose the change' },
+    ]
+  },
+  'C7': {
+    topic: 'C7 — Organic Chemistry',
+    subject: 'Chemistry',
+    is_mock: false,
+    pairs: [
+      { q: 'Hydrocarbon', a: 'Compound containing only hydrogen and carbon atoms' },
+      { q: 'Crude oil separation', a: 'Fractional distillation — different fractions condense at different temperatures' },
+      { q: 'Alkanes general formula', a: 'CnH2n+2 — saturated (single C-C bonds only)' },
+      { q: 'Alkenes general formula', a: 'CnH2n — unsaturated (contains C=C double bond)' },
+      { q: 'Cracking', a: 'Breaking large hydrocarbon molecules into smaller ones using heat and catalyst' },
+      { q: 'Why cracking is done', a: 'Greater demand for smaller fractions (petrol); produces alkenes for plastics' },
+      { q: 'Test for alkene', a: 'Bromine water — decolourises from orange to colourless (addition reaction)' },
+      { q: 'Combustion products', a: 'Complete: CO2 + water. Incomplete: CO + soot (carbon) + water' },
+      { q: 'Addition polymerisation', a: 'Many alkene monomers join together (double bond opens) to form a polymer chain' },
+    ]
+  },
+  'C8': {
+    topic: 'C8 — Chemical Analysis',
+    subject: 'Chemistry',
+    is_mock: false,
+    pairs: [
+      { q: 'Pure substance', a: 'Single element or compound — has fixed/sharp melting and boiling point' },
+      { q: 'Mixture', a: 'Two or more substances not chemically combined — melts/boils over a range of temperatures' },
+      { q: 'Chromatography', a: 'Separates mixtures based on how they travel through stationary phase (mobile phase carries them)' },
+      { q: 'Rf value formula', a: 'Rf = distance moved by substance ÷ distance moved by solvent' },
+      { q: 'Flame tests — Li', a: 'Red flame' },
+      { q: 'Flame tests — Na', a: 'Yellow/orange flame' },
+      { q: 'Flame tests — K', a: 'Lilac/purple flame' },
+      { q: 'Flame tests — Ca', a: 'Orange-red flame' },
+      { q: 'Flame tests — Cu', a: 'Blue-green flame' },
+      { q: 'Test for CO2', a: 'Turns limewater milky/cloudy' },
+      { q: 'Test for hydrogen', a: 'Squeaky pop with burning splint' },
+      { q: 'Test for oxygen', a: 'Relights a glowing splint' },
+    ]
+  },
+  'C9': {
+    topic: 'C9 — Chemistry of the Atmosphere',
+    subject: 'Chemistry',
+    is_mock: false,
+    pairs: [
+      { q: 'Atmosphere composition today', a: 'About 78% nitrogen, 21% oxygen, ~1% argon, 0.04% CO2' },
+      { q: 'Main greenhouse gases', a: 'Carbon dioxide (CO2), methane (CH4), water vapour' },
+      { q: 'Human activities increasing CO2', a: 'Burning fossil fuels, deforestation' },
+      { q: 'Human activities increasing methane', a: 'Cattle farming, rice paddies, landfill sites' },
+      { q: 'Greenhouse effect', a: 'Greenhouse gases absorb and re-emit heat radiation — trapping heat in atmosphere' },
+      { q: 'Effects of global warming', a: 'Rising sea levels, extreme weather, habitat loss, species extinction' },
+      { q: 'Early atmosphere', a: 'Mainly CO2 and water vapour (like Venus/Mars today); little or no oxygen' },
+      { q: 'How oxygen appeared', a: 'Photosynthesis by algae — released oxygen over billions of years' },
+    ]
+  },
+  'C10': {
+    topic: 'C10 — Using Resources',
+    subject: 'Chemistry',
+    is_mock: false,
+    pairs: [
+      { q: 'Renewable vs finite resources', a: 'Renewable: replenished naturally (won\'t run out). Finite: cannot be replaced once used' },
+      { q: 'Making drinking water from fresh water', a: 'Filtration (remove solids) + sterilisation (chlorine/UV to kill microbes)' },
+      { q: 'Desalination', a: 'Removing salt from seawater — by distillation or reverse osmosis; very energy intensive' },
+      { q: 'Haber process', a: 'Makes ammonia (NH3) from nitrogen + hydrogen; iron catalyst, 450°C, 200 atm' },
+      { q: 'NPK fertilisers', a: 'Contain nitrogen (N), phosphorus (P), potassium (K) — made from Haber process products' },
+      { q: 'Life cycle assessment (LCA)', a: 'Evaluates environmental impact of a product from manufacture to disposal' },
+      { q: 'Corrosion / rusting', a: 'Iron + oxygen + water → iron oxide (rust). Prevented by painting, galvanising, or sacrificial anode' },
+      { q: 'Alloys', a: 'Mixtures of metals — harder than pure metals because different-sized atoms disrupt layers' },
     ]
   },
   'P1': {
     topic: 'P1 — Energy',
     subject: 'Physics',
-    is_mock: true,
+    is_mock: false,
     pairs: [
-      { q: 'Conservation of energy', a: 'Energy cannot be created or destroyed, only transferred' },
+      { q: 'Conservation of energy', a: 'Energy cannot be created or destroyed — only transferred between stores' },
       { q: 'Kinetic energy formula', a: 'KE = ½mv²' },
       { q: 'Gravitational PE formula', a: 'GPE = mgh' },
-      { q: 'Elastic PE', a: 'Energy stored in stretched/compressed spring' },
+      { q: 'Elastic PE formula', a: 'EPE = ½ke²' },
+      { q: 'Power formula', a: 'P = E/t (watts, W)' },
+      { q: 'Efficiency formula', a: 'Efficiency = useful output energy ÷ total input energy' },
+      { q: 'Wasted energy goes to', a: 'Dissipated as heat (thermal energy) to the surroundings' },
+      { q: 'Ways to improve efficiency', a: 'Lubrication (reduce friction), insulation (reduce heat loss), streamlining' },
+      { q: 'Energy resources — renewable', a: 'Solar, wind, tidal, hydroelectric, geothermal, biomass, wave' },
+      { q: 'Energy resources — non-renewable', a: 'Coal, oil, natural gas (fossil fuels), nuclear' },
     ]
-  }
+  },
+  'P2': {
+    topic: 'P2 — Electricity',
+    subject: 'Physics',
+    is_mock: false,
+    pairs: [
+      { q: 'Ohm\'s Law', a: 'V = IR (voltage = current × resistance)' },
+      { q: 'Electrical power', a: 'P = IV (also P = I²R)' },
+      { q: 'Electrical energy', a: 'E = QV (also E = IVt or E = Pt)' },
+      { q: 'Series circuit', a: 'Same current throughout; voltages add up; one break stops all' },
+      { q: 'Parallel circuit', a: 'Same voltage across each branch; currents add up; one break doesn\'t stop all' },
+      { q: 'Resistance in series', a: 'Total R = R1 + R2 + R3...' },
+      { q: 'National grid purpose', a: 'Distributes electricity nationwide using high voltage to reduce energy loss' },
+      { q: 'Static electricity', a: 'Charge built up by friction transferring electrons; like charges repel, unlike attract' },
+      { q: 'Direct vs alternating current', a: 'DC: flows one direction (batteries). AC: changes direction (mains, 50Hz, 230V in UK)' },
+    ]
+  },
+  'P3': {
+    topic: 'P3 — Particle Model of Matter',
+    subject: 'Physics',
+    is_mock: false,
+    pairs: [
+      { q: 'Solid particles', a: 'Regular/fixed arrangement; vibrate in fixed positions; strong forces' },
+      { q: 'Liquid particles', a: 'Close together but can flow; random arrangement; weaker forces than solid' },
+      { q: 'Gas particles', a: 'Far apart; move randomly at high speed; very weak forces' },
+      { q: 'Density formula', a: 'Density = mass ÷ volume (kg/m³ or g/cm³)' },
+      { q: 'Specific heat capacity', a: 'Energy to raise 1 kg of substance by 1°C; Q = mcΔT' },
+      { q: 'Specific latent heat', a: 'Energy to change state of 1 kg without temperature change; Q = mL' },
+      { q: 'Latent heat of fusion', a: 'Energy to melt (solid → liquid) or freeze (liquid → solid)' },
+      { q: 'Latent heat of vaporisation', a: 'Energy to evaporate (liquid → gas) or condense (gas → liquid)' },
+      { q: 'Gas pressure', a: 'Caused by particles colliding with walls; increases with temperature or decreased volume' },
+    ]
+  },
+  'P4': {
+    topic: 'P4 — Atomic Structure (Radioactivity)',
+    subject: 'Physics',
+    is_mock: false,
+    pairs: [
+      { q: 'Alpha radiation', a: 'Helium nucleus (2p + 2n); stopped by paper/few cm air; most ionising' },
+      { q: 'Beta radiation', a: 'Fast electron from nucleus; stopped by aluminium; moderately ionising' },
+      { q: 'Gamma radiation', a: 'Electromagnetic wave; reduced by thick lead/concrete; least ionising' },
+      { q: 'Half-life', a: 'Time for half the radioactive nuclei to decay (activity halves)' },
+      { q: 'Background radiation sources', a: 'Radon gas, rocks, cosmic rays, medical sources, nuclear industry' },
+      { q: 'Nuclear fission', a: 'Large nucleus absorbs neutron → splits into two smaller nuclei + energy + more neutrons → chain reaction' },
+      { q: 'Nuclear fusion', a: 'Two small nuclei fuse together → larger nucleus + large amount of energy; requires very high temperature' },
+      { q: 'Uses of radioactivity', a: 'Medical tracers (gamma), cancer treatment (radiotherapy), smoke detectors (alpha), carbon dating' },
+    ]
+  },
+  'P5': {
+    topic: 'P5 — Forces',
+    subject: 'Physics',
+    is_mock: false,
+    pairs: [
+      { q: 'Newton\'s First Law', a: 'Object stays at rest or moves at constant velocity unless a resultant force acts' },
+      { q: 'Newton\'s Second Law', a: 'F = ma (resultant force = mass × acceleration)' },
+      { q: 'Newton\'s Third Law', a: 'Equal and opposite forces act on two interacting objects' },
+      { q: 'Weight formula', a: 'W = mg (weight = mass × gravitational field strength)' },
+      { q: 'Stopping distance', a: 'Thinking distance + braking distance' },
+      { q: 'Factors affecting thinking distance', a: 'Speed, tiredness, alcohol/drugs, distractions' },
+      { q: 'Factors affecting braking distance', a: 'Speed, road conditions, tyre condition, brake condition' },
+      { q: 'Momentum formula', a: 'p = mv (kg m/s); conserved in collisions' },
+      { q: 'Hooke\'s Law', a: 'Extension ∝ force (up to limit of proportionality); F = ke' },
+      { q: 'Pressure formula', a: 'Pressure = force ÷ area (Pa or N/m²)' },
+    ]
+  },
+  'P6': {
+    topic: 'P6 — Waves',
+    subject: 'Physics',
+    is_mock: false,
+    pairs: [
+      { q: 'Wave equation', a: 'v = fλ (wave speed = frequency × wavelength)' },
+      { q: 'Transverse waves', a: 'Oscillations perpendicular to direction of travel (e.g. light, water waves)' },
+      { q: 'Longitudinal waves', a: 'Oscillations parallel to direction of travel (e.g. sound)' },
+      { q: 'EM spectrum (low to high frequency)', a: 'Radio → microwave → infrared → visible → ultraviolet → X-ray → gamma' },
+      { q: 'Speed of all EM waves', a: '3 × 10⁸ m/s (in a vacuum)' },
+      { q: 'Uses of radio waves', a: 'TV and radio broadcasting, satellite communication' },
+      { q: 'Uses of microwaves', a: 'Cooking, satellite communication, mobile phones' },
+      { q: 'Uses of infrared', a: 'Thermal imaging, TV remotes, optical fibres' },
+      { q: 'Uses of UV', a: 'Sterilisation, fluorescent lamps, detecting forged bank notes' },
+      { q: 'Uses of X-rays', a: 'Medical imaging (bones), airport security' },
+      { q: 'Uses of gamma rays', a: 'Radiotherapy (cancer treatment), sterilising medical equipment, tracers' },
+    ]
+  },
+  'P7': {
+    topic: 'P7 — Magnetism and Electromagnetism',
+    subject: 'Physics',
+    is_mock: false,
+    pairs: [
+      { q: 'Motor effect', a: 'Current-carrying conductor in magnetic field experiences a force (F = BIL)' },
+      { q: 'Fleming\'s left-hand rule', a: 'thuMb = Motion, First finger = Field, seCond finger = Current' },
+      { q: 'Electromagnetic induction', a: 'Conductor moves relative to magnetic field → voltage induced → current if circuit complete' },
+      { q: 'Generator/dynamo', a: 'Uses electromagnetic induction to convert kinetic energy to electrical energy' },
+      { q: 'Transformer purpose', a: 'Changes voltage of AC supply (step-up increases, step-down decreases)' },
+      { q: 'Transformer equation', a: 'Vp/Vs = Np/Ns (primary voltage/secondary voltage = primary turns/secondary turns)' },
+      { q: 'Why high voltage for transmission', a: 'High voltage = low current = less energy lost as heat in cables' },
+      { q: 'Magnetic field around wire', a: 'Concentric circles; direction given by right-hand grip rule' },
+      { q: 'Solenoid', a: 'Coil of wire — creates uniform magnetic field inside (like a bar magnet)' },
+    ]
+  },
 };
+
+
 
 // ============================================================
 // SM-2 ALGORITHM
@@ -1716,13 +2769,16 @@ async function callClaude(systemPrompt, userMessage, maxTokens=500) {
 }
 
 async function gradeAnswer(question, correctAnswer, studentAnswer, timeSeconds) {
-  const system = `You are an AQA GCSE science marker. Grade the student's answer.
-Rules:
-- Compare student answer to the mark scheme answer
-- Consider time taken: if answer came in under 3 seconds, flag as possible copy-paste
-- Return ONLY valid JSON: {"grade": "again"|"hard"|"good"|"easy", "feedback": "brief encouraging feedback under 20 words", "copy_paste_suspected": boolean}
-- "I don't know", blank, vague = again. Partial = hard. Mostly right = good. Complete = easy.
-- NEVER give good/easy to vague or uncertain answers. Be strict.`;
+  const system = `You are a strict AQA GCSE science marker. Grade the student's answer honestly.
+STRICT RULES:
+- "again" = blank, "I don't know", clearly wrong, completely irrelevant, or missing ALL key facts
+- "hard" = partially correct but missing important facts or details
+- "good" = mostly correct, covers main points but may miss minor details
+- "easy" = complete and accurate answer covering all key facts
+- Do NOT give "good" or "easy" to vague, incomplete or uncertain answers
+- "I don't know", blank answers, or single words always = "again"
+- Consider time: under 3 seconds = likely copy-paste, flag it
+- Return ONLY valid JSON: {"grade": "again"|"hard"|"good"|"easy", "feedback": "brief specific feedback under 20 words", "copy_paste_suspected": boolean}`;
 
   const userMsg = `Question: ${question}
 Correct answer: ${correctAnswer}
@@ -1850,9 +2906,17 @@ function getDueCards(user) {
   const cards = getCardsForUser(user);
   const progress = LS.get('card_progress') || {};
   const now = new Date();
+  const today = new Date().toDateString();
+
+  // Reset daily counts if new day
+  const sessionState = LS.get('session_state') || {};
+  if (sessionState.date !== today) {
+    LS.set('session_state', { date: today, cardsStudied: 0 });
+  }
+
+  // Separate due reviews and new cards
   const due = [];
   const newCards = [];
-
   cards.forEach(c => {
     if (!progress[c.id]) {
       newCards.push(c);
@@ -1861,9 +2925,45 @@ function getDueCards(user) {
     }
   });
 
-  const reviewSlots = Math.min(due.length, CONFIG.REVIEW_CARDS_PER_SESSION);
-  const newSlots = Math.min(newCards.length, CONFIG.NEW_CARDS_PER_SESSION);
-  return [...due.slice(0, reviewSlots), ...newCards.slice(0, newSlots)];
+  // Pick up to 4 review cards and 6 new cards
+  const reviewPick = due.slice(0, CONFIG.REVIEW_CARDS_PER_SESSION);
+  const newPick = newCards.slice(0, CONFIG.NEW_CARDS_PER_SESSION);
+  const combined = [...reviewPick, ...newPick];
+
+  // Group by topic so the session feels coherent
+  // Find the most common topic in the combined set
+  const topicCounts = {};
+  combined.forEach(c => { topicCounts[c.topic] = (topicCounts[c.topic] || 0) + 1; });
+  const primaryTopic = Object.entries(topicCounts).sort((a,b) => b[1]-a[1])[0]?.[0];
+
+  // Put primary topic cards first
+  if (primaryTopic) {
+    combined.sort((a, b) => {
+      if (a.topic === primaryTopic && b.topic !== primaryTopic) return -1;
+      if (b.topic === primaryTopic && a.topic !== primaryTopic) return 1;
+      return 0;
+    });
+  }
+
+  return combined;
+}
+
+function getTodaysCardCount() {
+  const sessionState = LS.get('session_state') || {};
+  const today = new Date().toDateString();
+  if (sessionState.date !== today) return 0;
+  return sessionState.cardsStudied || 0;
+}
+
+function incrementCardCount() {
+  const today = new Date().toDateString();
+  const sessionState = LS.get('session_state') || { date: today, cardsStudied: 0 };
+  if (sessionState.date !== today) {
+    LS.set('session_state', { date: today, cardsStudied: 1 });
+  } else {
+    sessionState.cardsStudied = (sessionState.cardsStudied || 0) + 1;
+    LS.set('session_state', sessionState);
+  }
 }
 
 // ============================================================
@@ -2201,8 +3301,9 @@ function showHome() {
   const today = new Date().getDay();
   const todayIdx = today === 0 ? 6 : today - 1;
 
+  // Only mark days as done if user has actual study history
+  const history = LS.get('card_history') || [];
   const activityDays = days.map((d, i) => {
-    const history = LS.get('card_history') || [];
     const isDone = i < todayIdx && history.length > 0;
     const isToday = i === todayIdx;
     return `<div class="activity-day">
@@ -2257,31 +3358,23 @@ function showHome() {
       <div class="activity-days">${activityDays}</div>
     </div>
 
-    <!-- Today's Focus -->
-    ${todayTopic ? `
-    <div class="today-topic-card" style="background:linear-gradient(135deg, ${topicColor}, ${topicColor}CC);">
-      <div class="today-topic-label">Today's Focus</div>
-      <div class="today-topic-name">${todayTopic.topic_name}</div>
-      <div class="today-topic-sub">${todayTopic.topic} · ${todayTopic.subject}</div>
-      <div class="topic-pills">
-        <div class="pill" style="background:rgba(255,255,255,0.25);color:white;">${getDueCards(user).length} cards due</div>
-        <div class="pill" style="background:rgba(255,255,255,0.25);color:white;">${user.tier?.includes('triple') ? 'Triple' : 'Combined'}</div>
-      </div>
-    </div>` : ''}
-
-    <!-- Study Options -->
+    <!-- Study Options with integrated topic info -->
     <div class="section-title">How do you want to study?</div>
     <div class="study-options">
-      <div class="study-option" onclick="startFlashcards()">
-        <div class="study-option-icon" style="background:#FEF3C7;">⚡</div>
+      <div class="study-option" onclick="startFlashcards()" style="${todayTopic ? `border-top: 3px solid ${topicColor}` : ''}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div class="study-option-icon" style="background:#FEF3C7;">⚡</div>
+          ${todayTopic ? `<span class="pill" style="background:${topicColor}22;color:${topicColor};">${Math.max(0, CONFIG.CARDS_PER_SESSION - getTodaysCardCount())} cards due</span>` : ''}
+        </div>
         <div class="study-option-title">Quick Flashcards</div>
-        <div class="study-option-desc">Fast revision. Rate yourself or let AI grade you.</div>
+        <div class="study-option-desc">${todayTopic ? todayTopic.topic_name + ' · ' + todayTopic.subject : 'Fast revision. Rate yourself or let AI grade you.'}</div>
       </div>
       <div class="study-option" onclick="startFullSession()">
         <div class="study-option-icon" style="background:#DBEAFE;">📖</div>
         <div class="study-option-title">Full Session</div>
-        <div class="study-option-desc">Learn, practice and apply. 5–20 minutes.</div>
+        <div class="study-option-desc">Learn, practise and apply. 5–20 minutes.</div>
       </div>
+    </div>
     </div>
 
     <!-- AI Tutor -->
@@ -2494,6 +3587,9 @@ function recordGrade(cardId, grade) {
   progress[cardId] = { ...existing, ...sm2Next(existing, grade), cardId };
   LS.set('card_progress', progress);
 
+  // Increment daily card count
+  incrementCardCount();
+
   // Record history
   const card = STATE.cardQueue[STATE.currentCardIndex];
   const history = LS.get('card_history') || [];
@@ -2655,13 +3751,18 @@ function renderLearnPhase() {
 let mcqState = {};
 function renderMCQs() {
   mcqState = {};
-  const cards = STATE.cardQueue.slice(0, 4);
+  // Only use cards from the primary topic of this session
+  const primaryTopic = STATE.cardQueue[0]?.topic;
+  const topicCards = STATE.cardQueue.filter(c => c.topic === primaryTopic);
+  const cards = topicCards.slice(0, 4);
   if (cards.length === 0) return '<p style="color:var(--text-secondary);font-weight:600;">No questions available</p>';
 
   return cards.map((card, i) => {
-    // Generate wrong options from other cards
-    const pool = SAMPLE_CARDS.filter(c => c.id !== card.id && c.topic === card.topic);
-    const others = (pool.length >= 3 ? pool : SAMPLE_CARDS.filter(c => c.id !== card.id)).slice(0, 3).map(c => c.answer);
+    // Get wrong options ONLY from same topic to avoid cross-subject confusion
+    const sameTopicPool = SAMPLE_CARDS.filter(c => c.id !== card.id && c.topic === card.topic);
+    const fallbackPool = SAMPLE_CARDS.filter(c => c.id !== card.id && c.subject === card.subject);
+    const pool = sameTopicPool.length >= 3 ? sameTopicPool : fallbackPool;
+    const others = pool.slice(0, 3).map(c => c.answer);
     const opts = shuffle([card.answer, ...others]);
     mcqState[`q${i}`] = { correct: card.answer, done: false };
 
@@ -2965,13 +4066,28 @@ function showSessionEnd() {
     LS.set('demo_user', STATE.user);
   }
 
+  // Calculate accuracy from this session
+  const history = LS.get('card_history') || [];
+  const sessionHistory = history.slice(0, cardsDone || STATE.cardQueue?.length || 0);
+  const goodCount = sessionHistory.filter(h => h.grade >= 2).length;
+  const accuracy = sessionHistory.length > 0 ? Math.round((goodCount / sessionHistory.length) * 100) : 0;
+  
+  // Encouraging message based on performance
+  const messages = [
+    { min: 90, emoji: '🌟', title: 'Outstanding!', sub: 'That was a brilliant session. Keep it up!' },
+    { min: 70, emoji: '🎉', title: 'Great work!', sub: 'Solid session — keep this up and exam day will be easy.' },
+    { min: 50, emoji: '💪', title: 'Good effort!', sub: 'Every card reviewed builds your memory. Keep going!' },
+    { min: 0, emoji: '📚', title: 'Session done!', sub: 'Showing up is the hardest part — and you did it.' },
+  ];
+  const msg = messages.find(m => accuracy >= m.min) || messages[messages.length-1];
+
   const html = `
 <div class="screen">
   <div style="flex:1;overflow-y:auto;padding:24px 20px 100px;">
     <div class="end-hero">
-      <div class="end-emoji">🎉</div>
-      <div class="end-title">Session Complete!</div>
-      <div class="end-sub">Keep it up — you're doing brilliantly</div>
+      <div class="end-emoji">${msg.emoji}</div>
+      <div class="end-title">${msg.title}</div>
+      <div class="end-sub">${msg.sub}</div>
     </div>
 
     <div class="stats-grid">
@@ -2988,14 +4104,14 @@ function showSessionEnd() {
         <div class="stat-label">Day Streak 🔥</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" style="color:var(--ss-purple);">Lvl ${Math.floor((STATE.user?.xp || 0) / CONFIG.XP_PER_LEVEL) + 1}</div>
-        <div class="stat-label">Your Level</div>
+        <div class="stat-number" style="color:${accuracy >= 70 ? 'var(--ss-green)' : accuracy >= 50 ? 'var(--ss-blue)' : 'var(--ss-orange)'};">${accuracy}%</div>
+        <div class="stat-label">Accuracy</div>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:16px;">
-      <div style="font-size:15px;font-weight:800;margin-bottom:8px;">🌅 Tomorrow</div>
-      <p style="font-size:14px;color:var(--text-secondary);font-weight:600;line-height:1.5;">Your next session will include ${STATE.cardQueue?.length || 0} cards. Keep your streak going!</p>
+    <div class="card" style="margin-bottom:16px;border-left:4px solid var(--ss-green);">
+      <div style="font-size:15px;font-weight:800;margin-bottom:8px;">🌅 Keep your streak going!</div>
+      <p style="font-size:14px;color:var(--text-secondary);font-weight:600;line-height:1.5;">Come back tomorrow to review your cards. Your streak resets if you miss a day — don't break the chain!</p>
     </div>
 
     <button class="btn btn-primary btn-full btn-lg" onclick="showHome()">Back to Home 🏠</button>
@@ -3012,13 +4128,36 @@ function showAITutor() {
   STATE.screen = 'tutor';
   STATE.tutorHistory = STATE.tutorHistory || [];
 
-  const suggested = [
+  const allSuggestions = [
     "Explain mitosis simply",
     "Quiz me on cell biology",
-    "Why do we need enzymes?",
-    "What is atomic number?",
-    "Explain conservation of energy",
+    "What is the difference between aerobic and anaerobic respiration?",
+    "Explain photosynthesis using a simple analogy",
+    "What is the lock and key model?",
+    "Quiz me on atomic structure",
+    "What is ionic bonding?",
+    "Explain Newton's laws simply",
+    "What is the difference between series and parallel circuits?",
+    "How does natural selection work?",
+    "What is osmosis?",
+    "Explain the carbon cycle",
+    "What is half-life?",
+    "Quiz me on energy stores",
+    "What is the wave equation?",
+    "Why do ionic compounds conduct electricity when dissolved?",
+    "Explain homeostasis in simple terms",
+    "How do vaccines work?",
+    "What is the reactivity series?",
+    "Explain electrolysis simply",
+    "What is the difference between DNA and a gene?",
+    "Quiz me on forces and Newton's laws",
+    "What is the greenhouse effect?",
+    "Explain respiration vs photosynthesis",
+    "What are the properties of alpha, beta and gamma radiation?",
   ];
+  const suggested = allSuggestions.sort(() => Math.random() - 0.5).slice(0, 5);
+  // Show 3 random suggestions each time
+  const shuffledSuggestions = suggested.sort(() => Math.random() - 0.5).slice(0, 3);
 
   const chatHtml = STATE.tutorHistory.length === 0
     ? `<div style="text-align:center;padding:40px 20px;">
@@ -3044,7 +4183,7 @@ function showAITutor() {
 
   ${STATE.tutorHistory.length === 0 ? `
   <div class="suggested-questions">
-    ${suggested.map(q => `
+    ${shuffledSuggestions.map(q => `
       <button class="suggested-q" onclick="sendTutorMessage('${escapeAttr(q)}')">${q}</button>
     `).join('')}
   </div>` : ''}
