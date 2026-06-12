@@ -1448,6 +1448,36 @@ textarea.input { resize: vertical; min-height: 100px; }
   align-items: center;
   gap: 8px;
 }
+
+/* ── V1 FLASHCARD STYLES ── */
+.ans-list { list-style: none; padding: 0; margin: 12px 0 0 0; }
+.ans-list li { padding: 8px 12px; margin-bottom: 6px; background: #F0FBF7; border-radius: 10px; font-size: 14px; font-weight: 700; color: #1a1a2e; border-left: 3px solid #00C896; line-height: 1.5; }
+.ans-list li strong { color: #00C896; }
+.reveal-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #2D6A4F, #00C896); color: white; border: none; border-radius: 14px; font-size: 15px; font-weight: 800; cursor: pointer; font-family: inherit; margin-top: 8px; }
+.card-hint { background: #FFF8E1; border-radius: 10px; padding: 10px 14px; margin-top: 8px; font-size: 13px; font-weight: 700; color: #8B6914; border-left: 3px solid #FFB300; }
+.card-hint::before { content: '💡 '; }
+.exam-reveal-btn { width: 100%; padding: 12px 16px; background: #EEF2FF; border: 2px solid #818CF8; border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 800; color: #4F46E5; display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.exam-card { display: none; background: #F8FAFF; border-radius: 12px; padding: 16px; margin-top: 8px; border: 2px solid #C7D2FE; }
+.exam-card.open { display: block; }
+.exam-wow { font-size: 13px; font-weight: 900; color: #4F46E5; margin-bottom: 4px; }
+.exam-q-box { background: white; border-radius: 10px; padding: 12px; margin: 8px 0; border: 1px solid #C7D2FE; font-size: 14px; font-weight: 700; font-style: italic; color: #1a1a2e; line-height: 1.5; }
+.exam-marks-pill { display: inline-block; background: #4F46E5; color: white; border-radius: 6px; padding: 2px 10px; font-size: 11px; font-weight: 800; margin-top: 6px; }
+.exam-ms-lbl { font-size: 11px; font-weight: 800; color: #4F46E5; text-transform: uppercase; margin: 10px 0 6px; }
+.exam-ms-opt { display: flex; align-items: flex-start; gap: 6px; padding: 4px 0; font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.tick { color: #00C896; font-size: 14px; flex-shrink: 0; }
+.c-tier { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; }
+.c-tier.h { background: #EEF2FF; color: #4F46E5; }
+.c-tier.f { background: #F0FBF7; color: #00C896; }
+.ans-lbl { font-size: 12px; font-weight: 800; color: #00C896; text-transform: uppercase; margin-bottom: 4px; }
+.rate-btn { flex: 1; padding: 12px 4px; border: none; border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.rate-btn.again { background: #FEE2E2; color: #DC2626; }
+.rate-btn.hard { background: #FEF3C7; color: #D97706; }
+.rate-btn.good { background: #DCFCE7; color: #16A34A; }
+.rate-btn.easy { background: #EEF2FF; color: #4F46E5; }
+.rate-btn .em { font-size: 18px; }
+.rating-grid { display: flex; gap: 8px; margin: 12px 0; }
+.rating-prompt { font-size: 13px; font-weight: 800; color: var(--text-secondary); text-align: center; margin-bottom: 4px; }
+
 </style>
 </head>
 <body>
@@ -2748,7 +2778,7 @@ const SB = {
 // ============================================================
 // CLAUDE API
 // ============================================================
-async async function callClaude(systemPrompt, userMessage, maxTokens=500) {
+async function callClaude(systemPrompt, userMessage, maxTokens=500) {
   try {
     const res = await fetch('https://sciencespark-worker.sciencespark.workers.dev', {
       method: 'POST',
@@ -2881,6 +2911,20 @@ function formatTime(secs) {
   return `${m}:${s}`;
 }
 
+function bold(t) {
+  return (t || '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
+
+function fmtMs(ans) {
+  if (!ans) return '';
+  ans = ans.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  if (ans.includes('/')) {
+    const parts = ans.split(/\s*\/\s*/);
+    return parts.map(o => '<div class="exam-ms-opt"><span class="tick">&#x2713;</span><span>' + o.trim() + '</span></div>').join('');
+  }
+  return '<div class="exam-ms-opt"><span class="tick">&#x2713;</span><span>' + ans + '</span></div>';
+}
+
 function subjectColor(subj) {
   if (subj === 'Biology') return '#00C896';
   if (subj === 'Chemistry') return '#8B5CF6';
@@ -2927,6 +2971,7 @@ function getDueCards(user) {
 
   // Pick up to 4 review cards and 6 new cards
   const reviewPick = due.slice(0, CONFIG.REVIEW_CARDS_PER_SESSION);
+  // Always give new users cards - default 6 new cards per session
   const newSlots = Math.max(CONFIG.NEW_CARDS_PER_SESSION, CONFIG.CARDS_PER_SESSION - reviewPick.length);
   const newPick = newCards.slice(0, newSlots);
   const combined = [...reviewPick, ...newPick];
@@ -3314,8 +3359,9 @@ function showHome() {
   }).join('');
 
   // Determine today's topic
-  const cards = getCardsForUser(user);
-  const todayTopic = cards.length > 0 ? cards[0] : null;
+  const cards = getDueCards(user);
+  const allCards = getCardsForUser(user);
+  const todayTopic = cards.length > 0 ? cards[0] : (allCards.length > 0 ? allCards[0] : null);
   const topicColor = todayTopic ? subjectColor(todayTopic.subject) : 'var(--ss-blue)';
 
   const html = `
@@ -3456,75 +3502,107 @@ function renderFlashcard() {
   const card = STATE.cardQueue[STATE.currentCardIndex];
   const total = STATE.cardQueue.length;
   const current = STATE.currentCardIndex;
-  const aiMode = STATE.aiMode;
   STATE.flashcardFlipped = false;
   STATE.pendingAnswerTime = Date.now();
 
-  const dots = STATE.cardQueue.map((c, i) => `
-    <div class="progress-dot ${i < current ? 'done' : i === current ? 'current' : ''}"></div>
-  `).join('');
+  // Build answer bullets - support both old (string) and V1 (array) format
+  const answerBullets = Array.isArray(card.a)
+    ? card.a.map(b => '<li>' + bold(b) + '</li>').join('')
+    : '<li>' + bold(card.answer || '') + '</li>';
+
+  // Question - support both formats
+  const questionHTML = bold(card.question || card.q || '');
+
+  // Hint
+  const hintHTML = card.hint
+    ? '<div class="card-hint">' + card.hint + '</div>'
+    : '';
+
+  // Exam Q
+  const hasExamQ = !!(card.exam_q || card.examQ);
+  const examQText = bold(card.exam_q || card.examQ || '');
+  const examMarks = card.examMarks || (card.mark_scheme ? '1' : '1');
+  const examMS = fmtMs(card.examA || card.mark_scheme || '');
+
+  // Progress dots
+  const dots = STATE.cardQueue.map((c, i) =>
+    '<div class="progress-dot ' + (i < current ? 'done' : i === current ? 'current' : '') + '"></div>'
+  ).join('');
+
+  const subColor = subjectColor(card.subject);
+  const tierLabel = (card.tier === 'H') ? 'Higher' : 'Foundation';
+  const tierClass = (card.tier === 'H') ? 'h' : 'f';
 
   const html = `
 <div class="screen" id="screen-flashcards">
   <div class="session-header">
-    <button class="btn btn-ghost btn-sm" onclick="showHome()">← Back</button>
+    <button class="btn btn-ghost btn-sm" onclick="showHome()">← Home</button>
     <div class="progress-dots">${dots}</div>
     <div style="font-size:13px;font-weight:700;color:var(--text-secondary);">${current+1}/${total}</div>
   </div>
 
   <div class="flashcard-area">
-    <!-- AI Mode Toggle -->
-    <div class="ai-mode-toggle">
-      <div style="flex:1;">
-        <div style="font-size:14px;font-weight:800;">AI Marking</div>
-        <div style="font-size:12px;color:var(--text-secondary);font-weight:600;">${aiMode ? 'Type your answer, AI will grade it' : 'Flip the card, rate yourself'}</div>
+    <div class="card" style="padding:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:11px;font-weight:800;color:${subColor};background:${subColor}22;padding:3px 10px;border-radius:20px;">${card.subject} · ${card.topic_name || card.topic}</span>
+        <span class="c-tier ${tierClass}">${tierLabel}</span>
       </div>
-      <div class="toggle-switch" onclick="toggleAIMode()">
-        <div class="toggle-track ${aiMode ? 'on' : ''}"></div>
-        <div class="toggle-thumb ${aiMode ? 'on' : ''}"></div>
+      <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
+      ${hintHTML}
+    </div>
+
+    <button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>
+
+    <div id="answer-sec" style="display:none;">
+      <div class="card" style="padding:16px;">
+        <div class="ans-lbl">✅ Answer</div>
+        <ul class="ans-list">${answerBullets}</ul>
       </div>
     </div>
 
-    <!-- Flashcard -->
-    <div class="flashcard" id="main-flashcard" onclick="${!aiMode ? 'flipCard()' : ''}">
-      <div class="flashcard-tag" style="color:${subjectColor(card.subject)};">
-        ${card.subject} · ${card.topic} · ${card.tier === 'H' ? 'Higher' : 'Foundation'}
+    <div id="rating-wrap" style="display:none;">
+      <div class="rating-prompt">How did you find that?</div>
+      <div class="rating-grid">
+        <button class="rate-btn again" onclick="selfGrade('${card.id}',0)"><span class="em">😵</span>Again</button>
+        <button class="rate-btn hard" onclick="selfGrade('${card.id}',1)"><span class="em">😰</span>Hard</button>
+        <button class="rate-btn good" onclick="selfGrade('${card.id}',2)"><span class="em">🙂</span>Good</button>
+        <button class="rate-btn easy" onclick="selfGrade('${card.id}',3)"><span class="em">🌟</span>Easy!</button>
       </div>
-      <div class="flashcard-question">${card.question}</div>
-      <div class="flashcard-answer hidden" id="card-answer">
-        <strong>Answer:</strong> ${card.answer}
-      </div>
-    </div>
 
-    <!-- AI Mode: Type Answer -->
-    ${aiMode ? `
-    <div class="ai-answer-input">
-      <label class="label">Your Answer</label>
-      <textarea id="student-answer" class="input" placeholder="Type your answer here..." rows="3"></textarea>
-      <button class="btn btn-blue btn-full" style="margin-top:10px;" onclick="submitAIAnswer('${card.id}')">Submit Answer</button>
-    </div>` : `
-    <!-- Self-Rate Mode -->
-    <div id="self-rate-area" class="hidden">
-      <div class="flashcard-answer" style="background:white;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);">
-        <strong>Answer:</strong> ${card.answer}
-      </div>
-      <div class="grade-buttons" style="margin-top:12px;">
-        <button class="btn btn-grade-again" onclick="selfGrade('${card.id}',0)">Again</button>
-        <button class="btn btn-grade-hard" onclick="selfGrade('${card.id}',1)">Hard</button>
-        <button class="btn btn-grade-good" onclick="selfGrade('${card.id}',2)">Good</button>
-        <button class="btn btn-grade-easy" onclick="selfGrade('${card.id}',3)">Easy</button>
-      </div>
+      ${hasExamQ ? `
+      <button class="exam-reveal-btn" id="exam-reveal-btn" onclick="toggleExamCard()">
+        <span>🎯</span><span style="flex:1;">See the exam question this unlocks</span><span id="exam-chev">▼</span>
+      </button>
+      <div class="exam-card" id="exam-card">
+        <div class="exam-wow">💡 WOW moment</div>
+        <div style="font-size:12px;font-weight:800;color:#4F46E5;margin-bottom:8px;">That fact unlocks this exam question</div>
+        <div class="exam-q-box">${examQText}</div>
+        <span class="exam-marks-pill">${examMarks} mark${examMarks != 1 ? 's' : ''}</span>
+        <div class="exam-ms-lbl">AQA Mark Scheme</div>
+        <div>${examMS}</div>
+      </div>` : ''}
     </div>
-    <div id="flip-hint" class="flip-hint">Tap the card to reveal the answer</div>
-    `}
-
-    <!-- AI Feedback Area (shown after AI grades) -->
-    <div id="ai-feedback-area" class="hidden"></div>
   </div>
 </div>`;
 
-  render(html);
+  document.getElementById('app').innerHTML = html;
+  STATE.examOpen = false;
 }
+
+function revealFlashcardAnswer() {
+  document.getElementById('reveal-btn').style.display = 'none';
+  document.getElementById('answer-sec').style.display = 'block';
+  document.getElementById('rating-wrap').style.display = 'block';
+}
+
+function toggleExamCard() {
+  STATE.examOpen = !STATE.examOpen;
+  const card = document.getElementById('exam-card');
+  const chev = document.getElementById('exam-chev');
+  if (card) card.classList.toggle('open', STATE.examOpen);
+  if (chev) chev.innerHTML = STATE.examOpen ? '▲' : '▼';
+}
+
 
 function toggleAIMode() {
   STATE.aiMode = !STATE.aiMode;
