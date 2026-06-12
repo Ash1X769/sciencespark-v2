@@ -2748,7 +2748,7 @@ const SB = {
 // ============================================================
 // CLAUDE API
 // ============================================================
-async function callClaude(systemPrompt, userMessage, maxTokens=500) {
+async async function callClaude(systemPrompt, userMessage, maxTokens=500) {
   try {
     const res = await fetch('https://sciencespark-worker.sciencespark.workers.dev', {
       method: 'POST',
@@ -2927,7 +2927,8 @@ function getDueCards(user) {
 
   // Pick up to 4 review cards and 6 new cards
   const reviewPick = due.slice(0, CONFIG.REVIEW_CARDS_PER_SESSION);
-  const newPick = newCards.slice(0, CONFIG.NEW_CARDS_PER_SESSION);
+  const newSlots = Math.max(CONFIG.NEW_CARDS_PER_SESSION, CONFIG.CARDS_PER_SESSION - reviewPick.length);
+  const newPick = newCards.slice(0, newSlots);
   const combined = [...reviewPick, ...newPick];
 
   // Group by topic so the session feels coherent
