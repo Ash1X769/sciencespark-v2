@@ -4174,9 +4174,7 @@ function renderFlashcard() {
   const questionHTML = bold(card.question || card.q || '');
 
   // Hint
-  const hintHTML = card.hint
-    ? '<div class="card-hint">' + card.hint + '</div>'
-    : '';
+  const hintHTML = '';
 
   // Exam Q
   const hasExamQ = !!(card.exam_q || card.examQ);
