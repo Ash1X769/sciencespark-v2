@@ -3622,10 +3622,31 @@ function renderNavBar(active) {
   const items = [
     { id: 'home', icon: '🏠', label: 'Home', fn: 'showHome()' },
     { id: 'history', icon: '📊', label: 'Progress', fn: 'showHistory()' },
-    { id: 'ko', icon: '📋', label: 'Organisers', fn: 'showAllKO()' },
     { id: 'tutor', icon: '🤖', label: 'AI Tutor', fn: 'showAITutor()' },
     { id: 'profile', icon: '👤', label: 'Profile', fn: 'showProfile()' },
   ];
+
+  const topBar = `<div class="desktop-topbar">
+    <div class="topbar-logo">⚡ ScienceSpark</div>
+    ${items.map(it => `<div class="topbar-item ${it.id === active ? 'active' : ''}" onclick="${it.fn}"><span>${it.icon}</span> ${it.label}</div>`).join('')}
+    <div class="topbar-grid-btn" onclick="toggleTopbarMenu()" title="More">
+      <div class="topbar-grid-icon">
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+  <div class="topbar-dropdown" id="topbar-dropdown">
+    <div class="topbar-dropdown-grid">
+      <div class="topbar-dropdown-tile" onclick="showAITutor();toggleTopbarMenu()"><div class="tile-icon">🤖</div><div class="tile-label">AI Tutor</div></div>
+      <div class="topbar-dropdown-tile" onclick="showAllKO();toggleTopbarMenu()"><div class="tile-icon">📚</div><div class="tile-label">Organisers</div></div>
+      <div class="topbar-dropdown-tile" onclick="showHistory();toggleTopbarMenu()"><div class="tile-icon">📖</div><div class="tile-label">History</div></div>
+      <div class="topbar-dropdown-tile" onclick="showHistory();toggleTopbarMenu()"><div class="tile-icon">📊</div><div class="tile-label">Progress</div></div>
+      <div class="topbar-dropdown-tile" onclick="showProfile();toggleTopbarMenu()"><div class="tile-icon">👤</div><div class="tile-label">Profile</div></div>
+      <div class="topbar-dropdown-tile" onclick="showHome();toggleTopbarMenu()"><div class="tile-icon">🏠</div><div class="tile-label">Home</div></div>
+    </div>
+  </div>`;
 
   return `<nav class="nav-bar">
     ${items.map(it => `
