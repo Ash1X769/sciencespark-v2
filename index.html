@@ -1331,13 +1331,7 @@ textarea.input { resize: vertical; min-height: 100px; }
 /* ============================================================
    RESPONSIVE / DESKTOP WRAPPER
 ============================================================ */
-@media (min-width: 480px) {
-  #app {
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    box-shadow: 0 0 80px rgba(0,0,0,0.08);
-  }
-}
+
 
 /* ============================================================
    COMING SOON BADGE
@@ -1498,7 +1492,8 @@ textarea.input { resize: vertical; min-height: 100px; }
 .topbar-dropdown-tile .tile-label { font-size:11px; font-weight:800; color:#64748B; text-align:center; }
 
 @media (min-width: 768px) {
-  #app { max-width: 680px; margin: 0 auto; padding-top: 60px; box-shadow: none; border-radius: 0; }
+  body { background: #F0F4F8; }
+  #app { max-width: 600px; margin: 0 auto; padding-top: 64px; background: white; box-shadow: 0 0 40px rgba(0,0,0,0.08); min-height: 100vh; border-radius: 0; }
   .nav-bar { display: none !important; }
   .desktop-topbar { display: flex !important; }
 }
