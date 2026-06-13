@@ -4152,6 +4152,7 @@ function renderFlashcard() {
   const current = STATE.currentCardIndex;
   STATE.flashcardFlipped = false;
   STATE.pendingAnswerTime = Date.now();
+  const aiMode = STATE.aiMode !== false;
 
   // Build answer bullets - support both old (string) and V1 (array) format
   let answerBullets;
@@ -4275,8 +4276,62 @@ document.addEventListener('click', function(e) {
   }
 });
 
+async function submitFlashcardAI() {
+  const card = STATE.cardQueue[STATE.currentCardIndex];
+  const studentAnswer = (document.getElementById('student-answer')?.value || '').trim().toLowerCase();
+  const timeSeconds = Math.round((Date.now() - STATE.pendingAnswerTime) / 1000);
+  const keyWords = Array.isArray(card.a)
+    ? card.a.flatMap(line => { const matches = line.match(/\*\*([^*]+)\*\*/g) || []; return matches.map(m => m.replace(/\*\*/g, '').trim().toLowerCase()); })
+    : [];
+  const blankPhrases = ['', 'i dont know', "i don't know", 'idk', 'no idea', 'not sure', 'dont know', 'dunno'];
+  if (blankPhrases.includes(studentAnswer)) { showAIResult('again', 'No answer given.', false); recordAndAdvance(card.id, 'again'); return; }
+  const btn = document.querySelector('#ai-input-area button');
+  if (btn) { btn.disabled = true; btn.textContent = 'Marking...'; }
+  const keyWordList = keyWords.join(', ');
+  const keyPointsList = Array.isArray(card.a) ? card.a.map(b => b.replace(/\*\*/g, '')).join(' | ') : (card.answer || '');
+  const system = `You are a strict AQA GCSE science examiner.\nKey terms that MUST appear: ${keyWordList}\nFull answer: ${keyPointsList}\nGrade: again=missing all key terms, hard=1-2 key terms, good=most key terms, easy=all key terms.\nClose spellings count. Synonyms alone do NOT count.\nRespond ONLY with JSON: {"grade":"again","feedback":"under 12 words"}`;
+  try {
+    const raw = await callClaude(system, 'Student answer: ' + studentAnswer, 150);
+    const parsed = JSON.parse(raw.replace(/\`\`\`json|\`\`\`/g, '').trim());
+    const grade = ['again','hard','good','easy'].includes(parsed.grade) ? parsed.grade : 'again';
+    showAIResult(grade, parsed.feedback || '', timeSeconds < 4);
+    recordAndAdvance(card.id, grade);
+  } catch(e) {
+    const inputArea = document.getElementById('ai-input-area');
+    if (inputArea) inputArea.style.display = 'none';
+    document.getElementById('answer-sec').style.display = 'block';
+    document.getElementById('rating-wrap').style.display = 'block';
+  }
+}
+function showAIResult(grade, feedback, copyPaste) {
+  const colors = { again:'#DC2626', hard:'#D97706', good:'#16A34A', easy:'#4F46E5' };
+  const emojis = { again:'😵', hard:'😰', good:'🙂', easy:'🌟' };
+  const col = colors[grade] || '#64748B';
+  const inputArea = document.getElementById('ai-input-area');
+  if (inputArea) inputArea.style.display = 'none';
+  const resultDiv = document.getElementById('ai-result');
+  if (resultDiv) {
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<div style="background:white;border-radius:12px;padding:14px 16px;border-left:4px solid ' + col + ';margin-bottom:8px;">' +
+      '<div style="font-size:16px;font-weight:900;color:' + col + ';">' + emojis[grade] + ' ' + grade.charAt(0).toUpperCase() + grade.slice(1) + '</div>' +
+      '<div style="font-size:13px;color:#64748B;font-weight:700;">' + feedback + '</div>' +
+      (copyPaste ? '<div style="font-size:11px;color:#D97706;margin-top:4px;">⚠️ Answered very quickly</div>' : '') + '</div>';
+  }
+  document.getElementById('answer-sec').style.display = 'block';
+  document.getElementById('rating-wrap').style.display = 'block';
+}
+function recordAndAdvance(cardId, grade) {
+  const card = STATE.cardQueue[STATE.currentCardIndex];
+  const gradeNum = { again:0, hard:1, good:2, easy:3 }[grade] || 0;
+  const history = LS.get('card_history') || [];
+  history.unshift({ id:cardId, question:card.question||card.q, subject:card.subject, topic:card.topic_name||card.topic, grade:grade, date:new Date().toISOString(), reps:(LS.get('card_progress')?.[cardId]?.reps||0)+1 });
+  LS.set('card_history', history.slice(0,200));
+  selfGrade(cardId, gradeNum);
+}
+
 function toggleAIMode() {
-  STATE.aiMode = !STATE.aiMode;
+  STATE.aiMode = STATE.aiMode === false ? true : false;
+  renderFlashcard();
   renderFlashcard();
 }
 
