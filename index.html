@@ -1485,31 +1485,17 @@ textarea.input { resize: vertical; min-height: 100px; }
 .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: left .2s; }
 .toggle-thumb.on { left: 25px; }
 
-@media (min-width: 768px) {
-  #app { max-width: 680px; margin: 0 auto; padding-top: 60px; border-radius: 0; box-shadow: none; }
-  .nav-bar { display: none !important; }
-  .desktop-topbar { display: flex !important; }
-}
-@media (max-width: 767px) {
-  .desktop-topbar { display: none !important; }
-}
-.desktop-topbar {
-  display: none;
-  position: fixed; top: 0; left: 0; right: 0; height: 56px;
-  background: white; border-bottom: 1px solid #E2E8F0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06); z-index: 200;
-  align-items: center; padding: 0 24px; gap: 4px;
-}
-.topbar-logo { font-size: 17px; font-weight: 900; color: #00C896; margin-right: auto; }
-.topbar-item { display: flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 14px; font-weight: 700; color: #64748B; cursor: pointer; border-radius: 10px; transition: all 0.15s; }
-.topbar-item:hover { background: #F8FAFC; color: #1a1a2e; }
-.topbar-item.active { color: #00C896; background: #F0FBF7; }
-
-.quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-.quick-tile { background: white; border-radius: 14px; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.15s; border: 1px solid #E2E8F0; }
-.quick-tile:active { transform: scale(0.96); }
-.quick-tile-icon { font-size: 22px; }
-.quick-tile-label { font-size: 11px; font-weight: 800; color: #64748B; text-align: center; }
+.topbar-grid-btn { cursor:pointer; padding:8px; border-radius:8px; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+.topbar-grid-btn:hover { background:#F0F4F8; }
+.topbar-grid-icon { display:grid; grid-template-columns:repeat(3,5px); gap:3px; }
+.topbar-grid-icon span { width:5px; height:5px; background:#64748B; border-radius:1px; display:block; }
+.topbar-dropdown { display:none; position:fixed; top:56px; right:16px; background:white; border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,0.15); padding:16px; z-index:500; width:220px; border:1px solid #E2E8F0; }
+.topbar-dropdown.open { display:block; }
+.topbar-dropdown-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.topbar-dropdown-tile { display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px 8px; border-radius:12px; cursor:pointer; transition:background .15s; }
+.topbar-dropdown-tile:hover { background:#F0F4F8; }
+.topbar-dropdown-tile .tile-icon { font-size:22px; }
+.topbar-dropdown-tile .tile-label { font-size:11px; font-weight:800; color:#64748B; text-align:center; }
 </style>
 </head>
 <body>
@@ -3596,13 +3582,13 @@ function showHome() {
     </div>
     </div>
 
-    <!-- Quick Access -->
-    <div class="section-title">Quick Access</div>
-    <div class="quick-grid">
-      <div class="quick-tile" onclick="showAITutor()"><div class="quick-tile-icon">🤖</div><div class="quick-tile-label">AI Tutor</div></div>
-      <div class="quick-tile" onclick="showAllKO()"><div class="quick-tile-icon">📚</div><div class="quick-tile-label">Organisers</div></div>
-      <div class="quick-tile" onclick="showHistory('history')"><div class="quick-tile-icon">📖</div><div class="quick-tile-label">History</div></div>
-      <div class="quick-tile" onclick="showProfile()"><div class="quick-tile-icon">👤</div><div class="quick-tile-label">Profile</div></div>
+    <!-- AI Tutor -->
+    <div class="ai-tutor-btn" onclick="showAITutor()">
+      <div>
+        <div class="ai-tutor-text">🤖 Ask Your AI Tutor</div>
+        <div class="ai-tutor-sub">Get help with any science topic, anytime</div>
+      </div>
+      <div style="font-size:24px;">→</div>
     </div>
 
     <!-- Knowledge Organisers -->
@@ -3636,15 +3622,12 @@ function renderNavBar(active) {
   const items = [
     { id: 'home', icon: '🏠', label: 'Home', fn: 'showHome()' },
     { id: 'history', icon: '📊', label: 'Progress', fn: 'showHistory()' },
+    { id: 'ko', icon: '📋', label: 'Organisers', fn: 'showAllKO()' },
     { id: 'tutor', icon: '🤖', label: 'AI Tutor', fn: 'showAITutor()' },
     { id: 'profile', icon: '👤', label: 'Profile', fn: 'showProfile()' },
   ];
 
-  const topBar = `<div class="desktop-topbar">
-    <div class="topbar-logo">⚡ ScienceSpark</div>
-    ${items.map(it => `<div class="topbar-item ${it.id === active ? 'active' : ''}" onclick="${it.fn}"><span>${it.icon}</span>${it.label}</div>`).join('')}
-  </div>`;
-  return topBar + `<nav class="nav-bar">
+  return `<nav class="nav-bar">
     ${items.map(it => `
       <div class="nav-item ${it.id === active ? 'active' : ''}" onclick="${it.fn}">
         <span style="font-size:20px;">${it.icon}</span>
@@ -3789,6 +3772,18 @@ function toggleExamCard() {
   if (chev) chev.innerHTML = STATE.examOpen ? '▲' : '▼';
 }
 
+
+
+function toggleTopbarMenu() {
+  const d = document.getElementById('topbar-dropdown');
+  if (d) d.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  const d = document.getElementById('topbar-dropdown');
+  if (d && !e.target.closest('.topbar-grid-btn') && !e.target.closest('.topbar-dropdown')) {
+    d.classList.remove('open');
+  }
+});
 
 function toggleAIMode() {
   STATE.aiMode = !STATE.aiMode;
