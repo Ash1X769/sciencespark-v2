@@ -4089,8 +4089,8 @@ function renderNavBar(active) {
     <div class="topbar-logo">🌿 ScienceSpark</div>
     <div class="topbar-centre">
       <div class="topbar-item ${active === 'home' ? 'active' : ''}" onclick="showHome()">Learn</div>
-      <div class="topbar-item ${active === 'history' ? 'active' : ''}" onclick="showHistory()">History</div>
-      <div class="topbar-item ${active === 'dashboard' ? 'active' : ''}" onclick="showAllKO()">Dashboard</div>
+      <div class="topbar-item ${active === 'history' ? 'active' : ''}" onclick="showStudyHistory()">History</div>
+      <div class="topbar-item ${active === 'dashboard' ? 'active' : ''}" onclick="showDashboard()">Dashboard</div>
     </div>
     <div class="topbar-right">
       ${streak > 0 ? `<div class="topbar-streak"><span>🔥</span>${streak}</div>` : ''}
