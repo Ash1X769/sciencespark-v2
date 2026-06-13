@@ -3781,6 +3781,187 @@ function afterLogin() {
 // ============================================================
 // STUDENT HOME SCREEN
 // ============================================================
+
+function showStudyHistory() {
+  STATE.screen = 'history';
+  const history = (LS.get('card_history') || []).slice(0, 80);
+  
+  const gradeColor = { again:'#DC2626', hard:'#D97706', good:'#16A34A', easy:'#4F46E5', 0:'#DC2626', 1:'#D97706', 2:'#16A34A', 3:'#4F46E5' };
+  const gradeLabel = { again:'Again', hard:'Hard', good:'Good', easy:'Easy', 0:'Again', 1:'Hard', 2:'Good', 3:'Easy' };
+  const gradeEmoji = { again:'😵', hard:'😰', good:'🙂', easy:'🌟', 0:'😵', 1:'😰', 2:'🙂', 3:'🌟' };
+  
+  const filters = ['all','Biology','Chemistry','Physics','again','hard','good','easy'];
+  const filterLabels = { all:'All', Biology:'🌿 Biology', Chemistry:'⚗️ Chemistry', Physics:'⚡ Physics', again:'😵 Again', hard:'😰 Hard', good:'🙂 Good', easy:'🌟 Easy' };
+  
+  const activeFilter = STATE.historyFilter || 'all';
+  
+  const filtered = history.filter(h => {
+    if (activeFilter === 'all') return true;
+    if (['Biology','Chemistry','Physics'].includes(activeFilter)) return h.subject === activeFilter;
+    return (h.grade === activeFilter || h.grade === {again:0,hard:1,good:2,easy:3}[activeFilter]);
+  });
+
+  const filterPills = filters.map(f => {
+    const isActive = f === activeFilter;
+    return `<button onclick="STATE.historyFilter='${f}';showStudyHistory()" style="padding:6px 14px;border-radius:20px;border:2px solid ${isActive ? '#4F46E5' : '#E2E8F0'};background:${isActive ? '#EEF2FF' : 'white'};color:${isActive ? '#4F46E5' : '#64748B'};font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">${filterLabels[f]}</button>`;
+  }).join('');
+
+  const cardRows = filtered.length === 0
+    ? '<div style="text-align:center;padding:40px;color:#64748B;font-weight:700;">No cards match this filter yet.</div>'
+    : filtered.map(h => {
+        const grade = h.grade;
+        const col = gradeColor[grade] || '#64748B';
+        const lbl = gradeLabel[grade] || grade;
+        const em = gradeEmoji[grade] || '📚';
+        const date = h.date ? new Date(h.date).toLocaleDateString('en-GB', {day:'numeric',month:'short'}) : '';
+        const subjectEmoji = h.subject === 'Biology' ? '🌿' : h.subject === 'Chemistry' ? '⚗️' : '⚡';
+        return `<div style="background:white;border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
+          <div style="flex:1;min-width:0;margin-right:12px;">
+            <div style="font-size:14px;font-weight:800;color:#0F172A;margin-bottom:4px;">${h.question || 'Card'}</div>
+            <div style="font-size:12px;color:#64748B;font-weight:600;">${subjectEmoji} ${h.subject || ''} &nbsp;·&nbsp; ${h.topic || ''} &nbsp;·&nbsp; Rated ${date}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:13px;font-weight:900;color:${col};">${em} ${lbl}</div>
+            <div style="font-size:11px;color:#EF4444;font-weight:700;margin-top:2px;">Due now!</div>
+            <div style="font-size:11px;color:#64748B;font-weight:600;">Reps: ${h.reps || 0}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+  const html = `
+<div class="screen" id="screen-history">
+  ${renderNavBar('history')}
+  <div style="padding-bottom:40px;">
+    <h1 style="font-size:22px;font-weight:900;margin-bottom:4px;">📖 Study History</h1>
+    <p style="font-size:14px;color:#64748B;font-weight:600;margin-bottom:16px;">${filtered.length} cards shown</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;overflow-x:auto;padding-bottom:4px;">${filterPills}</div>
+    ${cardRows}
+  </div>
+</div>`;
+
+  render(html);
+}
+
+
+function showDashboard() {
+  STATE.screen = 'dashboard';
+  const user = STATE.user;
+  const history = LS.get('card_history') || [];
+  const progress = LS.get('card_progress') || {};
+  const cards = getCardsForUser(user);
+  
+  const xp = user.xp || 0;
+  const level = Math.floor(xp / 200) + 1;
+  const streak = user.streak || 0;
+  const totalDone = history.length;
+  const correct = history.filter(h => h.grade === 'good' || h.grade === 'easy' || h.grade === 2 || h.grade === 3).length;
+  const accuracy = totalDone > 0 ? Math.round((correct / totalDone) * 100) : 0;
+
+  // Topic progress
+  const topicGroups = {};
+  cards.forEach(card => {
+    const key = card.topic;
+    if (!topicGroups[key]) topicGroups[key] = { name: card.topic_name || card.topic, subject: card.subject, total: 0, done: 0 };
+    topicGroups[key].total++;
+    const p = progress[card.id];
+    if (p && (p.easeFactor >= 2.5 || p.interval >= 3)) topicGroups[key].done++;
+  });
+
+  const subjectColors = { Biology: '#22C55E', Chemistry: '#A855F7', Physics: '#3B82F6' };
+  const subjectEmojis = { Biology: '🌿', Chemistry: '⚗️', Physics: '⚡' };
+
+  const topicBars = Object.entries(topicGroups).map(([key, t]) => {
+    const pct = t.total > 0 ? Math.round((t.done / t.total) * 100) : 0;
+    const col = subjectColors[t.subject] || '#64748B';
+    const barColor = pct >= 80 ? '#22C55E' : pct >= 40 ? '#F59E0B' : '#EF4444';
+    return `<div style="background:white;border-radius:12px;padding:14px 16px;margin-bottom:8px;border:1px solid #F0F4F8;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:14px;font-weight:800;color:#0F172A;">${t.name}</div>
+        <div style="font-size:13px;font-weight:900;color:${barColor};">${pct}%</div>
+      </div>
+      <div style="background:#F0F4F8;border-radius:6px;height:8px;overflow:hidden;">
+        <div style="width:${pct}%;background:${barColor};height:100%;border-radius:6px;transition:width 0.5s;"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Group topics by subject
+  const bySubject = {};
+  Object.entries(topicGroups).forEach(([key, t]) => {
+    if (!bySubject[t.subject]) bySubject[t.subject] = [];
+    bySubject[t.subject].push({ key, ...t });
+  });
+
+  const subjectSections = Object.entries(bySubject).map(([subj, topics]) => {
+    const col = subjectColors[subj] || '#64748B';
+    const em = subjectEmojis[subj] || '📚';
+    const topicsHTML = topics.map(t => {
+      const pct = t.total > 0 ? Math.round((t.done / t.total) * 100) : 0;
+      const barColor = pct >= 80 ? '#22C55E' : pct >= 40 ? '#F59E0B' : '#EF4444';
+      return `<div style="background:white;border-radius:12px;padding:14px 16px;margin-bottom:8px;border:1px solid #F0F4F8;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-size:14px;font-weight:800;color:#0F172A;">${t.name}</div>
+          <div style="font-size:13px;font-weight:900;color:${barColor};">${pct}%</div>
+        </div>
+        <div style="background:#F0F4F8;border-radius:6px;height:8px;overflow:hidden;">
+          <div style="width:${pct}%;background:${barColor};height:100%;border-radius:6px;"></div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div style="font-size:12px;font-weight:900;color:${col};letter-spacing:0.08em;margin:20px 0 10px;">${em} ${subj.toUpperCase()}</div>${topicsHTML}`;
+  }).join('');
+
+  const html = `
+<div class="screen" id="screen-dashboard">
+  ${renderNavBar('dashboard')}
+  <div style="padding-bottom:40px;">
+    <h1 style="font-size:22px;font-weight:900;margin-bottom:4px;">📊 My Progress</h1>
+    <p style="font-size:14px;color:#64748B;font-weight:600;margin-bottom:20px;">Your personal study stats — keep it up!</p>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div style="background:white;border-radius:14px;padding:20px;border:1px solid #F0F4F8;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <div style="font-size:11px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:6px;">🔥 STREAK</div>
+        <div style="font-size:36px;font-weight:900;color:#F97316;">${streak}</div>
+        <div style="font-size:12px;color:#64748B;font-weight:600;">days in a row</div>
+      </div>
+      <div style="background:white;border-radius:14px;padding:20px;border:1px solid #F0F4F8;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <div style="font-size:11px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:6px;">⚡ TOTAL XP</div>
+        <div style="font-size:36px;font-weight:900;color:#6366F1;">${xp}</div>
+        <div style="font-size:12px;color:#64748B;font-weight:600;">xp earned</div>
+      </div>
+      <div style="background:white;border-radius:14px;padding:20px;border:1px solid #F0F4F8;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <div style="font-size:11px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:6px;">📚 CARDS DONE</div>
+        <div style="font-size:36px;font-weight:900;color:#3B82F6;">${totalDone}</div>
+        <div style="font-size:12px;color:#64748B;font-weight:600;">reviewed</div>
+      </div>
+      <div style="background:white;border-radius:14px;padding:20px;border:1px solid #F0F4F8;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <div style="font-size:11px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:6px;">✅ CORRECT</div>
+        <div style="font-size:36px;font-weight:900;color:#22C55E;">${correct}</div>
+        <div style="font-size:12px;color:#64748B;font-weight:600;">${accuracy}% accuracy</div>
+      </div>
+    </div>
+
+    <div style="background:white;border-radius:14px;padding:20px;border:1px solid #F0F4F8;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:6px;">🏆 LEVEL</div>
+      <div style="font-size:36px;font-weight:900;color:#A855F7;">Lvl ${level}</div>
+      <div style="background:#F0F4F8;border-radius:8px;height:10px;overflow:hidden;margin-top:10px;">
+        <div style="width:${Math.min(100,((xp%200)/200)*100)}%;background:linear-gradient(90deg,#818CF8,#6366F1);height:100%;border-radius:8px;"></div>
+      </div>
+      <div style="font-size:12px;color:#64748B;font-weight:600;margin-top:6px;">${xp%200}/200 XP to next level</div>
+    </div>
+
+    <div style="font-size:12px;font-weight:900;color:#64748B;letter-spacing:0.08em;margin-bottom:12px;">TOPIC PROGRESS</div>
+    ${subjectSections}
+
+    <div style="background:#EEF2FF;border-radius:12px;padding:14px 16px;margin-top:16px;border-left:4px solid #6366F1;">
+      <div style="font-size:13px;font-weight:700;color:#4F46E5;">💬 Your teacher can see your progress and unlock new topics for you.</div>
+    </div>
+  </div>
+</div>`;
+
+  render(html);
+}
+
 function showHome() {
   STATE.screen = 'home';
   const user = STATE.user;
@@ -3898,8 +4079,8 @@ function showHome() {
 function renderNavBar(active) {
   const items = [
     { id: 'home', icon: '🏠', label: 'Learn', fn: 'showHome()' },
-    { id: 'history', icon: '📊', label: 'History', fn: 'showHistory()' },
-    { id: 'dashboard', icon: '📋', label: 'Dashboard', fn: 'showAllKO()' },
+    { id: 'history', icon: '📖', label: 'History', fn: 'showStudyHistory()' },
+    { id: 'dashboard', icon: '📊', label: 'Dashboard', fn: 'showDashboard()' },
     { id: 'profile', icon: '👤', label: 'Profile', fn: 'showProfile()' },
   ];
 
