@@ -3146,12 +3146,12 @@ function bold(t) {
 
 function fmtMs(ans) {
   if (!ans) return '';
-  ans = ans.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  if (ans.includes('/')) {
-    const parts = ans.split(/\s*\/\s*/);
-    return parts.map(o => '<div class="exam-ms-opt"><span class="tick">&#x2713;</span><span>' + o.trim() + '</span></div>').join('');
+  // Split on '/' or '. 1 mark:' patterns to get individual mark points
+  const parts = ans.split(/\s*\/\s*|\s+(?=\d+ mark)/).filter(p => p.trim().length > 3);
+  if (parts.length > 1) {
+    return parts.map((p, i) => '<div style="padding:4px 0;font-size:13px;font-weight:700;color:var(--text);border-bottom:1px solid #F0F4F8;">' + p.trim() + ' <span style="color:#64748B;font-weight:600;">(' + (i+1) + ' mark)</span></div>').join('');
   }
-  return '<div class="exam-ms-opt"><span class="tick">&#x2713;</span><span>' + ans + '</span></div>';
+  return '<div style="font-size:13px;font-weight:700;color:var(--text);">' + ans + '</div>';
 }
 
 function subjectColor(subj) {
