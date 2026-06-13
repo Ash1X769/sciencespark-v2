@@ -5524,6 +5524,8 @@ async function showTeacherDashboard(selectedClass) {
     <select onchange="showTeacherDashboard(this.value)" style="flex:1;padding:8px 12px;border-radius:10px;border:2px solid #E2E8F0;font-size:14px;font-weight:800;font-family:inherit;color:#0F172A;background:white;cursor:pointer;">
       ${classes.map(cl => '<option value="' + cl.id + '"' + (cl.id === selectedClass ? ' selected' : '') + '>' + cl.name + '</option>').join('')}
     </select>
+    <button onclick="(() => { const sel = document.getElementById('class-select'); const id = sel?.value; const name = sel?.options[sel?.selectedIndex]?.text; if(id && id !== 'all') editClassName(id, name); })()" style="padding:8px 12px;border-radius:10px;border:2px solid #E2E8F0;background:white;font-size:14px;cursor:pointer;font-family:inherit;" title="Rename selected class">✏️</button>
+    <button onclick="(() => { const sel = document.getElementById('class-select'); const id = sel?.value; const name = sel?.options[sel?.selectedIndex]?.text; if(id && id !== 'all') deleteClass(id, name); })()" style="padding:8px 12px;border-radius:10px;border:2px solid #FEE2E2;background:#FEF2F2;font-size:14px;cursor:pointer;font-family:inherit;" title="Delete selected class">🗑️</button>
     <button onclick="showCreateClass()" style="padding:8px 16px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">➕ Create Class</button>
   </div>
 
@@ -5652,6 +5654,47 @@ function toggleStudentHistory(name) {
   const el = document.getElementById(id);
   if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
+
+async function editClassName(classId, currentName) {
+  const newName = prompt('Rename class:', currentName);
+  if (!newName || !newName.trim() || newName.trim() === currentName) return;
+  const token = STATE.user?.token;
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/classes?id=eq.' + classId, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': CONFIG.SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({ name: newName.trim() })
+    });
+    if (res.ok) { showToast('Class renamed!'); showTeacherDashboard(classId); }
+    else throw new Error('Failed');
+  } catch(e) { showToast('Could not rename class'); }
+}
+
+async function deleteClass(classId, className) {
+  if (!confirm('Delete class "' + className + '"? Students keep their accounts.')) return;
+  const token = STATE.user?.token;
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/class_members?class_id=eq.' + classId, {
+      method: 'DELETE',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
+    });
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/classes?id=eq.' + classId, {
+      method: 'DELETE',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
+    });
+    if (res.ok) { showToast('Class deleted'); showTeacherDashboard('all'); }
+    else throw new Error('Failed');
+  } catch(e) { showToast('Could not delete class'); }
+}
+
+function removeStudentFromClass(studentName, classId) {
+  showToast('Remove student coming soon — needs student IDs from Supabase');
+}
+
 function teacherTab(tab) {
   ['overview','rag','students'].forEach(t => {
     const btn = document.getElementById('ttab-' + t);
