@@ -1510,7 +1510,7 @@ textarea.input { resize: vertical; min-height: 100px; }
 .topbar-logo { font-size: 20px; font-weight: 900; color: #00C896; margin-right: auto; letter-spacing: -0.5px; }
 .topbar-item { display: flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 15px; font-weight: 800; color: #64748B; cursor: pointer; border-radius: 20px; transition: all 0.15s; }
 .topbar-item:hover { background: #F8FAFC; color: #1a1a2e; }
-.topbar-item.active { color: white; background: #4F46E5; }
+.topbar-item.active { color: white; background: #4F8EF7; }
 .topbar-grid-btn { cursor: pointer; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-left: 8px; }
 .topbar-grid-btn:hover { background: #F0F4F8; }
 .topbar-grid-icon { display: grid; grid-template-columns: repeat(3, 5px); gap: 3px; }
@@ -3110,9 +3110,9 @@ function fmtMs(ans) {
 }
 
 function subjectColor(subj) {
-  if (subj === 'Biology') return '#00C896';
-  if (subj === 'Chemistry') return '#8B5CF6';
-  return '#4F8EF7';
+  if (subj === 'Biology') return '#22C55E';
+  if (subj === 'Chemistry') return '#A855F7';
+  return '#3B82F6';
 }
 
 function tierLabel(tier) {
@@ -3590,7 +3590,7 @@ function showHome() {
         <div style="font-size:13px;font-weight:800;color:#4F46E5;">${xp} XP</div>
       </div>
       <div style="background:#F0F4F8;border-radius:8px;height:10px;overflow:hidden;">
-        <div style="width:${Math.min(100,(xpInLevel/200)*100)}%;background:linear-gradient(90deg,#818CF8,#4F46E5);height:100%;border-radius:8px;"></div>
+        <div style="width:${Math.min(100,(xpInLevel/200)*100)}%;background:linear-gradient(90deg,#818CF8,#6366F1);height:100%;border-radius:8px;"></div>
       </div>
     </div>
     <div style="background:linear-gradient(135deg,#F97316,#FBBF24);border-radius:16px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;">
