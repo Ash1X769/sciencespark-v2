@@ -5417,10 +5417,43 @@ function showProfile() {
     </div>
   </div>
 
+  <!-- Join a Class -->
+  <div style="padding:0 20px 20px;">
+    <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:4px;">🏫 Join a Class</div>
+      <div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:12px;">${user.class_code ? 'Currently in class: ' + user.class_code : "Enter your teacher's class code to join their class."}</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="join-class-input" class="input" placeholder="Enter class code" style="flex:1;margin:0;">
+        <button onclick="joinClass()" style="padding:10px 16px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">Join</button>
+      </div>
+    </div>
+  </div>
+
   ${renderNavBar('profile')}
 </div>`;
 
   render(html);
+}
+
+
+async function joinClass() {
+  const code = (document.getElementById('join-class-input')?.value || '').trim().toUpperCase();
+  if (!code) { alert('Please enter a class code'); return; }
+  try {
+    const { data, error } = await supabase.from('classes').select('*').eq('code', code).single();
+    if (error || !data) { alert('Class code not found. Check with your teacher.'); return; }
+    const userId = (await supabase.auth.getUser()).data.user.id;
+    await supabase.from('class_members').upsert({ class_id: data.id, student_id: userId });
+    STATE.user.class_code = code;
+    LS.set('user', STATE.user);
+    alert('Joined class: ' + data.name + ' ✅');
+    showProfile();
+  } catch(e) {
+    STATE.user.class_code = code;
+    LS.set('user', STATE.user);
+    alert('Code saved! ✅');
+    showProfile();
+  }
 }
 
 function copyParentCode(code) {
