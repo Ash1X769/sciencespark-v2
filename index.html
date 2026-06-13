@@ -1538,7 +1538,7 @@ textarea.input { resize: vertical; min-height: 100px; }
   box-shadow: 0 2px 8px rgba(0,0,0,0.06); z-index: 200;
   align-items: center; padding: 0 20px; gap: 4px;
 }
-.topbar-logo { font-size: 20px; font-weight: 900; color: #00C896; margin-right: auto; letter-spacing: -0.5px; }
+.topbar-logo { font-size: 20px; font-weight: 900; color: #0F172A; margin-right: auto; letter-spacing: -0.5px; }
 .topbar-item { display: flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 15px; font-weight: 800; color: #64748B; cursor: pointer; border-radius: 20px; transition: all 0.15s; }
 .topbar-item:hover { background: #F8FAFC; color: #1a1a2e; }
 .topbar-item.active { color: white; background: #4F8EF7; }
@@ -3639,11 +3639,12 @@ function showHome() {
 
   const subjectCards = subjectData.map(s => {
     const isPrimary = s.subj === primary.subj;
-    return '<div style="border-radius:14px;padding:24px 10px;text-align:center;background:' + s.color + '18;border:2px solid ' + s.color + (isPrimary ? '' : '44') + ';position:relative;cursor:pointer;" onclick="startFlashcards()">' +
-      '<div style="position:absolute;top:-8px;right:-8px;background:' + (isPrimary ? '#EF4444' : s.color) + ';color:white;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:900;">' + (isPrimary ? 'TODAY' : s.due) + '</div>' +
-      '<div style="font-size:26px;margin-bottom:6px;">' + s.emoji + '</div>' +
-      '<div style="font-size:13px;font-weight:900;">' + s.subj + '</div>' +
-      '<div style="font-size:11px;color:#64748B;font-weight:700;">' + s.due + ' cards left</div>' +
+    return '<div style="border-radius:14px;padding:20px 10px 16px;text-align:center;background:' + s.color + '15;border:2px solid ' + s.color + ';position:relative;cursor:pointer;transition:transform 0.15s;" onclick="startFlashcards()">' +
+      '<div style="position:absolute;top:-10px;right:-10px;background:#EF4444;color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;box-shadow:0 2px 6px rgba(239,68,68,0.4);">' + s.due + '</div>' +
+      (isPrimary ? '<div style="font-size:11px;font-weight:900;color:#4F8EF7;margin-bottom:6px;letter-spacing:0.05em;">TODAY</div>' : '<div style="height:17px;margin-bottom:6px;"></div>') +
+      '<div style="font-size:28px;margin-bottom:8px;">' + s.emoji + '</div>' +
+      '<div style="font-size:14px;font-weight:900;color:#0F172A;">' + s.subj + '</div>' +
+      '<div style="font-size:12px;color:#64748B;font-weight:700;margin-top:3px;">' + s.due + ' cards left</div>' +
       '</div>';
   }).join('');
 
@@ -3669,7 +3670,7 @@ function showHome() {
         <div style="width:${Math.min(100,(xpInLevel/200)*100)}%;background:linear-gradient(90deg,#818CF8,#6366F1);height:100%;border-radius:8px;"></div>
       </div>
     </div>
-    <div style="background:linear-gradient(135deg,#F97316,#FBBF24);border-radius:16px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;">
+    <div style="background:linear-gradient(135deg,#FBBF24,#F97316);border-radius:16px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;">
       <div style="font-size:36px;">🔥</div>
       <div style="flex:1;">
         <div style="font-size:17px;font-weight:900;color:white;">${streak} Day Streak!</div>
