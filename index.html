@@ -1478,6 +1478,12 @@ textarea.input { resize: vertical; min-height: 100px; }
 .rating-grid { display: flex; gap: 8px; margin: 12px 0; }
 .rating-prompt { font-size: 13px; font-weight: 800; color: var(--text-secondary); text-align: center; margin-bottom: 4px; }
 
+
+.toggle-switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+.toggle-track { width: 48px; height: 26px; border-radius: 13px; background: #E2E8F0; transition: background .2s; }
+.toggle-track.on { background: #00C896; }
+.toggle-thumb { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: left .2s; }
+.toggle-thumb.on { left: 25px; }
 </style>
 </head>
 <body>
