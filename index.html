@@ -3522,111 +3522,116 @@ function afterLogin() {
 function showHome() {
   STATE.screen = 'home';
   const user = STATE.user;
-  const xp = user.xp || 0;
-  const level = Math.floor(xp / CONFIG.XP_PER_LEVEL) + 1;
-  const xpInLevel = xp % CONFIG.XP_PER_LEVEL;
-  const xpPct = (xpInLevel / CONFIG.XP_PER_LEVEL * 100).toFixed(1);
-  const streak = user.streak || 0;
-  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const today = new Date().getDay();
-  const todayIdx = today === 0 ? 6 : today - 1;
-
-  // Only mark days as done if user has actual study history
+  const progress = LS.get('card_progress') || {};
   const history = LS.get('card_history') || [];
-  const activityDays = days.map((d, i) => {
-    const isDone = i < todayIdx && history.length > 0;
+  const xp = user.xp || 0;
+  const level = Math.floor(xp / 200) + 1;
+  const xpInLevel = xp % 200;
+  const streak = user.streak || 0;
+  const firstName = user.display_name?.split(' ')[0] || 'there';
+
+  const allCards = getCardsForUser(user);
+  const now = new Date();
+  const subjects = ['Biology', 'Chemistry', 'Physics'];
+  const subjectData = subjects.map(subj => {
+    const cards = allCards.filter(c => c.subject === subj);
+    const due = cards.filter(c => !progress[c.id] || new Date(progress[c.id].nextReview) <= now);
+    return { subj, cards: cards.length, due: due.length, color: subjectColor(subj), emoji: subj === 'Biology' ? '🌿' : subj === 'Chemistry' ? '⚗️' : '⚡' };
+  });
+
+  const totalDue = subjectData.reduce((a, s) => a + s.due, 0);
+  const primary = [...subjectData].sort((a,b) => b.due - a.due)[0];
+
+  const days = ['M','T','W','T','F','S','S'];
+  const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  const dayDots = days.map((d, i) => {
+    const done = i < todayIdx && history.length > 0;
     const isToday = i === todayIdx;
-    return `<div class="activity-day">
-      <div class="activity-dot ${isDone ? 'done' : isToday ? 'today' : ''}"></div>
-      <div class="activity-day-label">${d}</div>
-    </div>`;
+    return '<div style="width:32px;height:32px;border-radius:50%;background:' + (done || isToday ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)') + ';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:' + (done || isToday ? '#E8720C' : 'rgba(255,255,255,0.7)') + ';">' + d + '</div>';
   }).join('');
 
-  // Determine today's topic
-  const cards = getDueCards(user);
-  const allCards = getCardsForUser(user);
-  const todayTopic = cards.length > 0 ? cards[0] : (allCards.length > 0 ? allCards[0] : null);
-  const topicColor = todayTopic ? subjectColor(todayTopic.subject) : 'var(--ss-blue)';
+  const badges = [
+    { icon: '🌱', label: 'First Steps', earned: history.length > 0 },
+    { icon: '🔥', label: '3-Day Streak', earned: streak >= 3 },
+    { icon: '⚡', label: '7-Day Streak', earned: streak >= 7 },
+    { icon: '💯', label: '100 Cards', earned: history.length >= 100 },
+    { icon: '🏆', label: '500 Cards', earned: history.length >= 500 },
+    { icon: '🌿', label: 'Bio Expert', earned: false },
+    { icon: '⚗️', label: 'Chem Wizard', earned: false },
+    { icon: '⚡', label: 'Physics Pro', earned: false },
+  ];
+
+  const subjectCards = subjectData.map(s => {
+    const isPrimary = s.subj === primary.subj;
+    return '<div style="border-radius:14px;padding:16px 10px;text-align:center;background:' + s.color + '18;border:2px solid ' + s.color + (isPrimary ? '' : '44') + ';position:relative;cursor:pointer;" onclick="startFlashcards()">' +
+      '<div style="position:absolute;top:-8px;right:-8px;background:' + (isPrimary ? '#EF4444' : s.color) + ';color:white;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:900;">' + (isPrimary ? 'TODAY' : s.due) + '</div>' +
+      '<div style="font-size:26px;margin-bottom:6px;">' + s.emoji + '</div>' +
+      '<div style="font-size:13px;font-weight:900;">' + s.subj + '</div>' +
+      '<div style="font-size:11px;color:#64748B;font-weight:700;">' + s.due + ' cards left</div>' +
+      '</div>';
+  }).join('');
+
+  const badgeHTML = badges.map(b =>
+    '<div style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:2px solid ' + (b.earned ? '#00C896' : '#E2E8F0') + ';background:' + (b.earned ? '#F0FBF7' : 'white') + ';font-size:12px;font-weight:800;color:' + (b.earned ? '#00C896' : '#64748B') + ';">' +
+    '<span>' + b.icon + '</span>' + b.label + '</div>'
+  ).join('');
 
   const html = `
 <div class="screen" id="screen-home">
-  <div class="top-bar">
-    <div class="logo">⚡ ScienceSpark</div>
-    <div style="display:flex;gap:10px;align-items:center;">
-      <span style="font-size:13px;font-weight:700;color:var(--text-secondary);">Hi, ${user.display_name?.split(' ')[0] || 'there'}!</span>
-      <div class="pill pill-green">Lvl ${level}</div>
-    </div>
-  </div>
-
-  <div class="home-content">
-    <!-- Streak -->
-    <div class="streak-bar" onclick="showHistory()">
-      <div>
-        <div class="streak-number">${streak}</div>
-        <div class="streak-label">Day Streak 🔥</div>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:12px;font-weight:700;opacity:0.9;">${user.exam_board || 'AQA'} · ${tierLabel(user.tier)}</div>
-        <div style="font-size:12px;opacity:0.8;margin-top:2px;">View history →</div>
-      </div>
-      <div class="streak-icon">🔥</div>
-    </div>
-
-    <!-- XP Bar -->
-    <div class="xp-bar-wrap">
-      <div class="xp-level">
-        <span style="font-weight:800;font-size:15px;">Level ${level}</span>
-        <span style="font-size:13px;font-weight:700;color:var(--text-secondary);">${xpInLevel} / ${CONFIG.XP_PER_LEVEL} XP</span>
-      </div>
-      <div class="xp-track">
-        <div class="xp-fill" style="width:${xpPct}%"></div>
-      </div>
-    </div>
-
-    <!-- Weekly Activity -->
-    <div class="weekly-activity">
-      <div class="section-title">This Week</div>
-      <div class="activity-days">${activityDays}</div>
-    </div>
-
-    <!-- Study Options with integrated topic info -->
-    <div class="section-title">How do you want to study?</div>
-    <div class="study-options">
-      <div class="study-option" onclick="startFlashcards()" style="${todayTopic ? `border-top: 3px solid ${topicColor}` : ''}">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-          <div class="study-option-icon" style="background:#FEF3C7;">⚡</div>
-          ${todayTopic ? `<span class="pill" style="background:${topicColor}22;color:${topicColor};">${Math.max(0, CONFIG.CARDS_PER_SESSION - getTodaysCardCount())} cards due</span>` : ''}
-        </div>
-        <div class="study-option-title">Quick Flashcards</div>
-        <div class="study-option-desc">${todayTopic ? todayTopic.topic_name + ' · ' + todayTopic.subject : 'Fast revision. Rate yourself or let AI grade you.'}</div>
-      </div>
-      <div class="study-option" onclick="startFullSession()">
-        <div class="study-option-icon" style="background:#DBEAFE;">📖</div>
-        <div class="study-option-title">Full Session</div>
-        <div class="study-option-desc">Learn, practise and apply. 5–20 minutes.</div>
-      </div>
-    </div>
-    </div>
-
-    <!-- AI Tutor -->
-    <div class="ai-tutor-btn" onclick="showAITutor()">
-      <div>
-        <div class="ai-tutor-text">🤖 Ask Your AI Tutor</div>
-        <div class="ai-tutor-sub">Get help with any science topic, anytime</div>
-      </div>
-      <div style="font-size:24px;">→</div>
-    </div>
-
-
   ${renderNavBar('home')}
+  <div class="home-content">
+    <div style="text-align:center;padding:32px 20px 20px;">
+      <div style="font-size:24px;font-weight:900;margin-bottom:6px;">Let's spark some learning! ⚡</div>
+      <div style="font-size:14px;color:#64748B;font-weight:600;">Welcome back, ${firstName}! Keep building that habit.</div>
+    </div>
+    <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:800;">Level ${level}</div>
+        <div style="font-size:13px;font-weight:800;color:#4F46E5;">${xp} XP</div>
+      </div>
+      <div style="background:#F0F4F8;border-radius:8px;height:10px;overflow:hidden;">
+        <div style="width:${Math.min(100,(xpInLevel/200)*100)}%;background:linear-gradient(90deg,#818CF8,#4F46E5);height:100%;border-radius:8px;"></div>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,#F97316,#FBBF24);border-radius:16px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;">
+      <div style="font-size:36px;">🔥</div>
+      <div style="flex:1;">
+        <div style="font-size:17px;font-weight:900;color:white;">${streak} Day Streak!</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.85);font-weight:600;margin-bottom:10px;">${streak > 0 ? 'Keep it up — come back tomorrow!' : 'Start your streak today!'}</div>
+        <div style="display:flex;gap:6px;">${dayDots}</div>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">TODAY'S SESSION</div>
+    <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:15px;font-weight:800;">${totalDue} cards due today</div>
+        <div style="font-size:13px;color:#64748B;font-weight:600;">Across your unlocked subjects</div>
+      </div>
+      <div style="background:#EEF2FF;color:#4F46E5;border-radius:20px;padding:4px 14px;font-size:13px;font-weight:800;">${totalDue} due</div>
+    </div>
+    <div style="background:white;border-radius:16px;padding:18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
+      <div style="font-size:14px;font-weight:900;margin-bottom:14px;">📚 Choose your subject</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">${subjectCards}</div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="startFlashcards()" style="background:linear-gradient(135deg,#818CF8,#4F46E5);font-size:15px;padding:16px;">
+        📚 Start ${primary ? primary.subj : 'Today'} — ${primary ? primary.due : totalDue} cards
+      </button>
+    </div>
+    <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="startFullSession()">
+      <div>
+        <div style="font-size:14px;font-weight:800;">📖 Full Learning Session</div>
+        <div style="font-size:12px;color:#64748B;font-weight:600;">Learn, practise and apply. 5–20 minutes.</div>
+      </div>
+      <div style="font-size:20px;">→</div>
+    </div>
+    <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">BADGES</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;padding-bottom:100px;">${badgeHTML}</div>
+  </div>
 </div>`;
 
   render(html);
 }
 
-// ============================================================
-// NAV BAR
-// ============================================================
+
 function renderNavBar(active) {
   const items = [
     { id: 'home', icon: '🏠', label: 'Home', fn: 'showHome()' },
