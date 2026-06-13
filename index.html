@@ -4333,10 +4333,60 @@ function showAIResult(grade, feedback, copyPaste) {
 function recordAndAdvance(cardId, grade) {
   const card = STATE.cardQueue[STATE.currentCardIndex];
   const gradeNum = { again:0, hard:1, good:2, easy:3 }[grade] || 0;
+  
+  // Save to history
   const history = LS.get('card_history') || [];
-  history.unshift({ id:cardId, question:card.question||card.q, subject:card.subject, topic:card.topic_name||card.topic, grade:grade, date:new Date().toISOString(), reps:(LS.get('card_progress')?.[cardId]?.reps||0)+1 });
-  LS.set('card_history', history.slice(0,200));
-  selfGrade(cardId, gradeNum);
+  history.unshift({ 
+    id: cardId, 
+    question: card.question || card.q, 
+    subject: card.subject, 
+    topic: card.topic_name || card.topic, 
+    grade: grade, 
+    date: new Date().toISOString(), 
+    reps: (LS.get('card_progress')?.[cardId]?.reps || 0) + 1 
+  });
+  LS.set('card_history', history.slice(0, 200));
+  
+  // Update SRS scheduling but don't advance yet
+  const progress = LS.get('card_progress') || {};
+  const p = progress[cardId] || { easeFactor: 2.5, interval: 1, reps: 0 };
+  if (gradeNum === 0) {
+    p.reps = 0; p.interval = 1;
+  } else if (gradeNum === 1) {
+    p.reps++; p.interval = Math.max(1, p.interval - 1);
+  } else if (gradeNum === 2) {
+    p.reps++; p.interval = p.reps === 1 ? 1 : p.reps === 2 ? 6 : Math.round(p.interval * p.easeFactor);
+    p.easeFactor = Math.max(1.3, p.easeFactor - 0.15 + 0.1);
+  } else {
+    p.reps++; p.interval = p.reps === 1 ? 1 : p.reps === 2 ? 6 : Math.round(p.interval * p.easeFactor);
+    p.easeFactor = Math.min(3.0, p.easeFactor + 0.1);
+  }
+  p.nextReview = new Date(Date.now() + p.interval * 86400000).toISOString();
+  progress[cardId] = p;
+  LS.set('card_progress', progress);
+  
+  // Show next button instead of auto-advancing
+  const ratingWrap = document.getElementById('rating-wrap');
+  if (ratingWrap) {
+    // Add a next button at the bottom
+    const existing = document.getElementById('ai-next-btn');
+    if (!existing) {
+      const nextBtn = document.createElement('button');
+      nextBtn.id = 'ai-next-btn';
+      nextBtn.className = 'btn btn-primary btn-full';
+      nextBtn.style.marginTop = '12px';
+      nextBtn.textContent = 'Next card →';
+      nextBtn.onclick = () => {
+        STATE.currentCardIndex++;
+        if (STATE.currentCardIndex >= STATE.cardQueue.length) {
+          endSession();
+        } else {
+          renderFlashcard();
+        }
+      };
+      ratingWrap.appendChild(nextBtn);
+    }
+  }
 }
 
 function toggleAIMode() {
