@@ -1496,6 +1496,37 @@ textarea.input { resize: vertical; min-height: 100px; }
 .topbar-dropdown-tile:hover { background:#F0F4F8; }
 .topbar-dropdown-tile .tile-icon { font-size:22px; }
 .topbar-dropdown-tile .tile-label { font-size:11px; font-weight:800; color:#64748B; text-align:center; }
+
+@media (min-width: 768px) {
+  #app { max-width: 680px; margin: 0 auto; padding-top: 60px; box-shadow: none; border-radius: 0; }
+  .nav-bar { display: none !important; }
+  .desktop-topbar { display: flex !important; }
+}
+@media (max-width: 767px) {
+  .desktop-topbar { display: none !important; }
+}
+.desktop-topbar {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: white; border-bottom: 1px solid #E2E8F0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); z-index: 200;
+  align-items: center; padding: 0 20px; gap: 4px;
+}
+.topbar-logo { font-size: 17px; font-weight: 900; color: #00C896; margin-right: auto; }
+.topbar-item { display: flex; align-items: center; gap: 6px; padding: 8px 12px; font-size: 14px; font-weight: 700; color: #64748B; cursor: pointer; border-radius: 10px; transition: all 0.15s; }
+.topbar-item:hover { background: #F8FAFC; color: #1a1a2e; }
+.topbar-item.active { color: #00C896; background: #F0FBF7; }
+.topbar-grid-btn { cursor: pointer; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-left: 8px; }
+.topbar-grid-btn:hover { background: #F0F4F8; }
+.topbar-grid-icon { display: grid; grid-template-columns: repeat(3, 5px); gap: 3px; }
+.topbar-grid-icon span { width: 5px; height: 5px; background: #64748B; border-radius: 1px; display: block; }
+.topbar-dropdown { display: none; position: fixed; top: 60px; right: 16px; background: white; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); padding: 16px; z-index: 500; width: 220px; border: 1px solid #E2E8F0; }
+.topbar-dropdown.open { display: block; }
+.topbar-dropdown-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.topbar-dropdown-tile { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; border-radius: 12px; cursor: pointer; transition: background .15s; }
+.topbar-dropdown-tile:hover { background: #F0F4F8; }
+.tile-icon { font-size: 22px; }
+.tile-label { font-size: 11px; font-weight: 800; color: #64748B; text-align: center; }
 </style>
 </head>
 <body>
@@ -3591,25 +3622,8 @@ function showHome() {
       <div style="font-size:24px;">→</div>
     </div>
 
-    <!-- Knowledge Organisers -->
-    <div class="section-title">Knowledge Organisers</div>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      ${Object.entries(KNOWLEDGE_ORGANISERS).map(([key, ko]) => `
-        <div class="card" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;" onclick="showKnowledgeOrganiser('${key}')">
-          <div>
-            <div style="font-weight:800;font-size:14px;">${ko.topic}</div>
-            <div style="font-size:12px;color:var(--text-secondary);font-weight:600;margin-top:2px;">${ko.pairs.length} terms</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            ${ko.is_mock ? '<span class="coming-soon">Placeholder</span>' : ''}
-            <div style="font-size:20px;color:var(--text-light);">→</div>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  </div>
 
-  ${renderNavBar('home')}
+  ${renderNavBar${renderNavBar('home')}
 </div>`;
 
   render(html);
@@ -3639,16 +3653,16 @@ function renderNavBar(active) {
   </div>
   <div class="topbar-dropdown" id="topbar-dropdown">
     <div class="topbar-dropdown-grid">
-      <div class="topbar-dropdown-tile" onclick="showAITutor();toggleTopbarMenu()"><div class="tile-icon">🤖</div><div class="tile-label">AI Tutor</div></div>
       <div class="topbar-dropdown-tile" onclick="showAllKO();toggleTopbarMenu()"><div class="tile-icon">📚</div><div class="tile-label">Organisers</div></div>
-      <div class="topbar-dropdown-tile" onclick="showHistory();toggleTopbarMenu()"><div class="tile-icon">📖</div><div class="tile-label">History</div></div>
-      <div class="topbar-dropdown-tile" onclick="showHistory();toggleTopbarMenu()"><div class="tile-icon">📊</div><div class="tile-label">Progress</div></div>
+      <div class="topbar-dropdown-tile" onclick="showHistory('history');toggleTopbarMenu()"><div class="tile-icon">📖</div><div class="tile-label">History</div></div>
+      <div class="topbar-dropdown-tile" onclick="showAITutor();toggleTopbarMenu()"><div class="tile-icon">🤖</div><div class="tile-label">AI Tutor</div></div>
       <div class="topbar-dropdown-tile" onclick="showProfile();toggleTopbarMenu()"><div class="tile-icon">👤</div><div class="tile-label">Profile</div></div>
       <div class="topbar-dropdown-tile" onclick="showHome();toggleTopbarMenu()"><div class="tile-icon">🏠</div><div class="tile-label">Home</div></div>
+      <div class="topbar-dropdown-tile" onclick="showHistory('progress');toggleTopbarMenu()"><div class="tile-icon">📊</div><div class="tile-label">Progress</div></div>
     </div>
   </div>`;
 
-  return `<nav class="nav-bar">
+  const bottomNav = `<nav class="nav-bar">
     ${items.map(it => `
       <div class="nav-item ${it.id === active ? 'active' : ''}" onclick="${it.fn}">
         <span style="font-size:20px;">${it.icon}</span>
@@ -3656,6 +3670,8 @@ function renderNavBar(active) {
       </div>
     `).join('')}
   </nav>`;
+
+  return topBar + bottomNav;
 }
 
 // ============================================================
