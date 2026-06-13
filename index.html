@@ -3647,12 +3647,14 @@ async function doLogin() {
   }
 
   const token = res.access_token;
+  const refreshToken = res.refresh_token || '';
   const meta = res.user.user_metadata || {};
   
   STATE.user = {
     id: res.user.id,
     email: res.user.email,
     token,
+    refresh_token: refreshToken,
     display_name: meta.display_name || email,
     role: meta.role || 'student',
     year_group: meta.year_group || 11,
@@ -5987,43 +5989,57 @@ function closeModal() {
 // INIT
 // ============================================================
 async function init() {
-  // First try localStorage session
   const saved = LS.get('demo_user');
-  if (saved && saved.id) {
+  
+  if (saved && saved.id && saved.token) {
+    // Verify token still valid
+    try {
+      const res = await fetch(CONFIG.SUPABASE_URL + '/auth/v1/user', {
+        headers: {
+          'apikey': CONFIG.SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + saved.token
+        }
+      });
+      if (res.ok) {
+        STATE.user = saved;
+        STATE.role = saved.role || 'student';
+        afterLogin();
+        return;
+      }
+    } catch(e) {}
+    
+    // Try refresh token
+    if (saved.refresh_token) {
+      try {
+        const res = await fetch(CONFIG.SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY },
+          body: JSON.stringify({ refresh_token: saved.refresh_token })
+        });
+        const data = await res.json();
+        if (data.access_token) {
+          STATE.user = { ...saved, token: data.access_token, refresh_token: data.refresh_token };
+          STATE.role = saved.role || 'student';
+          LS.set('demo_user', STATE.user);
+          afterLogin();
+          return;
+        }
+      } catch(e) {}
+    }
+    
+    // Token expired but we have user data - restore anyway for offline use
     STATE.user = saved;
     STATE.role = saved.role || 'student';
     afterLogin();
     return;
   }
   
-  // Try Supabase session
-  try {
-    const { data } = await supabase.auth.getSession();
-    if (data?.session?.user) {
-      const u = data.session.user;
-      const meta = u.user_metadata || {};
-      STATE.user = {
-        id: u.id,
-        email: u.email,
-        display_name: meta.display_name || u.email,
-        role: meta.role || 'student',
-        year_group: meta.year_group || 11,
-        tier: meta.tier || 'combined_higher',
-        exam_board: meta.exam_board || 'AQA',
-        class_code: meta.class_code || null,
-        parent_code: meta.parent_code || null,
-        xp: meta.xp || 0,
-        streak: meta.streak || 0,
-        level: meta.level || 1,
-        ai_mode: meta.ai_mode !== false,
-      };
-      STATE.role = STATE.user.role;
-      LS.set('demo_user', STATE.user);
-      afterLogin();
-      return;
-    }
-  } catch(e) {
-    console.log('No Supabase session:', e);
+  if (saved && saved.id) {
+    // No token but have user - restore for offline
+    STATE.user = saved;
+    STATE.role = saved.role || 'student';
+    afterLogin();
+    return;
   }
   
   showAuth();
