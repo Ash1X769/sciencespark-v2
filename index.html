@@ -5485,19 +5485,35 @@ function doLogout() {
 // ============================================================
 // TEACHER DASHBOARD
 // ============================================================
-function showTeacherDashboard(selectedClass) {
+async function showTeacherDashboard(selectedClass) {
   STATE.screen = 'teacher';
   const user = STATE.user;
   const classCode = user.class_code || 'N/A';
   selectedClass = selectedClass || 'all';
 
-  // Placeholder classes
-  const classes = [
-    { id: 'all', name: 'All Classes' },
-    { id: 'c1', name: 'Year 10 Set 1' },
-    { id: 'c2', name: 'Year 11 Higher' },
-    { id: 'c3', name: 'After School Revision' },
-  ];
+  // Load real classes from Supabase (with placeholder fallback)
+  let classes = [{ id: 'all', name: 'All Classes' }];
+  try {
+    const { data: realClasses } = await supabase
+      .from('classes')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (realClasses && realClasses.length > 0) {
+      classes = [{ id: 'all', name: 'All Classes' }, ...realClasses.map(c => ({ id: c.id, name: c.name, code: c.code }))];
+    } else {
+      classes = [
+        { id: 'all', name: 'All Classes' },
+        { id: 'c1', name: 'Year 10 Set 1 (placeholder)' },
+        { id: 'c2', name: 'Year 11 Higher (placeholder)' },
+      ];
+    }
+  } catch(e) {
+    classes = [
+      { id: 'all', name: 'All Classes' },
+      { id: 'c1', name: 'Year 10 Set 1 (placeholder)' },
+      { id: 'c2', name: 'Year 11 Higher (placeholder)' },
+    ];
+  }
 
   // Placeholder students with class membership
   const allStudents = [
