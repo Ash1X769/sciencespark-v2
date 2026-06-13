@@ -6035,11 +6035,45 @@ async function init() {
   }
   
   if (saved && saved.id) {
-    // No token but have user - restore for offline
     STATE.user = saved;
     STATE.role = saved.role || 'student';
     afterLogin();
     return;
+  }
+  
+  // Try reading Supabase session directly from localStorage
+  try {
+    const sbKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    if (sbKey) {
+      const sbSession = JSON.parse(localStorage.getItem(sbKey));
+      if (sbSession && sbSession.access_token && sbSession.user) {
+        const u = sbSession.user;
+        const meta = u.user_metadata || {};
+        STATE.user = {
+          id: u.id,
+          email: u.email,
+          token: sbSession.access_token,
+          refresh_token: sbSession.refresh_token,
+          display_name: meta.display_name || u.email,
+          role: meta.role || 'student',
+          year_group: meta.year_group || 11,
+          tier: meta.tier || 'combined_higher',
+          exam_board: meta.exam_board || 'AQA',
+          class_code: meta.class_code || null,
+          parent_code: meta.parent_code || null,
+          xp: meta.xp || 0,
+          streak: meta.streak || 0,
+          level: meta.level || 1,
+          ai_mode: meta.ai_mode !== false,
+        };
+        STATE.role = STATE.user.role;
+        LS.set('demo_user', STATE.user);
+        afterLogin();
+        return;
+      }
+    }
+  } catch(e) {
+    console.log('Supabase session read error:', e);
   }
   
   showAuth();
