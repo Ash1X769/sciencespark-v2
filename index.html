@@ -4329,6 +4329,8 @@ function showAIResult(grade, feedback, copyPaste) {
   }
   document.getElementById('answer-sec').style.display = 'block';
   document.getElementById('rating-wrap').style.display = 'block';
+  const examBtn = document.getElementById('exam-reveal-btn');
+  if (examBtn) examBtn.style.display = 'flex';
 }
 function recordAndAdvance(cardId, grade) {
   const card = STATE.cardQueue[STATE.currentCardIndex];
