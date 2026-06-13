@@ -1553,6 +1553,12 @@ textarea.input { resize: vertical; min-height: 100px; }
 .topbar-dropdown-tile:hover { background: #F0F4F8; }
 .tile-icon { font-size: 22px; }
 .tile-label { font-size: 11px; font-weight: 800; color: #64748B; text-align: center; }
+
+.topbar-centre { display: flex; align-items: center; gap: 4px; position: absolute; left: 50%; transform: translateX(-50%); }
+.topbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.topbar-streak { display: flex; align-items: center; gap: 4px; background: #FFF7ED; border: 2px solid #F97316; border-radius: 20px; padding: 4px 12px; font-size: 14px; font-weight: 900; color: #F97316; }
+.topbar-avatar { width: 34px; height: 34px; border-radius: 50%; background: #F0F4F8; border: 2px solid #E2E8F0; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
+.desktop-topbar { position: relative; }
 </style>
 </head>
 <body>
@@ -3657,7 +3663,7 @@ function showHome() {
 <div class="screen" id="screen-home">
   ${renderNavBar('home')}
   <div class="home-content">
-    <div style="text-align:center;padding:32px 20px 20px;">
+    <div style="text-align:center;padding:16px 20px 12px;">
       <div style="font-size:24px;font-weight:900;margin-bottom:6px;">Let's spark some learning! ⚡</div>
       <div style="font-size:14px;color:#64748B;font-weight:600;">Welcome back, ${firstName}! Keep building that habit.</div>
     </div>
@@ -3711,21 +3717,30 @@ function showHome() {
 
 function renderNavBar(active) {
   const items = [
-    { id: 'home', icon: '🏠', label: 'Home', fn: 'showHome()' },
-    { id: 'history', icon: '📊', label: 'Progress', fn: 'showHistory()' },
-    { id: 'tutor', icon: '🤖', label: 'AI Tutor', fn: 'showAITutor()' },
+    { id: 'home', icon: '🏠', label: 'Learn', fn: 'showHome()' },
+    { id: 'history', icon: '📊', label: 'History', fn: 'showHistory()' },
+    { id: 'dashboard', icon: '📋', label: 'Dashboard', fn: 'showAllKO()' },
     { id: 'profile', icon: '👤', label: 'Profile', fn: 'showProfile()' },
   ];
 
+  const streak = STATE.user?.streak || 0;
   const topBar = `<div class="desktop-topbar">
-    <div class="topbar-logo">⚡ ScienceSpark</div>
-    ${items.map(it => `<div class="topbar-item ${it.id === active ? 'active' : ''}" onclick="${it.fn}"><span>${it.icon}</span> ${it.label}</div>`).join('')}
-    <div class="topbar-grid-btn" onclick="toggleTopbarMenu()" title="More">
-      <div class="topbar-grid-icon">
-        <span></span><span></span><span></span>
-        <span></span><span></span><span></span>
-        <span></span><span></span><span></span>
+    <div class="topbar-logo">🌿 ScienceSpark</div>
+    <div class="topbar-centre">
+      <div class="topbar-item ${active === 'home' ? 'active' : ''}" onclick="showHome()">Learn</div>
+      <div class="topbar-item ${active === 'history' ? 'active' : ''}" onclick="showHistory()">History</div>
+      <div class="topbar-item ${active === 'dashboard' ? 'active' : ''}" onclick="showAllKO()">Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      ${streak > 0 ? `<div class="topbar-streak"><span>🔥</span>${streak}</div>` : ''}
+      <div class="topbar-grid-btn" onclick="toggleTopbarMenu()" title="More">
+        <div class="topbar-grid-icon">
+          <span></span><span></span><span></span>
+          <span></span><span></span><span></span>
+          <span></span><span></span><span></span>
+        </div>
       </div>
+      <div class="topbar-avatar" onclick="showProfile()">👤</div>
     </div>
   </div>
   <div class="topbar-dropdown" id="topbar-dropdown">
