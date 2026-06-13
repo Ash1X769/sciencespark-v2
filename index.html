@@ -5491,28 +5491,11 @@ async function showTeacherDashboard(selectedClass) {
   const classCode = user.class_code || 'N/A';
   selectedClass = selectedClass || 'all';
 
-  // Load real classes from Supabase (with placeholder fallback)
+  // Load real classes from Supabase
+  const realClasses = await loadTeacherClasses();
   let classes = [{ id: 'all', name: 'All Classes' }];
-  try {
-    const { data: realClasses } = await supabase
-      .from('classes')
-      .select('*')
-      .order('created_at', { ascending: true });
-    if (realClasses && realClasses.length > 0) {
-      classes = [{ id: 'all', name: 'All Classes' }, ...realClasses.map(c => ({ id: c.id, name: c.name, code: c.code }))];
-    } else {
-      classes = [
-        { id: 'all', name: 'All Classes' },
-        { id: 'c1', name: 'Year 10 Set 1 (placeholder)' },
-        { id: 'c2', name: 'Year 11 Higher (placeholder)' },
-      ];
-    }
-  } catch(e) {
-    classes = [
-      { id: 'all', name: 'All Classes' },
-      { id: 'c1', name: 'Year 10 Set 1 (placeholder)' },
-      { id: 'c2', name: 'Year 11 Higher (placeholder)' },
-    ];
+  if (realClasses.length > 0) {
+    classes = [{ id: 'all', name: 'All Classes' }, ...realClasses.map(cl => ({ id: cl.id, name: cl.name, code: cl.code }))];
   }
 
   // Placeholder students with class membership
@@ -5615,53 +5598,48 @@ async function showCreateClass() {
   if (!name || !name.trim()) return;
   
   const code = Math.random().toString(36).substring(2,8).toUpperCase();
-  
+  const token = STATE.user?.token;
+  const teacherId = STATE.user?.id;
+
   try {
-    const { data, error } = await supabase
-      .from('classes')
-      .insert({ 
-        name: name.trim(), 
-        code: code,
-        teacher_id: supabase.auth.getUser ? (await supabase.auth.getUser()).data.user.id : STATE.user.id
-      })
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
-    // Show success with copy-able code
-    const msg = 'Class created! ✅\n\n' +
-      'Name: ' + name + '\n' +
-      'Code: ' + code + '\n\n' +
-      'Share this message with students:\n' +
-      '"Join my ScienceSpark class! Sign up at ' + window.location.hostname + ' and enter code: ' + code + '"';
-    
-    alert(msg);
-    
-    // Reload dashboard to show new class
-    showTeacherDashboard('all');
-    
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/classes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': CONFIG.SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + token,
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({ name: name.trim(), code: code, teacher_id: teacherId })
+    });
+
+    if (res.ok) {
+      alert('Class created! ✅\n\nName: ' + name.trim() + '\nCode: ' + code + '\n\nShare with students:\n"Sign up at ScienceSpark and enter code: ' + code + '"');
+      showTeacherDashboard('all');
+    } else {
+      const err = await res.json();
+      throw new Error(err.message || 'Save failed');
+    }
   } catch(e) {
-    // Fallback if Supabase not connected yet
-    const msg = 'Class created! ✅\n\n' +
-      'Name: ' + name + '\n' +
-      'Code: ' + code + '\n\n' +
-      'Share this with students:\n' +
-      '"Sign up and enter code: ' + code + '"\n\n' +
-      '(Note: saving to database coming soon)';
-    alert(msg);
+    console.error('Create class error:', e);
+    alert('Class created! ✅\n\nName: ' + name.trim() + '\nCode: ' + code + '\n\nShare with students:\n"Sign up and enter code: ' + code + '"\n\n(Could not save to database: ' + e.message + ')');
   }
 }
 
 async function loadTeacherClasses() {
+  const token = STATE.user?.token;
   try {
-    const { data, error } = await supabase
-      .from('classes')
-      .select('*')
-      .order('created_at', { ascending: true });
-    
-    if (error) throw error;
-    return data || [];
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/classes?select=*&order=created_at.asc', {
+      headers: {
+        'apikey': CONFIG.SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + token
+      }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data || [];
+    }
+    return [];
   } catch(e) {
     console.log('Could not load classes:', e);
     return [];
