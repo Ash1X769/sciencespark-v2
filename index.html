@@ -5375,6 +5375,16 @@ function showProfile() {
       </div>
     </div>
 
+    <!-- Join a Class -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:15px;font-weight:800;margin-bottom:8px;">🏫 Join a Class</div>
+      <div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:12px;">${user.class_code ? 'Currently in class: ' + user.class_code : "Enter your teacher's class code to join their class."}</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="join-class-input" class="input" placeholder="Enter class code" style="flex:1;margin:0;">
+        <button onclick="joinClass()" style="padding:10px 16px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">Join</button>
+      </div>
+    </div>
+
     <!-- Account Settings -->
     <div class="card" style="margin-bottom:16px;">
       <div style="font-size:15px;font-weight:800;margin-bottom:16px;">Account Settings</div>
@@ -5413,18 +5423,6 @@ function showProfile() {
             <div class="badge-label">${b.label}</div>
           </div>
         `).join('')}
-      </div>
-    </div>
-  </div>
-
-  <!-- Join a Class -->
-  <div style="padding:0 20px 20px;">
-    <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
-      <div style="font-size:14px;font-weight:800;margin-bottom:4px;">🏫 Join a Class</div>
-      <div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:12px;">${user.class_code ? 'Currently in class: ' + user.class_code : "Enter your teacher's class code to join their class."}</div>
-      <div style="display:flex;gap:8px;">
-        <input type="text" id="join-class-input" class="input" placeholder="Enter class code" style="flex:1;margin:0;">
-        <button onclick="joinClass()" style="padding:10px 16px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">Join</button>
       </div>
     </div>
   </div>
