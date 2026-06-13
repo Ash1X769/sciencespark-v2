@@ -5453,67 +5453,95 @@ function doLogout() {
 // ============================================================
 // TEACHER DASHBOARD
 // ============================================================
-function showTeacherDashboard() {
+function showTeacherDashboard(selectedClass) {
   STATE.screen = 'teacher';
   const user = STATE.user;
   const classCode = user.class_code || 'N/A';
+  selectedClass = selectedClass || 'all';
 
-  const students = [
-    { name: 'Alice Johnson', tier: 'Higher', streak: 7, xp: 450, cards: 85, accuracy: 88, topics: { 'Cell Biology': 85, 'Organisation': 60, 'Atomic Structure': 40 } },
-    { name: 'Ben Smith', tier: 'Foundation', streak: 2, xp: 120, cards: 22, accuracy: 64, topics: { 'Cell Biology': 30, 'Organisation': 10, 'Atomic Structure': 0 } },
-    { name: 'Chloe Davies', tier: 'Higher', streak: 12, xp: 680, cards: 110, accuracy: 91, topics: { 'Cell Biology': 95, 'Organisation': 80, 'Atomic Structure': 70 } },
-    { name: 'Dan Patel', tier: 'Foundation', streak: 0, xp: 50, cards: 8, accuracy: 50, topics: { 'Cell Biology': 15, 'Organisation': 0, 'Atomic Structure': 0 } },
+  // Placeholder classes
+  const classes = [
+    { id: 'all', name: 'All Classes' },
+    { id: 'c1', name: 'Year 10 Set 1' },
+    { id: 'c2', name: 'Year 11 Higher' },
+    { id: 'c3', name: 'After School Revision' },
   ];
 
+  // Placeholder students with class membership
+  const allStudents = [
+    { name: 'Alice Johnson', tier: 'Higher', streak: 7, xp: 450, cards: 85, accuracy: 88, classes: ['c1','c3'], topics: { 'Cell Biology': 85, 'Organisation': 60, 'Atomic Structure': 40 } },
+    { name: 'Ben Smith', tier: 'Foundation', streak: 2, xp: 120, cards: 22, accuracy: 64, classes: ['c1'], topics: { 'Cell Biology': 30, 'Organisation': 10, 'Atomic Structure': 0 } },
+    { name: 'Chloe Davies', tier: 'Higher', streak: 12, xp: 680, cards: 110, accuracy: 91, classes: ['c2','c3'], topics: { 'Cell Biology': 95, 'Organisation': 80, 'Atomic Structure': 70 } },
+    { name: 'Dan Patel', tier: 'Foundation', streak: 0, xp: 50, cards: 8, accuracy: 50, classes: ['c2'], topics: { 'Cell Biology': 15, 'Organisation': 0, 'Atomic Structure': 0 } },
+  ];
+
+  const students = selectedClass === 'all' ? allStudents : allStudents.filter(s => s.classes.includes(selectedClass));
   const topics = ['Cell Biology', 'Organisation', 'Atomic Structure'];
   const ragColor = (p) => p >= 75 ? '#22C55E' : p >= 40 ? '#F59E0B' : '#EF4444';
   const ragBg = (p) => p >= 75 ? '#F0FDF4' : p >= 40 ? '#FFFBEB' : '#FEF2F2';
+  const selectedName = classes.find(c => c.id === selectedClass)?.name || 'All Classes';
 
   const html = `<div style="min-height:100vh;background:#F8FAFC;">
   <div style="background:linear-gradient(135deg,#0F172A,#1E3A5F);padding:28px 24px 20px;color:white;position:relative;">
     <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;opacity:0.7;margin-bottom:4px;">TEACHER DASHBOARD</div>
     <div style="font-size:22px;font-weight:900;">Welcome, ${user.display_name || 'Teacher'}</div>
-    <div style="font-size:13px;opacity:0.7;font-weight:600;margin-top:4px;">Class code: <span style="background:rgba(255,255,255,0.15);padding:2px 10px;border-radius:6px;font-weight:900;">${classCode}</span></div>
     <button onclick="doLogout()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
   </div>
-  <div style="background:#FFF7ED;border-bottom:2px solid #F97316;padding:10px 20px;display:flex;align-items:center;gap:8px;">
-    <span>⚠️</span><span style="font-size:13px;font-weight:700;color:#C2410C;">Placeholder data — real student data connects once Supabase is live</span>
+
+  <!-- Class filter bar -->
+  <div style="background:white;border-bottom:1px solid #E2E8F0;padding:12px 20px;display:flex;align-items:center;gap:10px;">
+    <select onchange="showTeacherDashboard(this.value)" style="flex:1;padding:8px 12px;border-radius:10px;border:2px solid #E2E8F0;font-size:14px;font-weight:800;font-family:inherit;color:#0F172A;background:white;cursor:pointer;">
+      ${classes.map(cl => '<option value="' + cl.id + '"' + (cl.id === selectedClass ? ' selected' : '') + '>' + cl.name + '</option>').join('')}
+    </select>
+    <button onclick="showCreateClass()" style="padding:8px 16px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">➕ Create Class</button>
   </div>
-  <div style="display:flex;background:white;border-bottom:1px solid #E2E8F0;padding:0 16px;gap:4px;overflow-x:auto;">
+
+  <!-- Warning -->
+  <div style="background:#FFF7ED;border-bottom:2px solid #F97316;padding:8px 20px;display:flex;align-items:center;gap:8px;">
+    <span>⚠️</span><span style="font-size:12px;font-weight:700;color:#C2410C;">Placeholder data — real data connects once Supabase is live</span>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display:flex;background:white;border-bottom:1px solid #E2E8F0;padding:0 16px;gap:4px;">
     <button id="ttab-overview" onclick="teacherTab('overview')" style="padding:14px 16px;border:none;border-bottom:3px solid #0F172A;background:none;font-size:14px;font-weight:800;color:#0F172A;cursor:pointer;font-family:inherit;white-space:nowrap;">👥 Overview</button>
     <button id="ttab-rag" onclick="teacherTab('rag')" style="padding:14px 16px;border:none;border-bottom:3px solid transparent;background:none;font-size:14px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;white-space:nowrap;">🔴 RAG Grid</button>
     <button id="ttab-students" onclick="teacherTab('students')" style="padding:14px 16px;border:none;border-bottom:3px solid transparent;background:none;font-size:14px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;white-space:nowrap;">📋 Students</button>
   </div>
+
   <div style="padding:20px;max-width:960px;margin:0 auto;padding-bottom:60px;">
+
+    <!-- OVERVIEW -->
     <div id="tcontent-overview">
+      <div style="font-size:13px;font-weight:800;color:#64748B;margin-bottom:12px;">${selectedName} · ${students.length} student${students.length !== 1 ? 's' : ''}</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
         <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;text-align:center;">
           <div style="font-size:28px;font-weight:900;color:#0F172A;">${students.length}</div>
           <div style="font-size:11px;font-weight:800;color:#64748B;">STUDENTS</div>
         </div>
         <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:#F97316;">${Math.round(students.reduce((a,s)=>a+s.streak,0)/students.length)}</div>
+          <div style="font-size:28px;font-weight:900;color:#F97316;">${students.length ? Math.round(students.reduce((a,s)=>a+s.streak,0)/students.length) : 0}</div>
           <div style="font-size:11px;font-weight:800;color:#64748B;">AVG STREAK</div>
         </div>
         <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:#3B82F6;">${Math.round(students.reduce((a,s)=>a+s.cards,0)/students.length)}</div>
+          <div style="font-size:28px;font-weight:900;color:#3B82F6;">${students.length ? Math.round(students.reduce((a,s)=>a+s.cards,0)/students.length) : 0}</div>
           <div style="font-size:11px;font-weight:800;color:#64748B;">AVG CARDS</div>
         </div>
         <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:#22C55E;">${Math.round(students.reduce((a,s)=>a+s.accuracy,0)/students.length)}%</div>
+          <div style="font-size:28px;font-weight:900;color:#22C55E;">${students.length ? Math.round(students.reduce((a,s)=>a+s.accuracy,0)/students.length) : 0}%</div>
           <div style="font-size:11px;font-weight:800;color:#64748B;">AVG ACCURACY</div>
         </div>
       </div>
-      <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">ALL STUDENTS</div>
-      ${students.map(s => '<div style="background:white;border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;display:flex;align-items:center;gap:14px;"><div style="width:40px;height:40px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#4F46E5;flex-shrink:0;">' + s.name.charAt(0) + '</div><div style="flex:1;"><div style="font-size:15px;font-weight:800;">' + s.name + '</div><div style="font-size:12px;color:#64748B;font-weight:600;">' + s.tier + ' · 🔥' + s.streak + ' streak · ' + s.cards + ' cards · ' + s.accuracy + '% accuracy</div></div><span style="background:' + ragBg(s.accuracy) + ';color:' + ragColor(s.accuracy) + ';padding:4px 10px;border-radius:8px;font-size:13px;font-weight:800;">' + s.accuracy + '%</span></div>').join('')}
+      ${students.map(s => '<div style="background:white;border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;display:flex;align-items:center;gap:14px;"><div style="width:40px;height:40px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#4F46E5;flex-shrink:0;">' + s.name.charAt(0) + '</div><div style="flex:1;"><div style="font-size:15px;font-weight:800;">' + s.name + '</div><div style="font-size:12px;color:#64748B;font-weight:600;">' + s.tier + ' · 🔥' + s.streak + ' · ' + s.cards + ' cards · ' + s.accuracy + '% accuracy</div></div><span style="background:' + ragBg(s.accuracy) + ';color:' + ragColor(s.accuracy) + ';padding:4px 10px;border-radius:8px;font-size:13px;font-weight:800;">' + s.accuracy + '%</span></div>').join('')}
       <div style="background:#EEF2FF;border-radius:14px;padding:16px;margin-top:16px;border:1px solid #C7D2FE;">
-        <div style="font-size:14px;font-weight:800;color:#4F46E5;margin-bottom:6px;">🔗 Class Invite Code</div>
+        <div style="font-size:14px;font-weight:800;color:#4F46E5;margin-bottom:6px;">🔗 Default Class Code</div>
         <div style="font-size:28px;font-weight:900;color:#0F172A;letter-spacing:0.1em;margin-bottom:8px;">${classCode}</div>
-        <div style="font-size:13px;color:#64748B;font-weight:600;">Share this code with students so they can join your class at signup.</div>
+        <div style="font-size:13px;color:#64748B;font-weight:600;">Share with students at signup to join your class.</div>
       </div>
     </div>
+
+    <!-- RAG GRID -->
     <div id="tcontent-rag" style="display:none;">
-      <div style="font-size:13px;font-weight:700;color:#64748B;margin-bottom:16px;">🟢 75%+ mastered · 🟡 40-74% progressing · 🔴 Under 40% needs help</div>
+      <div style="font-size:13px;font-weight:700;color:#64748B;margin-bottom:16px;">${selectedName} · 🟢 75%+ · 🟡 40-74% · 🔴 Under 40%</div>
       <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:white;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
         <thead><tr style="background:#F8FAFC;">
           <th style="padding:12px 16px;text-align:left;font-size:13px;font-weight:800;color:#64748B;border-bottom:1px solid #E2E8F0;">Student</th>
@@ -5522,13 +5550,23 @@ function showTeacherDashboard() {
         <tbody>${students.map(s => '<tr style="border-bottom:1px solid #F0F4F8;"><td style="padding:12px 16px;font-size:14px;font-weight:800;">' + s.name + '</td>' + topics.map(t => { const p = s.topics[t]||0; return '<td style="padding:12px 16px;text-align:center;"><div style="background:' + ragBg(p) + ';color:' + ragColor(p) + ';border-radius:8px;padding:6px 10px;font-size:13px;font-weight:900;display:inline-block;min-width:48px;">' + p + '%</div></td>'; }).join('') + '</tr>').join('')}</tbody>
       </table></div>
     </div>
+
+    <!-- STUDENTS -->
     <div id="tcontent-students" style="display:none;">
-      ${students.map(s => '<div style="background:white;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;"><div style="width:44px;height:44px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#4F46E5;">' + s.name.charAt(0) + '</div><div><div style="font-size:16px;font-weight:900;">' + s.name + '</div><div style="font-size:12px;color:#64748B;font-weight:600;">' + s.tier + '</div></div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;"><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#F97316;">' + s.streak + '</div><div style="font-size:11px;color:#64748B;font-weight:700;">Streak</div></div><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#3B82F6;">' + s.cards + '</div><div style="font-size:11px;color:#64748B;font-weight:700;">Cards</div></div><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#22C55E;">' + s.accuracy + '%</div><div style="font-size:11px;color:#64748B;font-weight:700;">Accuracy</div></div></div>' + Object.entries(s.topics).map(([topic,pct]) => '<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:700;">' + topic + '</div><div style="font-size:13px;font-weight:800;color:' + ragColor(pct) + ';">' + pct + '%</div></div><div style="background:#F0F4F8;border-radius:4px;height:6px;"><div style="width:' + pct + '%;background:' + ragColor(pct) + ';height:100%;border-radius:4px;"></div></div></div>').join('') + '<button onclick="toggleStudentHistory(\'' + s.name + '\')" style="width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1px solid #E2E8F0;background:#F8FAFC;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:#4F46E5;">📖 View Study History</button><div id="hist-' + s.name.replace(/ /g,'-') + '" style="display:none;margin-top:12px;"><div style="font-size:12px;font-weight:800;color:#64748B;margin-bottom:8px;">RECENT CARDS</div>' + (s.recentCards || [{ question:'No history yet — student needs to complete sessions', grade:'—', subject:'', date:'' }]).map(h => '<div style="background:#F8FAFC;border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;"><div style="flex:1;font-size:13px;font-weight:700;">' + (h.question||'Card') + '</div><div style="font-size:12px;font-weight:800;color:#64748B;margin-left:8px;">' + (h.grade||'—') + '</div></div>').join('') + '</div></div>').join('')}
+      ${students.map(s => '<div style="background:white;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;"><div style="width:44px;height:44px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#4F46E5;">' + s.name.charAt(0) + '</div><div style="flex:1;"><div style="font-size:16px;font-weight:900;">' + s.name + '</div><div style="font-size:12px;color:#64748B;font-weight:600;">' + s.tier + '</div></div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;"><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#F97316;">' + s.streak + '</div><div style="font-size:11px;color:#64748B;font-weight:700;">Streak</div></div><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#3B82F6;">' + s.cards + '</div><div style="font-size:11px;color:#64748B;font-weight:700;">Cards</div></div><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#22C55E;">' + s.accuracy + '%</div><div style="font-size:11px;color:#64748B;font-weight:700;">Accuracy</div></div></div>' + Object.entries(s.topics).map(([topic,pct]) => '<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:700;">' + topic + '</div><div style="font-size:13px;font-weight:800;color:' + ragColor(pct) + ';">' + pct + '%</div></div><div style="background:#F0F4F8;border-radius:4px;height:6px;"><div style="width:' + pct + '%;background:' + ragColor(pct) + ';height:100%;border-radius:4px;"></div></div></div>').join('') + '<button onclick="toggleStudentHistory(\'' + s.name + '\')" style="width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1px solid #E2E8F0;background:#F8FAFC;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:#4F46E5;">📖 View Study History</button><div id="hist-' + s.name.replace(/ /g,'-') + '" style="display:none;margin-top:12px;"><div style="background:#F8FAFC;border-radius:8px;padding:12px;text-align:center;font-size:13px;color:#64748B;font-weight:700;">No history yet — connects to Supabase when live</div></div></div>').join('')}
     </div>
+
   </div>
 </div>`;
 
   render(html);
+}
+
+function showCreateClass() {
+  const name = prompt('Class name (e.g. "Year 10 Set 1"):');
+  if (!name) return;
+  const code = Math.random().toString(36).substring(2,8).toUpperCase();
+  alert('Class created!\n\nName: ' + name + '\nCode: ' + code + '\n\nShare this code with students at signup.\n(Saving to Supabase coming soon)');
 }
 
 
