@@ -5588,87 +5588,163 @@ function showParentPortal() {
   STATE.screen = 'parent';
   const user = STATE.user;
 
-  // Mock child data
+  // Placeholder child data - will connect to Supabase
   const child = {
-    name: 'Alice Johnson',
-    streak: 7,
-    xp: 450,
-    level: 3,
-    cards_done: 85,
+    name: 'Your Child',
+    streak: 0,
+    xp: 0,
+    level: 1,
+    cards_done: 0,
+    accuracy: 0,
+    tier: 'Foundation',
+    year_group: 10,
+    exam_board: 'AQA',
     topics: [
-      { name: 'Cell Biology', pct: 85, subject: 'Biology' },
-      { name: 'Atomic Structure', pct: 60, subject: 'Chemistry' },
-      { name: 'Energy', pct: 40, subject: 'Physics' },
-    ]
+      { name: 'Cell Biology', pct: 0, subject: 'Biology' },
+      { name: 'Organisation', pct: 0, subject: 'Biology' },
+      { name: 'Atomic Structure', pct: 0, subject: 'Chemistry' },
+      { name: 'Energy', pct: 0, subject: 'Physics' },
+    ],
+    recent: []
   };
 
   const html = `
-<div class="portal-overlay">
-  <div class="portal-header">
-    <div style="font-size:13px;font-weight:700;opacity:0.85;margin-bottom:4px;">PARENT PORTAL</div>
+<div style="min-height:100vh;background:#F8FAFC;">
+
+  <!-- Parent Portal Header -->
+  <div style="background:linear-gradient(135deg,#4F46E5,#7C3AED);padding:28px 24px 20px;color:white;position:relative;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;opacity:0.8;margin-bottom:4px;">PARENT PORTAL</div>
     <div style="font-size:22px;font-weight:900;">${child.name}'s Progress</div>
-    <div style="font-size:14px;opacity:0.85;font-weight:600;margin-top:4px;">Read-only view · Last updated today</div>
-    <button class="btn" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.2);color:white;padding:8px 16px;border-radius:8px;font-size:13px;" onclick="doLogout()">Log Out</button>
+    <div style="font-size:13px;opacity:0.8;font-weight:600;margin-top:4px;">Read-only view · Placeholder data</div>
+    <button onclick="doLogout()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
   </div>
 
-  <div class="portal-tabs">
-    <button class="portal-tab active" onclick="switchPortalTab('progress',this)">📊 Progress</button>
-    <button class="portal-tab" onclick="switchPortalTab('history',this)">📋 History</button>
-    <button class="portal-tab" onclick="switchPortalTab('settings',this)">⚙️ Settings</button>
-    <button class="portal-tab" onclick="switchPortalTab('tips',this)">💡 Tips</button>
+  <!-- Placeholder notice -->
+  <div style="background:#FFF7ED;border-bottom:2px solid #F97316;padding:10px 20px;display:flex;align-items:center;gap:8px;">
+    <span>⚠️</span>
+    <span style="font-size:13px;font-weight:700;color:#C2410C;">Placeholder data shown — real data coming once fully connected</span>
   </div>
 
-  <div id="portal-content" style="flex:1;overflow-y:auto;padding:20px;">
-    <!-- Progress Tab (default) -->
-    <div id="portal-progress">
-      <div class="stats-grid" style="margin-bottom:20px;">
-        <div class="stat-card">
-          <div class="stat-number" style="color:var(--ss-orange);">${child.streak}</div>
-          <div class="stat-label">Day Streak 🔥</div>
+  <!-- Tabs -->
+  <div style="display:flex;background:white;border-bottom:1px solid #E2E8F0;padding:0 16px;gap:4px;">
+    <button id="ptab-progress" onclick="parentTab('progress')" style="padding:14px 16px;border:none;border-bottom:3px solid #4F46E5;background:none;font-size:14px;font-weight:800;color:#4F46E5;cursor:pointer;font-family:inherit;">📊 Progress</button>
+    <button id="ptab-history" onclick="parentTab('history')" style="padding:14px 16px;border:none;border-bottom:3px solid transparent;background:none;font-size:14px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;">📖 History</button>
+    <button id="ptab-tips" onclick="parentTab('tips')" style="padding:14px 16px;border:none;border-bottom:3px solid transparent;background:none;font-size:14px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;">💡 Tips</button>
+  </div>
+
+  <!-- Tab Content -->
+  <div id="parent-tab-content" style="padding:20px;max-width:860px;margin:0 auto;padding-bottom:60px;">
+
+    <!-- PROGRESS TAB -->
+    <div id="pcontent-progress">
+      <!-- Stats grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+        <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
+          <div style="font-size:11px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:6px;">🔥 STREAK</div>
+          <div style="font-size:32px;font-weight:900;color:#F97316;">${child.streak}</div>
+          <div style="font-size:12px;color:#64748B;font-weight:600;">days in a row</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-number" style="color:var(--ss-blue);">${child.xp}</div>
-          <div class="stat-label">Total XP</div>
+        <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
+          <div style="font-size:11px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:6px;">⚡ TOTAL XP</div>
+          <div style="font-size:32px;font-weight:900;color:#6366F1;">${child.xp}</div>
+          <div style="font-size:12px;color:#64748B;font-weight:600;">xp earned</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-number" style="color:var(--ss-purple);">${child.cards_done}</div>
-          <div class="stat-label">Cards Done</div>
+        <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
+          <div style="font-size:11px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:6px;">📚 CARDS DONE</div>
+          <div style="font-size:32px;font-weight:900;color:#3B82F6;">${child.cards_done}</div>
+          <div style="font-size:12px;color:#64748B;font-weight:600;">reviewed</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-number" style="color:var(--ss-green);">Lvl ${child.level}</div>
-          <div class="stat-label">Level</div>
+        <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
+          <div style="font-size:11px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:6px;">🏆 LEVEL</div>
+          <div style="font-size:32px;font-weight:900;color:#A855F7;">Lvl ${child.level}</div>
+          <div style="font-size:12px;color:#64748B;font-weight:600;">current level</div>
         </div>
       </div>
 
-      <div class="section-title">Topic Progress</div>
+      <!-- Child info -->
+      <div style="background:white;border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
+        <div style="font-size:13px;font-weight:800;margin-bottom:10px;">📋 Study Details</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span style="background:#EEF2FF;color:#4F46E5;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;">Year ${child.year_group}</span>
+          <span style="background:#F0FDF4;color:#16A34A;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;">${child.tier}</span>
+          <span style="background:#FFF7ED;color:#C2410C;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;">${child.exam_board}</span>
+        </div>
+      </div>
+
+      <!-- Topic progress -->
+      <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">TOPIC PROGRESS</div>
       ${child.topics.map(t => {
-        const color = t.pct >= 75 ? 'var(--ss-green)' : t.pct >= 45 ? 'var(--ss-blue)' : 'var(--ss-orange)';
-        return `
-        <div class="topic-progress">
-          <div class="topic-progress-header">
+        const col = t.pct >= 75 ? '#22C55E' : t.pct >= 45 ? '#F59E0B' : '#EF4444';
+        const subCol = t.subject === 'Biology' ? '#22C55E' : t.subject === 'Chemistry' ? '#A855F7' : '#3B82F6';
+        return `<div style="background:white;border-radius:12px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.04);border:1px solid #F0F4F8;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
             <div>
-              <div class="topic-progress-name">${t.name}</div>
-              <div style="font-size:11px;color:var(--text-secondary);font-weight:600;">${t.subject}</div>
+              <div style="font-size:14px;font-weight:800;">${t.name}</div>
+              <div style="font-size:11px;font-weight:700;color:${subCol};">${t.subject}</div>
             </div>
-            <div class="topic-progress-pct" style="color:${color};">${t.pct}%</div>
+            <div style="font-size:14px;font-weight:900;color:${col};">${t.pct}%</div>
           </div>
-          <div class="topic-progress-bar">
-            <div class="topic-progress-fill" style="width:${t.pct}%;background:${color};"></div>
+          <div style="background:#F0F4F8;border-radius:6px;height:8px;overflow:hidden;">
+            <div style="width:${t.pct}%;background:${col};height:100%;border-radius:6px;transition:width 0.5s;"></div>
           </div>
         </div>`;
       }).join('')}
 
-      <div class="card" style="margin-top:20px;">
-        <div style="font-size:15px;font-weight:800;margin-bottom:8px;">📬 Contact Teacher</div>
-        <div style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:12px;">Send a message to ${child.name}'s science teacher</div>
-        <button class="btn btn-outline btn-full" onclick="showToast('Email feature requires Supabase connection')">Send Email to Teacher</button>
+      <!-- Contact teacher -->
+      <div style="background:white;border-radius:14px;padding:16px;margin-top:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
+        <div style="font-size:14px;font-weight:800;margin-bottom:6px;">📬 Contact Teacher</div>
+        <div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:12px;">Send a message to your child's science teacher</div>
+        <button onclick="alert('Email feature coming soon')" style="width:100%;padding:12px;border-radius:10px;border:2px solid #E2E8F0;background:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;color:#0F172A;">✉️ Email Teacher</button>
       </div>
     </div>
+
+    <!-- HISTORY TAB -->
+    <div id="pcontent-history" style="display:none;">
+      <div style="text-align:center;padding:40px 20px;">
+        <div style="font-size:40px;margin-bottom:12px;">📖</div>
+        <div style="font-size:16px;font-weight:800;margin-bottom:8px;">Study History</div>
+        <div style="font-size:14px;color:#64748B;font-weight:600;">Your child's recent card activity will appear here once data is connected to Supabase.</div>
+      </div>
+    </div>
+
+    <!-- TIPS TAB -->
+    <div id="pcontent-tips" style="display:none;">
+      <div style="font-size:15px;font-weight:800;margin-bottom:16px;">💡 How to support revision at home</div>
+      ${[
+        { icon:'🕐', title:'Little and often', tip:'10-15 minutes daily is far more effective than one long session on the weekend. The app is designed for short daily use.' },
+        { icon:'🔥', title:'Protect the streak', tip:'The daily streak is a powerful motivator. Encourage your child to log in every day, even for just 5 minutes.' },
+        { icon:'🚫', title:'No peeking', tip:'The AI marking works best when your child genuinely tries to recall the answer before submitting. Encourage honest effort.' },
+        { icon:'🎯', title:'Focus on the red topics', tip:'Topics showing 0-40% mastery need the most attention. Ask your child which topics are coming up as "Again" most often.' },
+        { icon:'💬', title:'Ask about the WOW moments', tip:'After each flashcard your child sees a real exam question linked to that fact. Ask them to show you one — it connects revision to actual exams.' },
+        { icon:'📈', title:'Progress not perfection', tip:'Seeing cards marked "Again" is not failure — it means the spaced repetition system is working and identifying gaps to fill.' },
+      ].map(t => `
+        <div style="background:white;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;display:flex;gap:14px;align-items:flex-start;">
+          <div style="font-size:24px;flex-shrink:0;">${t.icon}</div>
+          <div>
+            <div style="font-size:14px;font-weight:800;margin-bottom:4px;">${t.title}</div>
+            <div style="font-size:13px;color:#64748B;font-weight:600;line-height:1.5;">${t.tip}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+
   </div>
 </div>`;
 
   render(html);
 }
+
+function parentTab(tab) {
+  ['progress','history','tips'].forEach(t => {
+    const btn = document.getElementById('ptab-' + t);
+    const content = document.getElementById('pcontent-' + t);
+    if (btn) {
+      btn.style.borderBottomColor = t === tab ? '#4F46E5' : 'transparent';
+      btn.style.color = t === tab ? '#4F46E5' : '#64748B';
+    }
+    if (content) content.style.display = t === tab ? 'block' : 'none';
+  });
+}
+
 
 function switchPortalTab(tab, el) {
   document.querySelectorAll('.portal-tab').forEach(t => t.classList.remove('active'));
