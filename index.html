@@ -102,14 +102,7 @@ body {
 /* ============================================================
    LAYOUT
 ============================================================ */
-#app {
-  max-width: 480px;
-  margin: 0 auto;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
+
 
 .screen {
   flex: 1;
@@ -247,20 +240,7 @@ textarea.input { resize: vertical; min-height: 100px; }
 /* ============================================================
    NAVIGATION BAR
 ============================================================ */
-.nav-bar {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
-  background: white;
-  border-top: 1px solid var(--border);
-  display: flex;
-  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
-  z-index: 100;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
-}
+
 
 .nav-item {
   flex: 1;
@@ -1522,15 +1502,8 @@ textarea.input { resize: vertical; min-height: 100px; }
 .topbar-dropdown-tile .tile-icon { font-size:22px; }
 .topbar-dropdown-tile .tile-label { font-size:11px; font-weight:800; color:#64748B; text-align:center; }
 
-@media (min-width: 768px) {
-  body { background: white; }
-  #app { max-width: 860px; margin: 0 auto; padding-top: 70px; background: white; box-shadow: none; min-height: 100vh; border-radius: 0; }
-  .nav-bar { display: none !important; }
-  .desktop-topbar { display: flex !important; }
-}
-@media (max-width: 767px) {
-  .desktop-topbar { display: none !important; }
-}
+
+
 .desktop-topbar {
   display: none;
   position: fixed; top: 0; left: 0; right: 0; height: 56px;
@@ -1559,6 +1532,213 @@ textarea.input { resize: vertical; min-height: 100px; }
 .topbar-streak { display: flex; align-items: center; gap: 4px; background: #FFF7ED; border: 2px solid #F97316; border-radius: 20px; padding: 4px 12px; font-size: 14px; font-weight: 900; color: #F97316; }
 .topbar-avatar { width: 34px; height: 34px; border-radius: 50%; background: #F0F4F8; border: 2px solid #E2E8F0; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
 .desktop-topbar { position: relative; }
+
+/* ═══════════════════════════════════════════════
+   SCIENCESPARK V2 — CLEAN LAYOUT
+   Desktop: top bar + centred content
+   Mobile: bottom nav + full width content
+═══════════════════════════════════════════════ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: white;
+  color: #0F172A;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Main content wrapper ── */
+#app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ── Screen containers ── */
+.screen {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* ══════════════════════════════════
+   DESKTOP TOP BAR
+══════════════════════════════════ */
+.desktop-topbar {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  background: white;
+  border-bottom: 1px solid #E2E8F0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  z-index: 1000;
+  align-items: center;
+  padding: 0 32px;
+}
+
+.topbar-logo {
+  font-size: 18px;
+  font-weight: 900;
+  color: #0F172A;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-centre {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.topbar-item {
+  padding: 7px 16px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #64748B;
+  cursor: pointer;
+  border-radius: 20px;
+  transition: all 0.15s;
+  font-family: 'Nunito', sans-serif;
+}
+.topbar-item:hover { background: #F8FAFC; color: #0F172A; }
+.topbar-item.active { color: white; background: #4F8EF7; }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.topbar-streak {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #FFF7ED;
+  border: 2px solid #F97316;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  color: #F97316;
+  font-family: 'Nunito', sans-serif;
+}
+
+.topbar-grid-btn {
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.topbar-grid-btn:hover { background: #F0F4F8; }
+
+.topbar-grid-icon {
+  display: grid;
+  grid-template-columns: repeat(3, 5px);
+  gap: 3px;
+}
+.topbar-grid-icon span {
+  width: 5px; height: 5px;
+  background: #64748B;
+  border-radius: 1px;
+  display: block;
+}
+
+.topbar-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: #F0F4F8;
+  border: 2px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Dropdown */
+.topbar-dropdown {
+  display: none;
+  position: fixed;
+  top: 60px; right: 16px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  padding: 16px;
+  z-index: 1001;
+  width: 220px;
+  border: 1px solid #E2E8F0;
+}
+.topbar-dropdown.open { display: block; }
+.topbar-dropdown-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.topbar-dropdown-tile {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 12px 8px; border-radius: 12px;
+  cursor: pointer; transition: background .15s;
+}
+.topbar-dropdown-tile:hover { background: #F0F4F8; }
+.tile-icon { font-size: 22px; }
+.tile-label { font-size: 11px; font-weight: 800; color: #64748B; text-align: center; font-family: 'Nunito', sans-serif; }
+
+/* ══════════════════════════════════
+   MOBILE BOTTOM NAV
+══════════════════════════════════ */
+.nav-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: white;
+  border-top: 1px solid #E2E8F0;
+  display: flex;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+  z-index: 1000;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 0;
+  cursor: pointer;
+  color: #94A3B8;
+  font-size: 11px;
+  font-weight: 700;
+  transition: color 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Nunito', sans-serif;
+}
+.nav-item.active { color: #22C55E; }
+
+/* ══════════════════════════════════
+   DESKTOP vs MOBILE SWITCHING
+══════════════════════════════════ */
+@media (min-width: 768px) {
+  .desktop-topbar { display: flex !important; }
+  .nav-bar { display: none !important; }
+  .screen { padding-top: 72px; padding-bottom: 40px; padding-left: 24px; padding-right: 24px; }
+  body { background: white; }
+}
+
+@media (max-width: 767px) {
+  .desktop-topbar { display: none !important; }
+  .nav-bar { display: flex !important; }
+  .screen { padding-top: 16px; padding-left: 16px; padding-right: 16px; }
+}
 </style>
 </head>
 <body>
