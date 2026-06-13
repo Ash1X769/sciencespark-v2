@@ -5444,12 +5444,12 @@ async function joinClass() {
     const userId = (await supabase.auth.getUser()).data.user.id;
     await supabase.from('class_members').upsert({ class_id: data.id, student_id: userId });
     STATE.user.class_code = code;
-    LS.set('user', STATE.user);
+    LS.set('demo_user', STATE.user);
     alert('Joined class: ' + data.name + ' ✅');
     showProfile();
   } catch(e) {
     STATE.user.class_code = code;
-    LS.set('user', STATE.user);
+    LS.set('demo_user', STATE.user);
     alert('Code saved! ✅');
     showProfile();
   }
@@ -5949,16 +5949,47 @@ function closeModal() {
 // ============================================================
 // INIT
 // ============================================================
-function init() {
-  // Check for saved session
+async function init() {
+  // First try localStorage session
   const saved = LS.get('demo_user');
-  if (saved) {
+  if (saved && saved.id) {
     STATE.user = saved;
-    STATE.role = saved.role;
+    STATE.role = saved.role || 'student';
     afterLogin();
-  } else {
-    showAuth();
+    return;
   }
+  
+  // Try Supabase session
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session?.user) {
+      const u = data.session.user;
+      const meta = u.user_metadata || {};
+      STATE.user = {
+        id: u.id,
+        email: u.email,
+        display_name: meta.display_name || u.email,
+        role: meta.role || 'student',
+        year_group: meta.year_group || 11,
+        tier: meta.tier || 'combined_higher',
+        exam_board: meta.exam_board || 'AQA',
+        class_code: meta.class_code || null,
+        parent_code: meta.parent_code || null,
+        xp: meta.xp || 0,
+        streak: meta.streak || 0,
+        level: meta.level || 1,
+        ai_mode: meta.ai_mode !== false,
+      };
+      STATE.role = STATE.user.role;
+      LS.set('demo_user', STATE.user);
+      afterLogin();
+      return;
+    }
+  } catch(e) {
+    console.log('No Supabase session:', e);
+  }
+  
+  showAuth();
 }
 
 // Start app
