@@ -4200,16 +4200,7 @@ function renderFlashcard() {
   </div>
 
   <div class="flashcard-area">
-    <div class="card" style="padding:20px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <span style="font-size:11px;font-weight:800;color:${subColor};background:${subColor}22;padding:3px 10px;border-radius:20px;">${card.subject} · ${card.topic_name || card.topic}</span>
-        <span class="c-tier ${tierClass}">${tierLabel}</span>
-      </div>
-      <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
-      ${hintHTML}
-    </div>
-
-    <!-- AI Toggle -->
+<!-- AI Toggle -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;margin-bottom:8px;">
       <div>
         <div style="font-size:13px;font-weight:800;">${aiMode ? '🤖 AI Marking ON' : '🙋 Self Rate ON'}</div>
@@ -4218,6 +4209,15 @@ function renderFlashcard() {
       <div onclick="toggleAIMode()" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:${aiMode ? '#22C55E' : '#E2E8F0'};position:relative;transition:background 0.2s;flex-shrink:0;">
         <div style="position:absolute;top:3px;${aiMode ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>
       </div>
+    </div>
+
+        <div class="card" style="padding:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:11px;font-weight:800;color:${subColor};background:${subColor}22;padding:3px 10px;border-radius:20px;">${card.subject} · ${card.topic_name || card.topic}</span>
+        <span class="c-tier ${tierClass}">${tierLabel}</span>
+      </div>
+      <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
+      ${hintHTML}
     </div>
     ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea><button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for marking</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
 
