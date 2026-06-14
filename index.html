@@ -1742,6 +1742,149 @@ body {
   .nav-bar { display: flex !important; }
   .screen { padding-top: 16px; padding-left: 16px; padding-right: 16px; }
 }
+
+/* ── AI Tutor Floating Button + Panel ── */
+#ai-tutor-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.4);
+  z-index: 8888;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: none;
+}
+#ai-tutor-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(99,102,241,0.5);
+}
+#ai-tutor-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 8889;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+#ai-tutor-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+#ai-tutor-panel {
+  position: fixed;
+  top: 0;
+  right: -42%;
+  width: 40%;
+  min-width: 340px;
+  height: 100%;
+  background: #fff;
+  z-index: 8890;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+  transition: right 0.3s cubic-bezier(0.4,0,0.2,1);
+  font-family: 'Nunito', sans-serif;
+}
+#ai-tutor-panel.open {
+  right: 0;
+}
+@media (max-width: 768px) {
+  #ai-tutor-panel {
+    width: 100%;
+    min-width: unset;
+    top: 25%;
+    right: 0;
+    height: 75%;
+    border-radius: 20px 20px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    right: 0 !important;
+  }
+  #ai-tutor-panel.open {
+    transform: translateY(0);
+  }
+}
+.tutor-panel-header {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.tutor-panel-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f8fafc;
+}
+.tutor-panel-suggested {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+}
+.tutor-panel-input {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+.tutor-panel-bubble {
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.5;
+  max-width: 85%;
+}
+.tutor-panel-bubble.user {
+  background: #6366f1;
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+.tutor-panel-bubble.ai {
+  background: #fff;
+  color: #1e293b;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.tutor-suggested-btn {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  transition: all 0.15s;
+}
+.tutor-suggested-btn:hover {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+}
+
 </style>
 </head>
 <body>
@@ -6254,6 +6397,108 @@ init();
     window.openAITutor = openAITutor;
     window.closeAITutor = closeAITutor;
     window.sendTutorMessage = sendTutorMessage;
+
+
+// ── AI Tutor Floating Panel ──
+const _tutorSuggestions = [
+  "How does natural selection work?",
+  "Explain mitosis simply",
+  "What is ionic bonding?",
+  "Explain photosynthesis using an analogy",
+  "What is the wave equation?",
+  "Difference between aerobic and anaerobic respiration?",
+  "What is the lock and key model?",
+  "Explain Newton's laws simply",
+  "What causes a mutation?",
+  "How does osmosis work?"
+];
+var _tutorPanelHistory = [];
+
+function openAITutorPanel() {
+  const panel = document.getElementById('ai-tutor-panel');
+  const overlay = document.getElementById('ai-tutor-overlay');
+  const fab = document.getElementById('ai-tutor-fab');
+  if (panel) panel.classList.add('open');
+  if (overlay) overlay.classList.add('open');
+  if (fab) fab.style.display = 'none';
+  // Show suggested questions if no history
+  const sq = document.getElementById('tutor-panel-suggested');
+  if (sq && _tutorPanelHistory.length === 0) {
+    const shuffled = _tutorSuggestions.sort(() => Math.random() - 0.5).slice(0, 3);
+    sq.innerHTML = shuffled.map(q =>
+      '<button class="tutor-suggested-btn" onclick="sendAITutorPanel(' + JSON.stringify(q) + ')">' + q + '</button>'
+    ).join('');
+  }
+  setTimeout(() => {
+    const input = document.getElementById('tutor-panel-input');
+    if (input) input.focus();
+  }, 300);
+}
+
+function closeAITutorPanel() {
+  const panel = document.getElementById('ai-tutor-panel');
+  const overlay = document.getElementById('ai-tutor-overlay');
+  const fab = document.getElementById('ai-tutor-fab');
+  if (panel) panel.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+  if (fab) fab.style.display = 'flex';
+}
+
+async function sendAITutorPanel(presetQ) {
+  const input = document.getElementById('tutor-panel-input');
+  const question = presetQ || (input && input.value.trim());
+  if (!question) return;
+  if (input) input.value = '';
+
+  const sq = document.getElementById('tutor-panel-suggested');
+  if (sq) sq.innerHTML = '';
+
+  const messages = document.getElementById('tutor-panel-messages');
+  if (!messages) return;
+
+  // User bubble
+  const userBubble = document.createElement('div');
+  userBubble.className = 'tutor-panel-bubble user';
+  userBubble.textContent = question;
+  messages.appendChild(userBubble);
+  messages.scrollTop = messages.scrollHeight;
+
+  // AI loading bubble
+  const aiBubble = document.createElement('div');
+  aiBubble.className = 'tutor-panel-bubble ai';
+  aiBubble.innerHTML = '<div style="font-size:0.75rem;font-weight:700;color:#6366f1;margin-bottom:3px;">AI Tutor</div><span style="color:#94a3b8;">Thinking...</span>';
+  messages.appendChild(aiBubble);
+  messages.scrollTop = messages.scrollHeight;
+
+  _tutorPanelHistory.push({ role: 'user', content: question });
+
+  try {
+    const user = STATE.user || {};
+    const systemPrompt = 'You are a friendly, encouraging GCSE science tutor. The student is in Year ' + (user.year_group || 11) + ' studying ' + (user.tier || 'combined higher').replace(/_/g,' ') + ' tier following the AQA specification. Give clear, concise explanations suitable for GCSE level. Use simple language and analogies. Keep answers focused. After answering, add a short follow-up suggestion like "Try asking me..." to encourage further learning.';
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 600,
+        system: systemPrompt,
+        messages: _tutorPanelHistory
+      })
+    });
+    const data = await res.json();
+    const answer = data.content?.[0]?.text || 'Sorry, I could not get an answer. Please try again.';
+    _tutorPanelHistory.push({ role: 'assistant', content: answer });
+    aiBubble.innerHTML = '<div style="font-size:0.75rem;font-weight:700;color:#6366f1;margin-bottom:3px;">AI Tutor</div>' + answer.replace(/\n/g,'<br>');
+  } catch(e) {
+    aiBubble.innerHTML = '<div style="font-size:0.75rem;font-weight:700;color:#6366f1;margin-bottom:3px;">AI Tutor</div><span style="color:#ef4444;">Something went wrong. Please try again.</span>';
+  }
+  messages.scrollTop = messages.scrollHeight;
+}
+
+window.openAITutorPanel = openAITutorPanel;
+window.closeAITutorPanel = closeAITutorPanel;
+window.sendAITutorPanel = sendAITutorPanel;
 
 </script>
 </body>
