@@ -6212,6 +6212,22 @@ async function init() {
 
 // Start app
 init();
+
+// Expose teacher dashboard functions to window scope for onclick handlers
+window.teacherTab = teacherTab;
+window.buildSettingsHTML = buildSettingsHTML;
+window.onClassAIToggle = onClassAIToggle;
+window.toggleAILock = toggleAILock;
+window.copySettingsCode = copySettingsCode;
+window.saveClassName = saveClassName;
+window.deleteClassConfirm = deleteClassConfirm;
+window.setStudentAI = setStudentAI;
+window.showStudentDetail = showStudentDetail;
+window.showTeacherDashboard = showTeacherDashboard;
+window.showCreateClass = showCreateClass;
+window.toggleStudentHistory = toggleStudentHistory;
+window.ragColor = typeof ragColor !== 'undefined' ? ragColor : (p) => p >= 75 ? '#22C55E' : p >= 40 ? '#F59E0B' : '#EF4444';
+
 </script>
 </body>
 </html>
