@@ -1044,10 +1044,7 @@ textarea.input { resize: vertical; min-height: 100px; }
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 12px 16px 8px;
-  width: 100%;
-  justify-content: center;
-  border-top: 1px solid #e2e8f0;
+  padding: 0 20px 12px;
 }
 
 .suggested-q {
@@ -5069,13 +5066,14 @@ function showAITutor() {
     ${chatHtml}
   </div>
 
-  <div class="tutor-input-bar">
   ${STATE.tutorHistory.length === 0 ? `
   <div class="suggested-questions">
     ${shuffledSuggestions.map(q => `
       <button class="suggested-q" onclick="sendTutorMessage('${escapeAttr(q)}')">${q}</button>
     `).join('')}
   </div>` : ''}
+
+  <div class="tutor-input-bar">
     <textarea class="tutor-input" id="tutor-input" placeholder="Ask about any science topic..." rows="1"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTutorFromInput();}"></textarea>
     <button class="tutor-send-btn" onclick="sendTutorFromInput()">
