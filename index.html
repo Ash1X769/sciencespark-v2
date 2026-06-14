@@ -3329,8 +3329,8 @@ function formatAIResponse(text) {
 // LOCAL STORAGE (offline cache + demo mode)
 // ============================================================
 const LS = {
-  get: (k) => { try { return JSON.parse(localStorage.getItem('ss_' + k)); } catch { return null; } },
-  set: (k, v) => localStorage.setItem('ss_' + k, JSON.stringify(v)),
+  get: (k) => { try { return JSON.parse(localStorage.getItem('ss_' + k)) || JSON.parse(sessionStorage.getItem('ss_' + k)); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem('ss_' + k, JSON.stringify(v)); } catch(e){} try { sessionStorage.setItem('ss_' + k, JSON.stringify(v)); } catch(e){} },
   del: (k) => localStorage.removeItem('ss_' + k),
 };
 
