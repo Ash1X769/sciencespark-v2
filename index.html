@@ -4077,9 +4077,9 @@ function showHome() {
       </div>
       <div style="font-size:20px;">→</div>
     </div>
-      <div onclick="openAITutor()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:16px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;box-shadow:0 4px 12px rgba(99,102,241,0.25);">
+      <div onclick="showAITutor()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:16px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;box-shadow:0 4px 12px rgba(99,102,241,0.25);">
         <div style="display:flex;align-items:center;gap:14px;">
-          <div style="width:42px;height:42px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">🤖</div>
+          <div style="width:42px;height:42px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">✨</div>
           <div>
             <div style="font-size:14px;font-weight:800;color:#fff;">AI Tutor</div>
             <div style="font-size:12px;color:rgba(255,255,255,0.75);font-weight:600;">Ask me anything about your revision</div>
@@ -4128,7 +4128,7 @@ function renderNavBar(active) {
     <div class="topbar-dropdown-grid">
       <div class="topbar-dropdown-tile" onclick="showAllKO();toggleTopbarMenu()"><div class="tile-icon">📚</div><div class="tile-label">Organisers</div></div>
       <div class="topbar-dropdown-tile" onclick="showStudyHistory();toggleTopbarMenu()"><div class="tile-icon">📖</div><div class="tile-label">History</div></div>
-      <div class="topbar-dropdown-tile" onclick="showAITutor();toggleTopbarMenu()"><div class="tile-icon">🤖</div><div class="tile-label">AI Tutor</div></div>
+      <div class="topbar-dropdown-tile" onclick="showAITutor();toggleTopbarMenu()"><div class="tile-icon">✨</div><div class="tile-label">AI Tutor</div></div>
       <div class="topbar-dropdown-tile" onclick="showProfile();toggleTopbarMenu()"><div class="tile-icon">👤</div><div class="tile-label">Profile</div></div>
       <div class="topbar-dropdown-tile" onclick="showHome();toggleTopbarMenu()"><div class="tile-icon">🏠</div><div class="tile-label">Home</div></div>
       <div class="topbar-dropdown-tile" onclick="showDashboard();toggleTopbarMenu()"><div class="tile-icon">📊</div><div class="tile-label">Progress</div></div>
@@ -4223,7 +4223,7 @@ function renderFlashcard() {
 <!-- AI Toggle -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;margin-bottom:8px;">
       <div>
-        <div style="font-size:13px;font-weight:800;">${aiMode ? '🤖 AI Marking ON' : '🙋 Self Rate ON'}</div>
+        <div style="font-size:13px;font-weight:800;">${aiMode ? '✨ AI Marking ON' : '🙋 Self Rate ON'}</div>
         <div style="font-size:11px;color:#64748B;font-weight:600;">${aiMode ? 'Type your answer — marked against key terms' : 'Reveal and rate yourself honestly'}</div>
       </div>
       <div onclick="toggleAIMode()" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:${aiMode ? '#22C55E' : '#E2E8F0'};position:relative;transition:background 0.2s;flex-shrink:0;">
@@ -5046,7 +5046,7 @@ function showAITutor() {
 
   const chatHtml = STATE.tutorHistory.length === 0
     ? `<div style="text-align:center;padding:40px 20px;">
-        <div style="font-size:48px;margin-bottom:12px;">🤖</div>
+        <div style="font-size:48px;margin-bottom:12px;">✨</div>
         <div style="font-size:18px;font-weight:800;margin-bottom:8px;">Hi! I'm your Science Tutor</div>
         <div style="font-size:14px;color:var(--text-secondary);font-weight:600;line-height:1.5;">Ask me anything about GCSE science — I'll explain it clearly, quiz you, or go through concepts step by step.</div>
       </div>`
@@ -5058,7 +5058,7 @@ function showAITutor() {
 <div class="screen" id="screen-tutor">
   <div class="top-bar">
     <button class="btn btn-ghost btn-sm" onclick="showHome()">← Back</button>
-    <div style="font-size:17px;font-weight:800;">🤖 AI Science Tutor</div>
+    <div style="font-size:17px;font-weight:800;">✨ AI Science Tutor</div>
     <button class="btn btn-ghost btn-sm" onclick="clearTutorChat()">Clear</button>
   </div>
 
@@ -6033,7 +6033,7 @@ function switchPortalTab(tab, el) {
   } else if (tab === 'settings') {
     content.innerHTML = `
       <div class="card">
-        <div style="font-size:15px;font-weight:800;margin-bottom:16px;">🤖 AI Mode for Your Child</div>
+        <div style="font-size:15px;font-weight:800;margin-bottom:16px;">✨ AI Mode for Your Child</div>
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div>
             <div style="font-weight:700;font-size:14px;">AI Marking enabled</div>
@@ -6177,7 +6177,7 @@ init();
       panel.innerHTML = `
         <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:20px 20px 16px;display:flex;align-items:center;gap:14px;">
           <button onclick="closeAITutor()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer;font-family:Nunito,sans-serif;">←</button>
-          <div style="width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">🤖</div>
+          <div style="width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">✨</div>
           <div>
             <div style="font-size:16px;font-weight:800;color:#fff;">AI Tutor</div>
             <div style="font-size:12px;color:rgba(255,255,255,0.75);font-weight:600;">GCSE ${subject} · ${tier.replace('_',' ')}</div>
