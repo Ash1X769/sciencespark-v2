@@ -5735,7 +5735,7 @@ async function showTeacherDashboard(selectedClass) {
     <!-- STUDENTS -->
     <div id="tcontent-students" style="display:none;">
       ${students.map(s => '<div style="background:white;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;"><div style="width:44px;height:44px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#4F46E5;">' + s.name.charAt(0) + '</div>
-  <div id="tcontent-settings" style="display:none;padding:20px;"></div><div style="flex:1;"><div style="font-size:16px;font-weight:900;">' + s.name + '</div><div style="font-size:12px;color:#64748B;font-weight:600;">' + s.tier + '</div></div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;"><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#F97316;">' + s.streak + '</div><div style="font-size:11px;color:#64748B;font-weight:700;">Streak</div></div><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#3B82F6;">' + s.cards + '</div><div style="font-size:11px;color:#64748B;font-weight:700;">Cards</div></div><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#22C55E;">' + s.accuracy + '%</div><div style="font-size:11px;color:#64748B;font-weight:700;">Accuracy</div></div></div>' + Object.entries(s.topics).map(([topic,pct]) => '<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:700;">' + topic + '</div><div style="font-size:13px;font-weight:800;color:' + ragColor(pct) + ';">' + pct + '%</div></div><div style="background:#F0F4F8;border-radius:4px;height:6px;"><div style="width:' + pct + '%;background:' + ragColor(pct) + ';height:100%;border-radius:4px;"></div></div></div>').join('') + '<button onclick="toggleStudentHistory(\'' + s.name + '\')" style="width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1px solid #E2E8F0;background:#F8FAFC;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:#4F46E5;">📖 View Study History</button><div id="hist-' + s.name.replace(/ /g,'-') + '" style="display:none;margin-top:12px;"><div style="background:#F8FAFC;border-radius:8px;padding:12px;text-align:center;font-size:13px;color:#64748B;font-weight:700;">No history yet — connects to Supabase when live</div></div></div>').join('')}
+  <div style="flex:1;"><div style="font-size:16px;font-weight:900;">' + s.name + '</div><div style="font-size:12px;color:#64748B;font-weight:600;">' + s.tier + '</div></div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;"><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#F97316;">' + s.streak + '</div><div style="font-size:11px;color:#64748B;font-weight:700;">Streak</div></div><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#3B82F6;">' + s.cards + '</div><div style="font-size:11px;color:#64748B;font-weight:700;">Cards</div></div><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#22C55E;">' + s.accuracy + '%</div><div style="font-size:11px;color:#64748B;font-weight:700;">Accuracy</div></div></div>' + Object.entries(s.topics).map(([topic,pct]) => '<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:700;">' + topic + '</div><div style="font-size:13px;font-weight:800;color:' + ragColor(pct) + ';">' + pct + '%</div></div><div style="background:#F0F4F8;border-radius:4px;height:6px;"><div style="width:' + pct + '%;background:' + ragColor(pct) + ';height:100%;border-radius:4px;"></div></div></div>').join('') + '<button onclick="toggleStudentHistory(\'' + s.name + '\')" style="width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1px solid #E2E8F0;background:#F8FAFC;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:#4F46E5;">📖 View Study History</button><div id="hist-' + s.name.replace(/ /g,'-') + '" style="display:none;margin-top:12px;"><div style="background:#F8FAFC;border-radius:8px;padding:12px;text-align:center;font-size:13px;color:#64748B;font-weight:700;">No history yet — connects to Supabase when live</div></div></div>').join('')}
     </div>
 
   </div>
@@ -5856,6 +5856,47 @@ function teacherTab(tab) {
     if (btn) { btn.style.borderBottomColor = t===tab?'#0F172A':'transparent'; btn.style.color = t===tab?'#0F172A':'#64748B'; }
     if (content) content.style.display = t===tab?'block':'none';
   });
+  if (tab === 'settings') {
+    let el = document.getElementById('tcontent-settings');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'tcontent-settings';
+      el.style.cssText = 'padding:20px;';
+      const tabContents = document.querySelector('[id^="tcontent-overview"]') || document.getElementById('tcontent-students');
+      if (tabContents && tabContents.parentNode) tabContents.parentNode.appendChild(el);
+    }
+    el.style.display = 'block';
+    const classCode = STATE.user && STATE.user.class_code ? STATE.user.class_code : 'N/A';
+    const aiOn = STATE.user && STATE.user.ai_mode !== false;
+    el.innerHTML = '<div style="max-width:520px;margin:0 auto;padding:8px 0;">'
+      + '<h3 style="font-size:1.1rem;font-weight:700;color:#1e293b;margin:0 0 20px;">Class Settings</h3>'
+      + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;">'
+      + '<label style="font-size:0.8rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Class Name</label>'
+      + '<div style="display:flex;gap:10px;align-items:center;">'
+      + '<input id="edit-class-name" type="text" placeholder="e.g. Year 10 Set 1" style="flex:1;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.95rem;font-family:inherit;outline:none;">'
+      + '<button onclick="saveClassName()" style="padding:10px 18px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-weight:600;font-size:0.85rem;cursor:pointer;">Save</button>'
+      + '</div></div>'
+      + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;">'
+      + '<label style="font-size:0.8rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Class Code</label>'
+      + '<div style="display:flex;gap:10px;align-items:center;">'
+      + '<span style="flex:1;padding:10px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:1rem;font-weight:700;color:#6366f1;letter-spacing:2px;">' + classCode + '</span>'
+      + '<button onclick="copyClassCode()" style="padding:10px 18px;background:#f1f5f9;color:#374151;border:1px solid #e2e8f0;border-radius:8px;font-weight:600;font-size:0.85rem;cursor:pointer;">Copy</button>'
+      + '</div>'
+      + '<p style="font-size:0.78rem;color:#94a3b8;margin:8px 0 0;">Share this with students so they can join your class.</p>'
+      + '</div>'
+      + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;">'
+      + '<label style="font-size:0.8rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:12px;">AI Marking</label>'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;">'
+      + '<div><p style="margin:0;font-size:0.9rem;font-weight:600;color:#1e293b;">Require AI marking for all students</p>'
+      + '<p style="margin:4px 0 0;font-size:0.78rem;color:#64748b;">Students cannot self-rate if this is on</p></div>'
+      + '<input type="checkbox" ' + (aiOn ? 'checked' : '') + ' onchange="toggleClassAIMode(this.checked)" style="width:20px;height:20px;cursor:pointer;">'
+      + '</div></div>'
+      + '<div style="background:#fff5f5;border:1px solid #fecaca;border-radius:12px;padding:20px;">'
+      + '<label style="font-size:0.8rem;font-weight:600;color:#ef4444;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Danger Zone</label>'
+      + '<p style="font-size:0.85rem;color:#64748b;margin:0 0 12px;">Deleting a class cannot be undone.</p>'
+      + '<button onclick="confirmDeleteClass()" style="padding:9px 18px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:600;font-size:0.85rem;cursor:pointer;">Delete this class</button>'
+      + '</div></div>';
+  }
 }
 
 
