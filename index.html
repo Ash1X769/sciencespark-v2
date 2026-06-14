@@ -942,14 +942,11 @@ textarea.input { resize: vertical; min-height: 100px; }
 .tutor-chat {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 20px 40px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-bottom: 120px;
-  max-width: 800px;
-  width: 100%;
-  margin: 0 auto;
+  padding-bottom: 20px;
 }
 
 .chat-bubble {
@@ -999,9 +996,6 @@ textarea.input { resize: vertical; min-height: 100px; }
 }
 
 .tutor-input-bar {
-  max-width: 800px;
-  width: 100%;
-  margin: 0 auto;
   position: fixed;
   bottom: 72px;
   left: 50%;
@@ -1047,13 +1041,13 @@ textarea.input { resize: vertical; min-height: 100px; }
 .tutor-send-btn:hover { transform: scale(1.08); }
 
 .suggested-questions {
-  max-width: 800px;
-  width: 100%;
-  margin: 0 auto;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 0 20px 12px;
+  padding: 12px 20px;
+  width: 100%;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
 }
 
 .suggested-q {
@@ -5075,14 +5069,13 @@ function showAITutor() {
     ${chatHtml}
   </div>
 
+  <div class="tutor-input-bar">
   ${STATE.tutorHistory.length === 0 ? `
   <div class="suggested-questions">
     ${shuffledSuggestions.map(q => `
       <button class="suggested-q" onclick="sendTutorMessage('${escapeAttr(q)}')">${q}</button>
     `).join('')}
   </div>` : ''}
-
-  <div class="tutor-input-bar">
     <textarea class="tutor-input" id="tutor-input" placeholder="Ask about any science topic..." rows="1"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTutorFromInput();}"></textarea>
     <button class="tutor-send-btn" onclick="sendTutorFromInput()">
