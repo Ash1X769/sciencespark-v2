@@ -5488,7 +5488,11 @@ function doLogout() {
   STATE.user = null;
   STATE.role = null;
   STATE.tutorHistory = [];
+  STATE.classAILocked = false;
+  STATE.classAIOn = false;
   LS.del('demo_user');
+  LS.del('last_screen');
+  try { sessionStorage.clear(); } catch(e) {}
   showAuth();
 }
 
