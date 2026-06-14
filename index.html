@@ -3774,10 +3774,17 @@ async function doSignup() {
   }
 }
 
-function afterLogin() {
+function afterLogin(startScreen) {
+  if (startScreen === 'history') { showStudyHistory(); return; }
+  if (startScreen === 'teacher') { showTeacherDashboard(); return; }
+  if (startScreen === 'parent') { showParentPortal(); return; }
   if (STATE.role === 'student') showHome();
   else if (STATE.role === 'teacher') showTeacherDashboard();
   else showParentPortal();
+}
+
+function saveScreen(name) {
+  LS.set('last_screen', name);
 }
 
 // ============================================================
@@ -3785,7 +3792,7 @@ function afterLogin() {
 // ============================================================
 
 function showStudyHistory() {
-  STATE.screen = 'history';
+  STATE.screen = 'history'; saveScreen('history');
   const history = (LS.get('card_history') || []).slice(0, 80);
   
   const gradeColor = { again:'#DC2626', hard:'#D97706', good:'#16A34A', easy:'#4F46E5', 0:'#DC2626', 1:'#D97706', 2:'#16A34A', 3:'#4F46E5' };
@@ -5488,7 +5495,7 @@ function doLogout() {
 // TEACHER DASHBOARD
 // ============================================================
 async function showTeacherDashboard(selectedClass) {
-  STATE.screen = 'teacher';
+  STATE.screen = 'teacher'; saveScreen('teacher');
   const user = STATE.user;
   const classCode = user.class_code || 'N/A';
   selectedClass = selectedClass || 'all';
@@ -5743,7 +5750,7 @@ function showStudentDetail(name) {
 // PARENT PORTAL
 // ============================================================
 function showParentPortal() {
-  STATE.screen = 'parent';
+  STATE.screen = 'parent'; saveScreen('parent');
   const user = STATE.user;
 
   // Placeholder child data - will connect to Supabase
@@ -5995,54 +6002,26 @@ function closeModal() {
 // ============================================================
 async function init() {
   const saved = LS.get('demo_user');
-  
-  if (saved && saved.id && saved.token) {
-    // Verify token still valid
-    try {
-      const res = await fetch(CONFIG.SUPABASE_URL + '/auth/v1/user', {
-        headers: {
-          'apikey': CONFIG.SUPABASE_ANON_KEY,
-          'Authorization': 'Bearer ' + saved.token
-        }
-      });
-      if (res.ok) {
-        STATE.user = saved;
-        STATE.role = saved.role || 'student';
-        afterLogin();
-        return;
-      }
-    } catch(e) {}
-    
-    // Try refresh token
-    if (saved.refresh_token) {
-      try {
-        const res = await fetch(CONFIG.SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY },
-          body: JSON.stringify({ refresh_token: saved.refresh_token })
-        });
-        const data = await res.json();
-        if (data.access_token) {
-          STATE.user = { ...saved, token: data.access_token, refresh_token: data.refresh_token };
-          STATE.role = saved.role || 'student';
-          LS.set('demo_user', STATE.user);
-          afterLogin();
-          return;
-        }
-      } catch(e) {}
-    }
-    
-    // Token expired but we have user data - restore anyway for offline use
-    STATE.user = saved;
-    STATE.role = saved.role || 'student';
-    afterLogin();
-    return;
-  }
-  
+
+  // Restore session instantly — no network call, no delay, no logout on refresh
   if (saved && saved.id) {
     STATE.user = saved;
     STATE.role = saved.role || 'student';
-    afterLogin();
+    const lastScreen = LS.get('last_screen');
+    afterLogin(lastScreen || null);
+    // Silently refresh token in background
+    if (saved.refresh_token) {
+      fetch(CONFIG.SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY },
+        body: JSON.stringify({ refresh_token: saved.refresh_token })
+      }).then(r => r.json()).then(data => {
+        if (data.access_token) {
+          STATE.user = { ...STATE.user, token: data.access_token, refresh_token: data.refresh_token };
+          LS.set('demo_user', STATE.user);
+        }
+      }).catch(() => {});
+    }
     return;
   }
   
