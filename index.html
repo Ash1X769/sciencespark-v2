@@ -5712,78 +5712,46 @@ function confirmRemoveStudent(studentName, classId) {
   showToast('Remove student coming soon');
 }
 function buildSettingsHTML(code, aiAttr) {
-  return '<h3 style="font-family:inherit;font-size:1.1rem;font-weight:700;color:#1e293b;margin:0 0 20px;">Class Settings</h3>'
+  var on = aiAttr ? true : false;
+  var W = 'font-family:Nunito,sans-serif;font-weight:';
+  var S = W + '600;font-size:';
+  return '<div style="' + W + '700;font-size:1.1rem;color:#1e293b;margin:0 0 24px;">Class Settings</div>'
     + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;">'
-    + '<label style="font-family:inherit;font-size:0.75rem;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Class Name</label>'
+    + '<div style="' + W + '800;font-size:0.75rem;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Class Name</div>'
     + '<div style="display:flex;gap:10px;">'
-    + '<input id="edit-class-name" type="text" placeholder="e.g. Year 10 Set 1" style="flex:1;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-weight:600;font-size:0.95rem;font-family:inherit;outline:none;">'
-    + '<button onclick="saveClassName()" style="padding:10px 18px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;">Save</button>'
+    + '<input id="edit-class-name" type="text" placeholder="e.g. Year 10 Set 1" style="flex:1;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;' + S + '0.95rem;font-family:Nunito,sans-serif;outline:none;">'
+    + '<button onclick="saveClassName()" style="padding:10px 18px;background:#6366f1;color:#fff;border:none;border-radius:8px;' + W + '700;font-size:0.9rem;font-family:Nunito,sans-serif;cursor:pointer;">Save</button>'
     + '</div></div>'
     + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;">'
-    + '<label style="font-family:inherit;font-size:0.75rem;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Class Code</label>'
+    + '<div style="' + W + '800;font-size:0.75rem;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Class Code</div>'
     + '<div style="display:flex;gap:10px;align-items:center;">'
-    + '<span id="settings-class-code" style="flex:1;padding:10px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:1rem;font-weight:700;color:#6366f1;letter-spacing:2px;">' + code + '</span>'
-    + '<button onclick="copySettingsCode()" style="padding:10px 18px;background:#f1f5f9;color:#374151;border:1px solid #e2e8f0;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;">Copy</button>'
+    + '<span id="settings-class-code" style="flex:1;padding:10px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;' + W + '800;font-size:1rem;font-family:Nunito,sans-serif;color:#6366f1;letter-spacing:2px;">' + code + '</span>'
+    + '<button onclick="copySettingsCode()" style="padding:10px 18px;background:#f1f5f9;color:#374151;border:1px solid #e2e8f0;border-radius:8px;' + W + '700;font-size:0.9rem;font-family:Nunito,sans-serif;cursor:pointer;">Copy</button>'
     + '</div>'
-    + '<p style="font-weight:600;font-size:0.78rem;color:#475569;margin:8px 0 0;">Share this with students so they can join your class.</p>'
+    + '<div style="' + S + '0.78rem;color:#475569;margin:8px 0 0;">Share this with students so they can join your class.</div>'
     + '</div>'
     + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;">'
-    + '<label style="font-family:inherit;font-size:0.75rem;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:12px;">AI Marking</label>'
+    + '<div style="' + W + '800;font-size:0.75rem;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">AI Marking</div>'
     + '<div style="display:flex;align-items:center;justify-content:space-between;">'
-    + '<div><p style="margin:0;font-family:inherit;font-size:0.9rem;font-weight:600;color:#1e293b;">Require AI marking for all students</p>'
-    + '<p style="margin:4px 0 0;font-weight:600;font-size:0.78rem;color:#374151;">Students cannot self-rate if this is on</p></div>'
-    + buildAIToggle(aiAttr)
+    + '<div>'
+    + '<div style="' + W + '700;font-size:0.95rem;color:#1e293b;margin-bottom:4px;">Require AI marking for all students</div>'
+    + '<div style="' + S + '0.82rem;color:#475569;">Students cannot self-rate when this is on</div>'
+    + '</div>'
+    + '<div style="display:flex;align-items:center;gap:14px;margin-left:20px;">'
+    + '<span style="' + W + '700;font-size:0.9rem;color:' + (on ? '#94a3b8' : '#6366f1') + ';">Self Rating</span>'
+    + '<div onclick="toggleClassAIMode(this)" data-on="' + (on?'1':'0') + '" style="position:relative;width:56px;height:30px;background:' + (on?'#6366f1':'#cbd5e1') + ';border-radius:30px;cursor:pointer;transition:0.25s;flex-shrink:0;">'
+    + '<div style="position:absolute;top:3px;left:' + (on?'29px':'3px') + ';width:24px;height:24px;background:#fff;border-radius:50%;transition:0.25s;box-shadow:0 1px 4px rgba(0,0,0,0.2);"></div>'
+    + '</div>'
+    + '<span style="' + W + '700;font-size:0.9rem;color:' + (on ? '#6366f1' : '#94a3b8') + ';">AI Marking</span>'
+    + '</div>'
     + '</div></div>'
     + '<div style="background:#fff5f5;border:1px solid #fecaca;border-radius:12px;padding:20px;">'
-    + '<label style="font-family:inherit;font-size:0.75rem;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Danger Zone</label>'
-    + '<p style="font-weight:600;font-size:0.85rem;color:#374151;margin:0 0 12px;">Deleting a class cannot be undone.</p>'
-    + '<button onclick="deleteClassConfirm()" style="padding:9px 18px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;">Delete this class</button>'
+    + '<div style="' + W + '800;font-size:0.75rem;color:#ef4444;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Danger Zone</div>'
+    + '<div style="' + S + '0.85rem;color:#ef4444;margin:0 0 14px;">This is permanent. You will lose all class data and this cannot be reversed.</div>'
+    + '<button onclick="deleteClassConfirm()" style="padding:10px 22px;background:#ef4444;color:#fff;border:none;border-radius:8px;' + W + '700;font-size:0.9rem;font-family:Nunito,sans-serif;cursor:pointer;">Delete this class</button>'
     + '</div>';
 }
 
-function teacherTab(tab) {
-  ['overview','rag','students','settings'].forEach(t => {
-    const btn = document.getElementById('ttab-' + t);
-    const content = document.getElementById('tcontent-' + t);
-    if (btn) { btn.style.borderBottomColor = t===tab?'#0F172A':'transparent'; btn.style.color = t===tab?'#0F172A':'#64748B'; }
-    if (content) content.style.display = t===tab?'block':'none';
-  });
-  if (tab === 'settings') {
-    let el = document.getElementById('tcontent-settings');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'tcontent-settings';
-      el.style.cssText = 'padding:20px;max-width:960px;margin:0 auto;padding-bottom:60px;'; el.style.fontFamily = 'Nunito, sans-serif';
-      const ref = document.getElementById('tcontent-students');
-      if (ref && ref.parentNode) ref.parentNode.appendChild(el);
-    }
-    el.style.display = 'block'; el.style.fontFamily = 'Nunito, sans-serif';
-    const code = (STATE.user && STATE.user.class_code) ? STATE.user.class_code : 'N/A';
-    const aiAttr = (STATE.user && STATE.user.ai_mode !== false) ? 'checked' : '';
-    el.innerHTML = buildSettingsHTML(code, aiAttr);
-  }
-}
-
-function copySettingsCode() {
-  const el = document.getElementById('settings-class-code');
-  const code = el ? el.textContent : ((STATE.user && STATE.user.class_code) || '');
-  navigator.clipboard.writeText(code).then(() => showToast('Class code copied!'));
-}
-
-function buildAIToggle(aiOn) {
-  var on = aiOn ? true : false;
-  var bg = on ? '#6366f1' : '#cbd5e1';
-  var left = on ? '36px' : '4px';
-  var aiColor = on ? '#6366f1' : '#94a3b8';
-  var srColor = on ? '#94a3b8' : '#6366f1';
-  return '<div style="display:flex;align-items:center;gap:16px;margin-top:8px;">'
-    + '<span style="font-size:0.9rem;font-weight:700;color:' + srColor + ';">Self Rating</span>'
-    + '<div onclick="toggleClassAIMode(this)" data-on="' + (on?'1':'0') + '" style="position:relative;width:64px;height:32px;background:' + bg + ';border-radius:32px;cursor:pointer;transition:0.3s;flex-shrink:0;">'
-    + '<div style="position:absolute;top:4px;left:' + left + ';width:24px;height:24px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 4px rgba(0,0,0,0.25);"></div>'
-    + '</div>'
-    + '<span style="font-size:0.9rem;font-weight:700;color:' + aiColor + ';">AI Marking</span>'
-    + '</div>';
-}
 
 function toggleClassAIMode(el) {
   var on = el.getAttribute('data-on') !== '1';
