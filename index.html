@@ -3666,6 +3666,7 @@ async function doLogin() {
     ai_mode: true, ai_mode_locked: false,
   };
   STATE.role = meta.role || 'student';
+  LS.set('demo_user', STATE.user);
   afterLogin();
 }
 
