@@ -5535,14 +5535,12 @@ async function showTeacherDashboard(selectedClass) {
       ${classes.map(cl => '<option value="' + cl.id + '"' + (cl.id === selectedClass ? ' selected' : '') + '>' + cl.name + '</option>').join('')}
     </select>
     
-    <button onclick="(() => { const sel = document.getElementById('class-select'); const id = sel?.value; const name = sel?.options[sel?.selectedIndex]?.text; if(id && id !== 'all') deleteClass(id, name); })()" style="padding:8px 12px;border-radius:10px;border:2px solid #FEE2E2;background:#FEF2F2;font-size:14px;cursor:pointer;font-family:inherit;" title="Delete selected class">🗑️</button>
+    
     <button onclick="showCreateClass()" style="padding:8px 16px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">➕ Create Class</button>
   </div>
 
   <!-- Warning -->
-  <div style="background:#FFF7ED;border-bottom:2px solid #F97316;padding:8px 20px;display:flex;align-items:center;gap:8px;">
-    <span>⚠️</span><span style="font-size:12px;font-weight:700;color:#C2410C;">Placeholder data — real data connects once Supabase is live</span>
-  </div>
+  
 
   <!-- Tabs -->
   <div style="display:flex;background:white;border-bottom:1px solid #E2E8F0;padding:0 16px;gap:4px;">
@@ -5714,13 +5712,13 @@ function confirmRemoveStudent(studentName, classId) {
 function buildSettingsHTML(code, aiAttr) {
   return '<h3 style="font-size:1.1rem;font-weight:700;color:#1e293b;margin:0 0 20px;">Class Settings</h3>'
     + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;">'
-    + '<label style="font-size:0.75rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Class Name</label>'
+    + '<label style="font-size:0.8rem;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Class Name</label>'
     + '<div style="display:flex;gap:10px;">'
     + '<input id="edit-class-name" type="text" placeholder="e.g. Year 10 Set 1" style="flex:1;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.95rem;font-family:inherit;outline:none;">'
     + '<button onclick="saveClassName()" style="padding:10px 18px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Save</button>'
     + '</div></div>'
     + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;">'
-    + '<label style="font-size:0.75rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Class Code</label>'
+    + '<label style="font-size:0.8rem;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Class Code</label>'
     + '<div style="display:flex;gap:10px;align-items:center;">'
     + '<span id="settings-class-code" style="flex:1;padding:10px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:1rem;font-weight:700;color:#6366f1;letter-spacing:2px;">' + code + '</span>'
     + '<button onclick="copySettingsCode()" style="padding:10px 18px;background:#f1f5f9;color:#374151;border:1px solid #e2e8f0;border-radius:8px;font-weight:600;cursor:pointer;">Copy</button>'
@@ -5728,15 +5726,15 @@ function buildSettingsHTML(code, aiAttr) {
     + '<p style="font-size:0.78rem;color:#94a3b8;margin:8px 0 0;">Share this with students so they can join your class.</p>'
     + '</div>'
     + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;">'
-    + '<label style="font-size:0.75rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:12px;">AI Marking</label>'
+    + '<label style="font-size:0.8rem;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:12px;">AI Marking</label>'
     + '<div style="display:flex;align-items:center;justify-content:space-between;">'
     + '<div><p style="margin:0;font-size:0.9rem;font-weight:600;color:#1e293b;">Require AI marking for all students</p>'
     + '<p style="margin:4px 0 0;font-size:0.78rem;color:#64748b;">Students cannot self-rate if this is on</p></div>'
     + '<input type="checkbox" ' + aiAttr + ' onchange="showToast(\'AI mode updated\')" style="width:20px;height:20px;cursor:pointer;">'
     + '</div></div>'
     + '<div style="background:#fff5f5;border:1px solid #fecaca;border-radius:12px;padding:20px;">'
-    + '<label style="font-size:0.75rem;font-weight:600;color:#ef4444;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Danger Zone</label>'
-    + '<p style="font-size:0.85rem;color:#64748b;margin:0 0 12px;">Deleting a class cannot be undone.</p>'
+    + '<label style="font-size:0.8rem;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Delete Class</label>'
+    + '<p style="font-size:0.85rem;font-weight:700;color:#ef4444;margin:0 0 12px;">This change is permanent and you will lose everything. This cannot be reversed.</p>'
     + '<button onclick="deleteClassConfirm()" style="padding:9px 18px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Delete this class</button>'
     + '</div>';
 }
@@ -5770,10 +5768,37 @@ function copySettingsCode() {
   navigator.clipboard.writeText(code).then(() => showToast('Class code copied!'));
 }
 
-function saveClassName() {
+async function saveClassName() {
   const input = document.getElementById('edit-class-name');
   if (!input || !input.value.trim()) { showToast('Enter a class name first'); return; }
-  showToast('Class name saved!');
+  const newName = input.value.trim();
+  const sel = document.getElementById('class-select');
+  const classId = sel && sel.value !== 'all' ? sel.value : null;
+  if (!classId) { showToast('Select a class first'); return; }
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/classes?id=eq.' + classId, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': CONFIG.SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + STATE.user.token,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ name: newName })
+    });
+    if (res.ok) {
+      // Update dropdown option text
+      if (sel) {
+        const opt = sel.options[sel.selectedIndex];
+        if (opt) opt.text = newName;
+      }
+      showToast('Class name updated! ✅');
+    } else {
+      showToast('Could not save — try again');
+    }
+  } catch(e) {
+    showToast('Could not save — check connection');
+  }
 }
 
 function deleteClassConfirm() {
