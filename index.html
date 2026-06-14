@@ -6121,6 +6121,18 @@ async function init() {
 
 // Start app
 init();
+
+// Expose functions to window for onclick handlers in dynamically injected HTML
+window.teacherTab = teacherTab;
+window.saveClassName = saveClassName;
+window.copySettingsCode = copySettingsCode;
+window.deleteClassConfirm = deleteClassConfirm;
+window.toggleClassAIMode = toggleClassAIMode;
+window.showTeacherDashboard = showTeacherDashboard;
+window.showCreateClass = showCreateClass;
+window.showStudentDetail = showStudentDetail;
+window.toggleStudentHistory = toggleStudentHistory;
+
 </script>
 </body>
 </html>
