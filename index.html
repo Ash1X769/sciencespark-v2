@@ -1739,6 +1739,150 @@ body {
   .nav-bar { display: flex !important; }
   .screen { padding-top: 16px; padding-left: 16px; padding-right: 16px; }
 }
+
+        /* Teacher Class Profile Header */
+        .teacher-class-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border-radius: 16px;
+            padding: 28px 28px 20px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .teacher-class-header::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 200px; height: 200px;
+            background: rgba(99,102,241,0.15);
+            border-radius: 50%;
+        }
+        .teacher-class-header::after {
+            content: '';
+            position: absolute;
+            bottom: -40px; left: -40px;
+            width: 160px; height: 160px;
+            background: rgba(16,185,129,0.10);
+            border-radius: 50%;
+        }
+        .tch-top-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            position: relative;
+            z-index: 1;
+        }
+        .tch-class-info h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0 0 4px;
+        }
+        .tch-subject-line {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+            margin: 0;
+        }
+        .tch-code-pill {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 10px 16px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .tch-code-pill .code-label {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .tch-code-pill .code-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #a5b4fc;
+            letter-spacing: 2px;
+            display: block;
+        }
+        .tch-copy-btn {
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+        }
+        .tch-copy-btn:hover { color: #a5b4fc; }
+        .tch-stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .tch-stat-box {
+            background: rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+        .tch-stat-box .stat-num {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            display: block;
+        }
+        .tch-stat-box .stat-lbl {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.45);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-top: 2px;
+        }
+        .tch-stat-box.green .stat-num { color: #34d399; }
+        .tch-stat-box.amber .stat-num { color: #fbbf24; }
+        .tch-stat-box.red   .stat-num { color: #f87171; }
+        .tch-action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            position: relative;
+            z-index: 1;
+            flex-wrap: wrap;
+        }
+        .tch-action-btn {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.85);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tch-action-btn:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+        .tch-action-btn.primary {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: #fff;
+        }
+        .tch-action-btn.primary:hover { background: #4f46e5; }
+        @media (max-width: 480px) {
+            .tch-stats-row { grid-template-columns: repeat(2,1fr); }
+            .tch-top-row { flex-direction: column; }
+        }
+
 </style>
 </head>
 <body>
@@ -5488,6 +5632,7 @@ function doLogout() {
 // TEACHER DASHBOARD
 // ============================================================
 async function showTeacherDashboard(selectedClass) {
+  setTimeout(() => populateTeacherHeader(window._tchStudents||[]), 200);
   STATE.screen = 'teacher';
   const user = STATE.user;
   const classCode = user.class_code || 'N/A';
@@ -6086,6 +6231,57 @@ async function init() {
 
 // Start app
 init();
+
+    // Teacher Class Profile Header
+    function populateTeacherHeader(students) {
+        const user = STATE.user;
+        if (!user) return;
+        const code = user.class_code || 'N/A';
+        const el = document.getElementById('tchCodeDisplay');
+        if (el) el.textContent = code;
+        const rawName = user.display_name || user.email?.split('@')[0] || 'My';
+        const suffix = rawName.endsWith('s') ? "\u2019 Class" : "\u2019s Class";
+        const nameEl = document.getElementById('tchClassName');
+        if (nameEl) nameEl.textContent = rawName + suffix;
+        students = students || [];
+        let green = 0, amber = 0, red = 0;
+        students.forEach(s => {
+            const acc = s.accuracy || 0;
+            if (acc >= 70) green++;
+            else if (acc >= 40) amber++;
+            else red++;
+        });
+        const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+        set('tchStatStudents', students.length);
+        set('tchStatGreen', green);
+        set('tchStatAmber', amber);
+        set('tchStatRed', red);
+    }
+
+    function copyClassCode() {
+        const code = STATE.user?.class_code || '';
+        if (!code) { showToast('No class code found'); return; }
+        navigator.clipboard.writeText(code).then(() => showToast('Class code copied! ✅'));
+    }
+
+    function copyInviteMessage() {
+        const code = STATE.user?.class_code || '';
+        const teacher = STATE.user?.display_name || 'Your teacher';
+        const msg = teacher + ' has invited you to join ScienceSpark!\n\nSign up at: https://ash1x769.github.io/sciencespark-v2/\nWhen asked for a class code enter: ' + code + '\n\nFree GCSE science revision built around your exact AQA spec. \ud83d\ude80';
+        navigator.clipboard.writeText(msg).then(() => showToast('Invite message copied! ✅'));
+    }
+
+    function exportClassCSV() {
+        const students = window._tchStudents || [];
+        if (!students.length) { showToast('No students to export yet'); return; }
+        const rows = [['Name','Email','Year Group','Tier','Accuracy','Streak','XP']];
+        students.forEach(s => rows.push([s.name||'—',s.email||'—',s.year_group||'—',s.tier||'—',(s.accuracy||0)+'%',(s.streak||0)+' days',s.xp||0]));
+        const csv = rows.map(r => r.map(c => '"'+c+'"').join(',')).join('\n');
+        const a = Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:'sciencespark-class.csv'});
+        a.click();
+        showToast('CSV downloaded ✅');
+    }
+
 </script>
 </body>
 </html>
