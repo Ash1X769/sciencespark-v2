@@ -5757,7 +5757,7 @@ function teacherTab(tab) {
       const ref = document.getElementById('tcontent-students');
       if (ref && ref.parentNode) ref.parentNode.appendChild(el);
     }
-    el.style.display = 'block';
+    el.style.display = 'block'; el.style.fontFamily = 'Nunito, sans-serif';
     const code = (STATE.user && STATE.user.class_code) ? STATE.user.class_code : 'N/A';
     const aiAttr = (STATE.user && STATE.user.ai_mode !== false) ? 'checked' : '';
     el.innerHTML = buildSettingsHTML(code, aiAttr);
