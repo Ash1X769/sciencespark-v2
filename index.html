@@ -5732,7 +5732,7 @@ function buildSettingsHTML(code, aiAttr) {
     + '<div style="display:flex;align-items:center;justify-content:space-between;">'
     + '<div><p style="margin:0;font-size:0.9rem;font-weight:600;color:#1e293b;">Require AI marking for all students</p>'
     + '<p style="margin:4px 0 0;font-size:0.78rem;color:#64748b;">Students cannot self-rate if this is on</p></div>'
-    + '<input type="checkbox" ' + aiAttr + ' onchange="showToast(\'AI mode updated\')" style="width:28px;height:28px;cursor:pointer;accent-color:#6366f1;">'
+    + buildAIToggle(aiAttr)
     + '</div></div>'
     + '<div style="background:#fff5f5;border:1px solid #fecaca;border-radius:12px;padding:20px;">'
     + '<label style="font-size:0.75rem;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Danger Zone</label>'
@@ -5768,6 +5768,32 @@ function copySettingsCode() {
   const el = document.getElementById('settings-class-code');
   const code = el ? el.textContent : ((STATE.user && STATE.user.class_code) || '');
   navigator.clipboard.writeText(code).then(() => showToast('Class code copied!'));
+}
+
+function buildAIToggle(aiOn) {
+  var on = aiOn ? true : false;
+  var bg = on ? '#6366f1' : '#cbd5e1';
+  var left = on ? '36px' : '4px';
+  var aiColor = on ? '#6366f1' : '#94a3b8';
+  var srColor = on ? '#94a3b8' : '#6366f1';
+  return '<div style="display:flex;align-items:center;gap:16px;margin-top:8px;">'
+    + '<span style="font-size:0.9rem;font-weight:700;color:' + srColor + ';">Self Rating</span>'
+    + '<div onclick="toggleClassAIMode(this)" data-on="' + (on?'1':'0') + '" style="position:relative;width:64px;height:32px;background:' + bg + ';border-radius:32px;cursor:pointer;transition:0.3s;flex-shrink:0;">'
+    + '<div style="position:absolute;top:4px;left:' + left + ';width:24px;height:24px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 4px rgba(0,0,0,0.25);"></div>'
+    + '</div>'
+    + '<span style="font-size:0.9rem;font-weight:700;color:' + aiColor + ';">AI Marking</span>'
+    + '</div>';
+}
+
+function toggleClassAIMode(el) {
+  var on = el.getAttribute('data-on') !== '1';
+  el.setAttribute('data-on', on ? '1' : '0');
+  el.style.background = on ? '#6366f1' : '#cbd5e1';
+  el.children[0].style.left = on ? '36px' : '4px';
+  var spans = el.parentNode.querySelectorAll('span');
+  if (spans[0]) spans[0].style.color = on ? '#94a3b8' : '#6366f1';
+  if (spans[1]) spans[1].style.color = on ? '#6366f1' : '#94a3b8';
+  showToast((on ? 'AI Marking' : 'Self Rating') + ' enabled for class');
 }
 
 function saveClassName() {
