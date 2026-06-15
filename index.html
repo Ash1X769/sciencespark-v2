@@ -1739,108 +1739,6 @@ body {
   .nav-bar { display: flex !important; }
   .screen { padding-top: 16px; padding-left: 16px; padding-right: 16px; }
 }
-
-/* ── AI Tutor Floating Bar + Panel ── */
-#ai-fab-bar {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
-  padding: 12px 20px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(99,102,241,0.4);
-  z-index: 8888;
-  font-family: Nunito, sans-serif;
-  font-weight: 700;
-  font-size: 0.9rem;
-  border: none;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-#ai-fab-bar:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,102,241,0.5); }
-
-#ai-fab-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.25);
-  z-index: 8889;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s;
-}
-#ai-fab-overlay.open { opacity: 1; pointer-events: all; }
-
-#ai-fab-panel {
-  position: fixed;
-  bottom: -80%;
-  right: 24px;
-  width: 38%;
-  min-width: 320px;
-  height: 72vh;
-  background: #fff;
-  border-radius: 20px 20px 0 0;
-  z-index: 8890;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 -4px 32px rgba(0,0,0,0.15);
-  transition: bottom 0.35s cubic-bezier(0.4,0,0.2,1);
-  font-family: Nunito, sans-serif;
-  overflow: hidden;
-}
-#ai-fab-panel.open { bottom: 0; }
-
-@media (max-width: 768px) {
-  #ai-fab-panel { width: 100%; right: 0; min-width: unset; }
-  #ai-fab-bar { right: 16px; bottom: 16px; }
-}
-
-#ai-fab-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: #f8fafc;
-}
-#ai-fab-input-row {
-  display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  background: #fff;
-  border-top: 1px solid #e2e8f0;
-  flex-shrink: 0;
-}
-.ai-fab-bubble-user {
-  background: #6366f1;
-  color: #fff;
-  border-radius: 14px;
-  border-bottom-right-radius: 4px;
-  padding: 10px 14px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  max-width: 80%;
-  align-self: flex-end;
-  line-height: 1.5;
-}
-.ai-fab-bubble-ai {
-  background: #fff;
-  color: #1e293b;
-  border-radius: 14px;
-  border-bottom-left-radius: 4px;
-  padding: 10px 14px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  max-width: 80%;
-  align-self: flex-start;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  line-height: 1.5;
-}
-
 </style>
 </head>
 <body>
@@ -4179,7 +4077,7 @@ function showHome() {
       </div>
       <div style="font-size:20px;">→</div>
     </div>
-      <div onclick="openAIFab()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:16px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;box-shadow:0 4px 12px rgba(99,102,241,0.25);">
+      <div onclick="showAITutor()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:16px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;box-shadow:0 4px 12px rgba(99,102,241,0.25);">
         <div style="display:flex;align-items:center;gap:14px;">
           <div style="width:42px;height:42px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">✨</div>
           <div>
@@ -4230,7 +4128,7 @@ function renderNavBar(active) {
     <div class="topbar-dropdown-grid">
       <div class="topbar-dropdown-tile" onclick="showAllKO();toggleTopbarMenu()"><div class="tile-icon">📚</div><div class="tile-label">Organisers</div></div>
       <div class="topbar-dropdown-tile" onclick="showStudyHistory();toggleTopbarMenu()"><div class="tile-icon">📖</div><div class="tile-label">History</div></div>
-      <div class="topbar-dropdown-tile" onclick="openAIFab();toggleTopbarMenu()"><div class="tile-icon">✨</div><div class="tile-label">AI Tutor</div></div>
+      <div class="topbar-dropdown-tile" onclick="showAITutor();toggleTopbarMenu()"><div class="tile-icon">✨</div><div class="tile-label">AI Tutor</div></div>
       <div class="topbar-dropdown-tile" onclick="showProfile();toggleTopbarMenu()"><div class="tile-icon">👤</div><div class="tile-label">Profile</div></div>
       <div class="topbar-dropdown-tile" onclick="showHome();toggleTopbarMenu()"><div class="tile-icon">🏠</div><div class="tile-label">Home</div></div>
       <div class="topbar-dropdown-tile" onclick="showDashboard();toggleTopbarMenu()"><div class="tile-icon">📊</div><div class="tile-label">Progress</div></div>
@@ -6308,62 +6206,6 @@ init();
     window.openAITutor = openAITutor;
     window.closeAITutor = closeAITutor;
     window.sendTutorMessage = sendTutorMessage;
-
-
-// ── AI Tutor FAB ──
-function openAIFab() {
-  document.getElementById('ai-fab-panel').classList.add('open');
-  document.getElementById('ai-fab-overlay').classList.add('open');
-  document.getElementById('ai-fab-bar').style.display = 'none';
-  setTimeout(() => document.getElementById('ai-fab-input').focus(), 350);
-}
-function closeAIFab() {
-  document.getElementById('ai-fab-panel').classList.remove('open');
-  document.getElementById('ai-fab-overlay').classList.remove('open');
-  document.getElementById('ai-fab-bar').style.display = 'flex';
-}
-async function sendAIFab() {
-  const input = document.getElementById('ai-fab-input');
-  const msgs = document.getElementById('ai-fab-messages');
-  if (!input || !input.value.trim()) return;
-  const q = input.value.trim();
-  input.value = '';
-
-  const userBubble = document.createElement('div');
-  userBubble.className = 'ai-fab-bubble-user';
-  userBubble.textContent = q;
-  msgs.appendChild(userBubble);
-
-  const aiBubble = document.createElement('div');
-  aiBubble.className = 'ai-fab-bubble-ai';
-  aiBubble.textContent = 'Thinking...';
-  msgs.appendChild(aiBubble);
-  msgs.scrollTop = msgs.scrollHeight;
-
-  try {
-    const user = (typeof STATE !== 'undefined' && STATE.user) || {};
-    const year = user.year_group || 11;
-    const tier = (user.tier || 'combined higher').replace(/_/g,' ');
-    const res = await fetch('https://sciencespark-worker.sciencespark.workers.dev', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 600,
-        system: 'You are a friendly GCSE science tutor for Year ' + year + ' ' + tier + ' tier AQA. Give clear concise answers. After each answer suggest a follow-up question.',
-        messages: [{ role: 'user', content: q }]
-      })
-    });
-    const data = await res.json();
-    aiBubble.textContent = data.content?.[0]?.text || 'Sorry, try again!';
-  } catch(e) {
-    aiBubble.textContent = 'Something went wrong. Please try again.';
-  }
-  msgs.scrollTop = msgs.scrollHeight;
-}
-window.openAIFab = openAIFab;
-window.closeAIFab = closeAIFab;
-window.sendAIFab = sendAIFab;
 
 </script>
 </body>
