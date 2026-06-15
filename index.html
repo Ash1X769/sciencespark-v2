@@ -5664,7 +5664,7 @@ async function showTeacherDashboard(selectedClass) {
   const selectedName = classes.find(c => c.id === selectedClass)?.name || 'All Classes';
 
   const html = `<div style="min-height:100vh;background:#F8FAFC;">
-  <div style="background:linear-gradient(135deg,#0F172A,#1E3A5F);padding:28px 24px 20px;color:white;position:relative;">
+  <div style="background:linear-gradient(135deg,var(--ss-green),var(--ss-blue));padding:28px 24px 20px;color:white;position:relative;">
     <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;opacity:0.7;margin-bottom:4px;">TEACHER DASHBOARD</div>
     <div style="font-size:22px;font-weight:900;">Welcome, ${user.display_name || 'Teacher'}</div>
     <button onclick="doLogout()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
