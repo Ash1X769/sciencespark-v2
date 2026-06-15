@@ -1739,6 +1739,110 @@ body {
   .nav-bar { display: flex !important; }
   .screen { padding-top: 16px; padding-left: 16px; padding-right: 16px; }
 }
+
+/* ── AI Tutor Chat Widget ── */
+#ai-chat-widget {
+  position: fixed;
+  bottom: 0;
+  right: 24px;
+  width: 340px;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+  z-index: 9999;
+  font-family: Nunito, sans-serif;
+  transition: all 0.3s ease;
+}
+#ai-chat-header {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 16px 16px 0 0;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#ai-chat-header .chat-title {
+  font-size: 15px;
+  font-weight: 800;
+  font-family: Nunito, sans-serif;
+}
+#ai-chat-body {
+  display: flex;
+  flex-direction: column;
+  height: 420px;
+}
+#ai-chat-widget.closed #ai-chat-body { display: none; }
+#ai-chat-widget.hidden { display: none; }
+#ai-chat-messages {
+  flex: 1;
+  padding: 14px;
+  overflow-y: auto;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ai-msg-user {
+  background: #6366f1;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border-bottom-right-radius: 4px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  max-width: 80%;
+  align-self: flex-end;
+  line-height: 1.5;
+  font-family: Nunito, sans-serif;
+}
+.ai-msg-ai {
+  background: #fff;
+  color: #1e293b;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  max-width: 80%;
+  align-self: flex-start;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  line-height: 1.5;
+  font-family: Nunito, sans-serif;
+}
+#ai-chat-input-area {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+}
+#ai-chat-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-family: Nunito, sans-serif;
+  font-weight: 600;
+  outline: none;
+}
+#ai-chat-input-area button {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  font-family: Nunito, sans-serif;
+}
+@media (max-width: 768px) {
+  #ai-chat-widget { right: 0; width: 100%; border-radius: 16px 16px 0 0; }
+}
+
 </style>
 </head>
 <body>
@@ -4077,9 +4181,7 @@ function showHome() {
       </div>
       <div style="font-size:20px;">→</div>
     </div>
-      <div onclick="showAITutor()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:16px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;box-shadow:0 4px 12px rgba(99,102,241,0.25);">
-        <div style="display:flex;align-items:center;gap:14px;">
-          <div style="width:42px;height:42px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">✨</div>
+      
           <div>
             <div style="font-size:14px;font-weight:800;color:#fff;">AI Tutor</div>
             <div style="font-size:12px;color:rgba(255,255,255,0.75);font-weight:600;">Ask me anything about your revision</div>
@@ -4128,7 +4230,7 @@ function renderNavBar(active) {
     <div class="topbar-dropdown-grid">
       <div class="topbar-dropdown-tile" onclick="showAllKO();toggleTopbarMenu()"><div class="tile-icon">📚</div><div class="tile-label">Organisers</div></div>
       <div class="topbar-dropdown-tile" onclick="showStudyHistory();toggleTopbarMenu()"><div class="tile-icon">📖</div><div class="tile-label">History</div></div>
-      <div class="topbar-dropdown-tile" onclick="showAITutor();toggleTopbarMenu()"><div class="tile-icon">✨</div><div class="tile-label">AI Tutor</div></div>
+      <div class="tile-label">AI Tutor</div></div>
       <div class="topbar-dropdown-tile" onclick="showProfile();toggleTopbarMenu()"><div class="tile-icon">👤</div><div class="tile-label">Profile</div></div>
       <div class="topbar-dropdown-tile" onclick="showHome();toggleTopbarMenu()"><div class="tile-icon">🏠</div><div class="tile-label">Home</div></div>
       <div class="topbar-dropdown-tile" onclick="showDashboard();toggleTopbarMenu()"><div class="tile-icon">📊</div><div class="tile-label">Progress</div></div>
@@ -6206,6 +6308,76 @@ init();
     window.openAITutor = openAITutor;
     window.closeAITutor = closeAITutor;
     window.sendTutorMessage = sendTutorMessage;
+
+
+// ── AI Tutor Chat Widget ──
+function toggleAIChat() {
+  const widget = document.getElementById('ai-chat-widget');
+  const icon = document.getElementById('ai-chat-icon');
+  widget.classList.toggle('closed');
+  icon.innerText = widget.classList.contains('closed') ? '▲' : '▼';
+  if (!widget.classList.contains('closed')) {
+    document.getElementById('ai-chat-input').focus();
+    const msgs = document.getElementById('ai-chat-messages');
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+}
+
+function showAIChatWidget() {
+  const w = document.getElementById('ai-chat-widget');
+  if (w) w.classList.remove('hidden');
+}
+
+function hideAIChatWidget() {
+  const w = document.getElementById('ai-chat-widget');
+  if (w) { w.classList.add('hidden'); w.classList.add('closed'); }
+}
+
+async function sendAIChat() {
+  const input = document.getElementById('ai-chat-input');
+  const msgs = document.getElementById('ai-chat-messages');
+  const message = input.value.trim();
+  if (!message) return;
+
+  const userDiv = document.createElement('div');
+  userDiv.className = 'ai-msg-user';
+  userDiv.textContent = message;
+  msgs.appendChild(userDiv);
+  input.value = '';
+  msgs.scrollTop = msgs.scrollHeight;
+
+  const aiDiv = document.createElement('div');
+  aiDiv.className = 'ai-msg-ai';
+  aiDiv.textContent = 'Thinking...';
+  msgs.appendChild(aiDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    const user = (typeof STATE !== 'undefined' && STATE.user) || {};
+    const year = user.year_group || 11;
+    const tier = (user.tier || 'combined higher').replace(/_/g, ' ');
+    const res = await fetch('https://sciencespark-worker.sciencespark.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 600,
+        system: 'You are a friendly GCSE science tutor for Year ' + year + ' ' + tier + ' tier AQA. Give clear concise answers. After each answer suggest a follow-up question.',
+        messages: [{ role: 'user', content: message }]
+      })
+    });
+    const data = await res.json();
+    aiDiv.textContent = data.content?.[0]?.text || 'Sorry, try again!';
+  } catch(e) {
+    aiDiv.textContent = 'Something went wrong. Please try again.';
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+window.toggleAIChat = toggleAIChat;
+window.showAIChatWidget = showAIChatWidget;
+window.hideAIChatWidget = hideAIChatWidget;
+window.sendAIChat = sendAIChat;
 
 </script>
 </body>
