@@ -1742,8 +1742,8 @@ body {
 
 /* ── AI Tutor Chat Widget ── */
 #ai-chat-widget {
-  position: fixed;
-  bottom: 0;
+  position: fixed !important;
+  bottom: 0 !important;
   right: 24px;
   width: 340px;
   background: #fff;
@@ -1751,7 +1751,8 @@ body {
   box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
   z-index: 9999;
   font-family: Nunito, sans-serif;
-  transition: all 0.3s ease;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
 }
 #ai-chat-header {
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
