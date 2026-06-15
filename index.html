@@ -4749,20 +4749,22 @@ function renderMCQs() {
   if (cards.length === 0) return '<p style="color:var(--text-secondary);font-weight:600;">No questions available</p>';
 
   return cards.map((card, i) => {
+    const question = card.q || card.question || '';
+    const answer = Array.isArray(card.a) ? card.a[0] : (card.answer || '');
     // Get wrong options ONLY from same topic to avoid cross-subject confusion
     const sameTopicPool = SAMPLE_CARDS.filter(c => c.id !== card.id && c.topic === card.topic);
     const fallbackPool = SAMPLE_CARDS.filter(c => c.id !== card.id && c.subject === card.subject);
     const pool = sameTopicPool.length >= 3 ? sameTopicPool : fallbackPool;
-    const others = pool.slice(0, 3).map(c => c.answer);
-    const opts = shuffle([card.answer, ...others]);
-    mcqState[`q${i}`] = { correct: card.answer, done: false };
+    const others = pool.slice(0, 3).map(c => Array.isArray(c.a) ? c.a[0] : (c.answer || '')).filter(Boolean);
+    const opts = shuffle([answer, ...others]);
+    mcqState[`q${i}`] = { correct: answer, done: false };
 
     return `
 <div style="margin-bottom:20px;">
-  <div style="font-size:14px;font-weight:700;margin-bottom:10px;">${i+1}. ${card.question}</div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:10px;">${i+1}. ${question}</div>
   <div style="display:flex;flex-direction:column;gap:8px;" id="mcq-opts-${i}">
     ${opts.map(opt => `
-      <button class="mcq-option" onclick="selectMCQ(${i}, '${escapeAttr(opt)}', '${escapeAttr(card.answer)}')">${opt}</button>
+      <button class="mcq-option" onclick="selectMCQ(${i}, '${escapeAttr(opt)}', '${escapeAttr(answer)}')">${opt}</button>
     `).join('')}
   </div>
 </div>`;
