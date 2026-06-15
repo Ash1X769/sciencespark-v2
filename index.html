@@ -1730,7 +1730,8 @@ body {
 @media (min-width: 768px) {
   .desktop-topbar { display: flex !important; }
   .nav-bar { display: none !important; }
-  .screen { padding-top: 72px; padding-bottom: 40px; padding-left: 24px; padding-right: 24px; }
+  .screen { padding-bottom: 40px; padding-left: 24px; padding-right: 24px; }
+  .screen.has-topbar { padding-top: 72px; }
   body { background: white; }
 }
 
@@ -1745,7 +1746,7 @@ body {
   position: fixed !important;
   bottom: 0 !important;
   right: 24px;
-  width: 340px;
+  width: 500px;
   background: #fff;
   border-radius: 16px 16px 0 0;
   box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
@@ -1772,7 +1773,7 @@ body {
 #ai-chat-body {
   display: flex;
   flex-direction: column;
-  height: 420px;
+  height: 550px;
 }
 #ai-chat-widget.closed #ai-chat-body { display: none; }
 #ai-chat-widget.hidden { display: none; }
@@ -3945,7 +3946,7 @@ function showStudyHistory() {
       }).join('');
 
   const html = `
-<div class="screen" id="screen-history">
+<div class="screen has-topbar" id="screen-history">
   ${renderNavBar('history')}
   <div style="padding-bottom:40px;">
     <h1 style="font-size:22px;font-weight:900;margin-bottom:4px;">📖 Study History</h1>
@@ -4028,7 +4029,7 @@ function showDashboard() {
   }).join('');
 
   const html = `
-<div class="screen" id="screen-dashboard">
+<div class="screen has-topbar" id="screen-dashboard">
   ${renderNavBar('dashboard')}
   <div style="padding-bottom:40px;">
     <h1 style="font-size:22px;font-weight:900;margin-bottom:4px;">📊 My Progress</h1>
@@ -4137,7 +4138,7 @@ function showHome() {
   ).join('');
 
   const html = `
-<div class="screen" id="screen-home">
+<div class="screen has-topbar" id="screen-home">
   ${renderNavBar('home')}
   <div class="home-content">
     <div style="text-align:center;padding:16px 20px 12px;">
@@ -5159,7 +5160,7 @@ function showAITutor() {
       `).join('');
 
   const html = `
-<div class="screen" id="screen-tutor">
+<div class="screen has-topbar" id="screen-tutor">
   <div class="top-bar">
     <button class="btn btn-ghost btn-sm" onclick="showHome()">← Back</button>
     <div style="font-size:17px;font-weight:800;">✨ AI Science Tutor</div>
@@ -5265,7 +5266,7 @@ function showAllKO() {
   const colors = { Biology: 'var(--bio-color)', Chemistry: 'var(--chem-color)', Physics: 'var(--phys-color)' };
 
   const html = `
-<div class="screen" id="screen-ko">
+<div class="screen has-topbar" id="screen-ko">
   <div class="top-bar">
     <div></div>
     <div style="font-size:18px;font-weight:800;">Knowledge Organisers</div>
@@ -5376,7 +5377,7 @@ function showHistory() {
   });
 
   const html = `
-<div class="screen" id="screen-history">
+<div class="screen has-topbar" id="screen-history">
   <div class="top-bar">
     <div></div>
     <div style="font-size:18px;font-weight:800;">My Progress</div>
@@ -5467,7 +5468,7 @@ function showProfile() {
   const parentCode = user.parent_code || generateCode(8);
 
   const html = `
-<div class="screen" id="screen-profile">
+<div class="screen has-topbar" id="screen-profile">
   <div class="top-bar">
     <div></div>
     <div style="font-size:18px;font-weight:800;">My Profile</div>
@@ -6344,6 +6345,49 @@ function updateChatWidgetVisibility() {
   else showAIChatWidget();
 }
 
+function renderMarkdown(text) {
+  // Escape HTML so AI can't inject tags
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const lines = esc(text).split('\n');
+  let html = '';
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    // Table: current line has pipes and next is a separator row
+    if (line.trim().startsWith('|') && i + 1 < lines.length && /^\|[\s\-:|]+\|/.test(lines[i+1].trim())) {
+      const cols = line.split('|').slice(1,-1);
+      let t = '<table style="border-collapse:collapse;width:100%;font-size:0.82rem;margin:6px 0;">';
+      t += '<thead><tr>' + cols.map(h => `<th style="border:1px solid #e2e8f0;padding:5px 8px;background:#f1f5f9;font-weight:800;text-align:left;">${h.trim()}</th>`).join('') + '</tr></thead><tbody>';
+      i += 2;
+      while (i < lines.length && lines[i].trim().startsWith('|')) {
+        const cells = lines[i].split('|').slice(1,-1);
+        t += '<tr>' + cells.map(c => `<td style="border:1px solid #e2e8f0;padding:5px 8px;">${c.trim()}</td>`).join('') + '</tr>';
+        i++;
+      }
+      t += '</tbody></table>';
+      html += t;
+      continue;
+    }
+    // Headings
+    if (/^### /.test(line)) {
+      html += `<div style="font-size:0.88rem;font-weight:800;color:#1e293b;margin:8px 0 3px;">${line.slice(4)}</div>`;
+    } else if (/^## /.test(line)) {
+      html += `<div style="font-size:0.93rem;font-weight:800;color:#1e293b;margin:10px 0 4px;">${line.slice(3)}</div>`;
+    } else if (/^# /.test(line)) {
+      html += `<div style="font-size:1rem;font-weight:900;color:#1e293b;margin:12px 0 5px;">${line.slice(2)}</div>`;
+    } else if (line.trim() === '') {
+      html += '<br>';
+    } else {
+      const inline = line
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+      html += inline + '<br>';
+    }
+    i++;
+  }
+  return html.trimEnd().replace(/(<br>)+$/, '');
+}
+
 async function sendAIChat() {
   const input = document.getElementById('ai-chat-input');
   const msgs = document.getElementById('ai-chat-messages');
@@ -6378,7 +6422,7 @@ async function sendAIChat() {
       })
     });
     const data = await res.json();
-    aiDiv.textContent = data.content?.[0]?.text || 'Sorry, try again!';
+    aiDiv.innerHTML = renderMarkdown(data.content?.[0]?.text || 'Sorry, try again!');
   } catch(e) {
     aiDiv.textContent = 'Something went wrong. Please try again.';
   }
