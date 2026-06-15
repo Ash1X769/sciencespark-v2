@@ -5749,10 +5749,14 @@ async function showTeacherDashboard(selectedClass) {
   const ragBg = (p) => p >= 75 ? '#F0FDF4' : p >= 40 ? '#FFFBEB' : '#FEF2F2';
   const selectedName = classes.find(c => c.id === selectedClass)?.name || 'All Classes';
 
+  // Store for saveClassName() and settings tab
+  STATE.teacherSelectedClass = selectedClass;
+  STATE.teacherClasses = classes;
+
   const html = `<div style="min-height:100vh;background:#F8FAFC;">
-  <div style="background:linear-gradient(135deg,var(--ss-green),var(--ss-blue));padding:28px 24px 20px;color:white;position:relative;">
-    <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;opacity:0.7;margin-bottom:4px;">TEACHER DASHBOARD</div>
-    <div style="font-size:22px;font-weight:900;">Welcome, ${user.display_name || 'Teacher'}</div>
+  <div style="background:linear-gradient(135deg,var(--ss-green),var(--ss-purple));padding:28px 24px 20px;color:white;position:relative;">
+    <div style="font-size:12px;font-weight:700;opacity:0.85;margin-bottom:6px;">Welcome, ${user.display_name || 'Teacher'}</div>
+    <div style="font-size:28px;font-weight:900;line-height:1.1;">${selectedName}</div>
     <button onclick="doLogout()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
   </div>
 
@@ -5761,14 +5765,9 @@ async function showTeacherDashboard(selectedClass) {
     <select onchange="showTeacherDashboard(this.value)" style="flex:1;padding:8px 12px;border-radius:10px;border:2px solid #E2E8F0;font-size:14px;font-weight:800;font-family:inherit;color:#0F172A;background:white;cursor:pointer;">
       ${classes.map(cl => '<option value="' + cl.id + '"' + (cl.id === selectedClass ? ' selected' : '') + '>' + cl.name + '</option>').join('')}
     </select>
-    
+
     <button onclick="(() => { const sel = document.getElementById('class-select'); const id = sel?.value; const name = sel?.options[sel?.selectedIndex]?.text; if(id && id !== 'all') deleteClass(id, name); })()" style="padding:8px 12px;border-radius:10px;border:2px solid #FEE2E2;background:#FEF2F2;font-size:14px;cursor:pointer;font-family:inherit;" title="Delete selected class">🗑️</button>
     <button onclick="showCreateClass()" style="padding:8px 16px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">➕ Create Class</button>
-  </div>
-
-  <!-- Warning -->
-  <div style="background:#FFF7ED;border-bottom:2px solid #F97316;padding:8px 20px;display:flex;align-items:center;gap:8px;">
-    <span>⚠️</span><span style="font-size:12px;font-weight:700;color:#C2410C;">Placeholder data — real data connects once Supabase is live</span>
   </div>
 
   <!-- Tabs -->
@@ -5938,12 +5937,13 @@ function confirmRemoveStudent(studentName, classId) {
   if (!confirm('Remove ' + studentName + ' from this class?\nThey keep their account and progress.')) return;
   showToast('Remove student coming soon');
 }
-function buildSettingsHTML(code, aiAttr) {
+function buildSettingsHTML(code, aiAttr, currentName) {
+  const escapedName = (currentName || '').replace(/"/g, '&quot;');
   return '<h3 style="font-size:1.1rem;font-weight:700;color:#1e293b;margin:0 0 20px;">Class Settings</h3>'
     + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;">'
     + '<label style="font-size:0.75rem;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Class Name</label>'
     + '<div style="display:flex;gap:10px;">'
-    + '<input id="edit-class-name" type="text" placeholder="e.g. Year 10 Set 1" style="flex:1;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.95rem;font-family:inherit;outline:none;">'
+    + '<input id="edit-class-name" type="text" placeholder="e.g. Year 10 Set 1" value="' + escapedName + '" style="flex:1;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.95rem;font-family:inherit;outline:none;">'
     + '<button onclick="saveClassName()" style="padding:10px 18px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;">Save</button>'
     + '</div></div>'
     + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;">'
@@ -5987,7 +5987,11 @@ function teacherTab(tab) {
     el.style.display = 'block';
     const code = (STATE.user && STATE.user.class_code) ? STATE.user.class_code : 'N/A';
     const aiAttr = (STATE.user && STATE.user.ai_mode !== false) ? 'checked' : '';
-    el.innerHTML = buildSettingsHTML(code, aiAttr);
+    const selectedCls = STATE.teacherSelectedClass;
+    const clsList = STATE.teacherClasses || [];
+    const currentCls = clsList.find(c => c.id === selectedCls);
+    const currentName = currentCls ? currentCls.name : '';
+    el.innerHTML = buildSettingsHTML(code, aiAttr, currentName);
   }
 }
 
@@ -6023,10 +6027,39 @@ function toggleClassAIMode(el) {
   showToast((on ? 'AI Marking' : 'Self Rating') + ' enabled for class');
 }
 
-function saveClassName() {
+async function saveClassName() {
   const input = document.getElementById('edit-class-name');
   if (!input || !input.value.trim()) { showToast('Enter a class name first'); return; }
-  showToast('Class name saved!');
+
+  const selectedClass = STATE.teacherSelectedClass;
+  if (!selectedClass || selectedClass === 'all') {
+    showToast('Select a specific class first');
+    return;
+  }
+
+  const newName = input.value.trim();
+  const token = STATE.user?.token;
+
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/classes?id=eq.' + selectedClass, {
+      method: 'PATCH',
+      headers: {
+        'apikey': CONFIG.SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ name: newName })
+    });
+    if (res.ok) {
+      showToast('Class name saved! ✅');
+      showTeacherDashboard(selectedClass);
+    } else {
+      showToast('Could not save — check connection');
+    }
+  } catch(e) {
+    showToast('Could not save — check connection');
+  }
 }
 
 function deleteClassConfirm() {
@@ -6452,7 +6485,7 @@ function hideAIChatWidget() {
 }
 
 function updateChatWidgetVisibility() {
-  const hideOn = ['auth', 'flashcards', 'ai-chat'];
+  const hideOn = ['auth', 'flashcards', 'ai-chat', 'teacher'];
   if (hideOn.includes(STATE.screen)) hideAIChatWidget();
   else showAIChatWidget();
 }
