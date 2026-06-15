@@ -1696,6 +1696,8 @@ textarea.input { resize: vertical; min-height: 100px; }
 
 .nav-item {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -5618,7 +5620,7 @@ function showAIChatTab() {
     <div style="font-size:20px;font-weight:900;">✨ AI Tutor</div>
     <div style="font-size:13px;color:#64748B;font-weight:600;margin-top:2px;">Ask me anything about GCSE Science</div>
   </div>
-  <div style="display:flex;flex-direction:column;min-height:calc(100vh - 200px);">
+  <div style="display:flex;flex-direction:column;min-height:calc(100vh - 200px);margin:0 -16px;">
     <div id="ai-tab-messages" style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
       <div class="ai-msg-ai">Hi! I'm your AI Tutor 🎓 Ask me anything about GCSE Science — topics, exam questions, or tricky concepts.</div>
     </div>
