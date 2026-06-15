@@ -3226,28 +3226,30 @@ const KNOWLEDGE_ORGANISERS = {
 
 
 // ============================================================
-// SM-2 ALGORITHM
+// SRS SCHEDULING
 // ============================================================
 function sm2Next(card, grade) {
   // grade: 0=again, 1=hard, 2=good, 3=easy
-  let { easeFactor = 2.5, interval = 1, repetitions = 0 } = card;
+  // repetitions always increments — never resets, it's a record of how many times seen
+  let { repetitions = 0, easyCount = 0 } = card;
 
-  if (grade < 2) {
-    repetitions = 0;
+  let interval;
+  if (grade === 0 || grade === 1) {
     interval = 1;
+  } else if (grade === 2) {
+    interval = 3;
   } else {
-    if (repetitions === 0) interval = 1;
-    else if (repetitions === 1) interval = 6;
-    else interval = Math.round(interval * easeFactor);
-    repetitions++;
+    // Easy: 7 days first time, 28 days every time after
+    interval = easyCount === 0 ? 7 : 28;
+    easyCount++;
   }
 
-  easeFactor = Math.max(1.3, easeFactor + (0.1 - (3 - grade) * (0.08 + (3 - grade) * 0.02)));
+  repetitions++;
 
   const nextReview = new Date();
   nextReview.setDate(nextReview.getDate() + interval);
 
-  return { easeFactor, interval, repetitions, nextReview: nextReview.toISOString(), lastGrade: grade };
+  return { repetitions, easyCount, interval, nextReview: nextReview.toISOString(), lastGrade: grade };
 }
 
 // ============================================================
@@ -3340,14 +3342,14 @@ async function callClaude(systemPrompt, userMessage, maxTokens=500) {
 }
 
 async function gradeAnswer(question, correctAnswer, studentAnswer, timeSeconds) {
-  const system = `You are a strict AQA GCSE science marker. Grade the student's answer honestly.
+  const system = `You are a strict AQA GCSE science marker. Grade the student's answer by counting what percentage of the key concepts from the correct answer are present.
 STRICT RULES:
-- "again" = blank, "I don't know", clearly wrong, completely irrelevant, or missing ALL key facts
-- "hard" = partially correct but missing important facts or details
-- "good" = mostly correct, covers main points but may miss minor details
-- "easy" = complete and accurate answer covering all key facts
-- Do NOT give "good" or "easy" to vague, incomplete or uncertain answers
-- "I don't know", blank answers, or single words always = "again"
+- Count how many key concepts from the correct answer appear in the student's answer
+- 0-25% of key concepts present → "again"
+- 26-49% of key concepts present → "hard"
+- 50-99% of key concepts present → "good"
+- 100% of key concepts present → "easy" (spelling mistakes are fine, all concepts must be there)
+- "I don't know", blank answers, or single words always = "again" (0%)
 - Consider time: under 3 seconds = likely copy-paste, flag it
 - Return ONLY valid JSON: {"grade": "again"|"hard"|"good"|"easy", "feedback": "brief specific feedback under 20 words", "copy_paste_suspected": boolean}`;
 
@@ -3902,18 +3904,39 @@ function saveScreen(name) {
 
 function showStudyHistory() {
   STATE.screen = 'history'; saveScreen('history');
-  const history = (LS.get('card_history') || []).slice(0, 80);
-  
+  const history = LS.get('card_history') || [];
+
   const gradeColor = { again:'#DC2626', hard:'#D97706', good:'#16A34A', easy:'#4F46E5', 0:'#DC2626', 1:'#D97706', 2:'#16A34A', 3:'#4F46E5' };
   const gradeLabel = { again:'Again', hard:'Hard', good:'Good', easy:'Easy', 0:'Again', 1:'Hard', 2:'Good', 3:'Easy' };
   const gradeEmoji = { again:'😵', hard:'😰', good:'🙂', easy:'🌟', 0:'😵', 1:'😰', 2:'🙂', 3:'🌟' };
-  
+
+  // Aggregate: one entry per card (history is newest-first, so first hit = most recent)
+  const byCard = {};
+  history.forEach(h => {
+    const key = h.cardId || h.id || h.question;
+    if (!key) return;
+    if (!byCard[key]) {
+      byCard[key] = {
+        cardId: key,
+        question: h.question,
+        subject: h.subject,
+        topic: h.topic,
+        grade: h.grade,
+        date: h.date,
+        attempts: 1
+      };
+    } else {
+      byCard[key].attempts++;
+    }
+  });
+  const cards = Object.values(byCard);
+
   const filters = ['all','Biology','Chemistry','Physics','again','hard','good','easy'];
   const filterLabels = { all:'All', Biology:'🌿 Biology', Chemistry:'⚗️ Chemistry', Physics:'⚡ Physics', again:'😵 Again', hard:'😰 Hard', good:'🙂 Good', easy:'🌟 Easy' };
-  
+
   const activeFilter = STATE.historyFilter || 'all';
-  
-  const filtered = history.filter(h => {
+
+  const filtered = cards.filter(h => {
     if (activeFilter === 'all') return true;
     if (['Biology','Chemistry','Physics'].includes(activeFilter)) return h.subject === activeFilter;
     return (h.grade === activeFilter || h.grade === {again:0,hard:1,good:2,easy:3}[activeFilter]);
@@ -3925,7 +3948,7 @@ function showStudyHistory() {
   }).join('');
 
   const cardRows = filtered.length === 0
-    ? '<div style="text-align:center;padding:40px;color:#64748B;font-weight:700;">No cards match this filter yet.</div>'
+    ? '<div style="text-align:center;padding:40px;color:#64748B;font-weight:700;">No cards studied yet.</div>'
     : filtered.map(h => {
         const grade = h.grade;
         const col = gradeColor[grade] || '#64748B';
@@ -3936,12 +3959,11 @@ function showStudyHistory() {
         return `<div style="background:white;border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
           <div style="flex:1;min-width:0;margin-right:12px;">
             <div style="font-size:14px;font-weight:800;color:#0F172A;margin-bottom:4px;">${h.question || 'Card'}</div>
-            <div style="font-size:12px;color:#64748B;font-weight:600;">${subjectEmoji} ${h.subject || ''} &nbsp;·&nbsp; ${h.topic || ''} &nbsp;·&nbsp; Rated ${date}</div>
+            <div style="font-size:12px;color:#64748B;font-weight:600;">${subjectEmoji} ${h.subject || ''} &nbsp;·&nbsp; ${h.topic || ''} &nbsp;·&nbsp; Last seen ${date}</div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
             <div style="font-size:13px;font-weight:900;color:${col};">${em} ${lbl}</div>
-            <div style="font-size:11px;color:#EF4444;font-weight:700;margin-top:2px;">Due now!</div>
-            <div style="font-size:11px;color:#64748B;font-weight:600;">Reps: ${h.reps || 0}</div>
+            <div style="font-size:11px;color:#64748B;font-weight:600;margin-top:2px;">${h.attempts} attempt${h.attempts !== 1 ? 's' : ''}</div>
           </div>
         </div>`;
       }).join('');
@@ -3951,7 +3973,7 @@ function showStudyHistory() {
   ${renderNavBar('history')}
   <div style="padding-bottom:40px;">
     <h1 style="font-size:22px;font-weight:900;margin-bottom:4px;">📖 Study History</h1>
-    <p style="font-size:14px;color:#64748B;font-weight:600;margin-bottom:16px;">${filtered.length} cards shown</p>
+    <p style="font-size:14px;color:#64748B;font-weight:600;margin-bottom:16px;">${filtered.length} card${filtered.length !== 1 ? 's' : ''} studied</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;overflow-x:auto;padding-bottom:4px;">${filterPills}</div>
     ${cardRows}
   </div>
@@ -4423,7 +4445,7 @@ async function submitFlashcardAI() {
   if (btn) { btn.disabled = true; btn.textContent = 'Marking...'; }
   const keyWordList = keyWords.join(', ');
   const keyPointsList = Array.isArray(card.a) ? card.a.map(b => b.replace(/\*\*/g, '')).join(' | ') : (card.answer || '');
-  const system = `You are a strict AQA GCSE science examiner.\nKey terms that MUST appear: ${keyWordList}\nFull answer: ${keyPointsList}\nGrade: again=missing all key terms, hard=1-2 key terms, good=most key terms, easy=all key terms.\nClose spellings count. Synonyms alone do NOT count.\nRespond ONLY with JSON: {"grade":"again","feedback":"under 12 words"}`;
+  const system = `You are a strict AQA GCSE science examiner.\nKey terms that MUST appear: ${keyWordList}\nFull answer: ${keyPointsList}\nCount what percentage of key terms appear in the student's answer (close spellings count, synonyms alone do NOT):\n- 0-25% of key terms → again\n- 26-49% of key terms → hard\n- 50-99% of key terms → good\n- 100% of key terms → easy\nRespond ONLY with JSON: {"grade":"again","feedback":"under 12 words"}`;
   try {
     const raw = await callClaude(system, 'Student answer: ' + studentAnswer, 150);
     const parsed = JSON.parse(raw.replace(/\`\`\`json|\`\`\`/g, '').trim());
@@ -4443,53 +4465,61 @@ function showAIResult(grade, feedback, copyPaste) {
   const col = colors[grade] || '#64748B';
   const inputArea = document.getElementById('ai-input-area');
   if (inputArea) inputArea.style.display = 'none';
+
+  const encourageMsgs = [
+    "This one's being stubborn! 💪 We'll keep coming back to it until you've got it",
+    "Not quite there yet — but repetition is how it sticks! 🧠",
+    "This card isn't going anywhere until you nail it! 🎯",
+    "Keep going — every time you see this it's getting closer to locked in! 🔒",
+    "Science is hard — that's why we keep coming back! You've got this 💥"
+  ];
+  STATE._encourageIdx = ((STATE._encourageIdx || 0) + 1) % encourageMsgs.length;
+  const encourageHTML = (grade === 'again' || grade === 'hard')
+    ? '<div style="font-size:12px;color:#64748B;font-weight:700;margin-top:6px;font-style:italic;">' + encourageMsgs[STATE._encourageIdx] + '</div>'
+    : '';
+
   const resultDiv = document.getElementById('ai-result');
   if (resultDiv) {
     resultDiv.style.display = 'block';
     resultDiv.innerHTML = '<div style="background:white;border-radius:12px;padding:14px 16px;border-left:4px solid ' + col + ';margin-bottom:8px;">' +
       '<div style="font-size:16px;font-weight:900;color:' + col + ';">' + emojis[grade] + ' ' + grade.charAt(0).toUpperCase() + grade.slice(1) + '</div>' +
       '<div style="font-size:13px;color:#64748B;font-weight:700;">' + feedback + '</div>' +
-      (copyPaste ? '<div style="font-size:11px;color:#D97706;margin-top:4px;">⚠️ Answered very quickly</div>' : '') + '</div>';
+      (copyPaste ? '<div style="font-size:11px;color:#D97706;margin-top:4px;">⚠️ Answered very quickly</div>' : '') +
+      encourageHTML + '</div>';
   }
   document.getElementById('answer-sec').style.display = 'block';
   document.getElementById('rating-wrap').style.display = 'block';
+  // AI graded — hide self-rating buttons, grade already saved to SRS
+  const ratingGrid = document.querySelector('#rating-wrap .rating-grid');
+  const ratingPrompt = document.querySelector('#rating-wrap .rating-prompt');
+  if (ratingGrid) ratingGrid.style.display = 'none';
+  if (ratingPrompt) ratingPrompt.style.display = 'none';
   const examBtn = document.getElementById('exam-reveal-btn');
   if (examBtn) examBtn.style.display = 'flex';
 }
 function recordAndAdvance(cardId, grade) {
   const card = STATE.cardQueue[STATE.currentCardIndex];
-  const gradeNum = { again:0, hard:1, good:2, easy:3 }[grade] || 0;
-  
+  const gradeNum = { again:0, hard:1, good:2, easy:3 }[grade] ?? 0;
+
+  // Update SRS via shared sm2Next
+  const progress = LS.get('card_progress') || {};
+  const existing = progress[cardId] || {};
+  progress[cardId] = { ...existing, ...sm2Next(existing, gradeNum), cardId };
+  LS.set('card_progress', progress);
+
+  incrementCardCount();
+
   // Save to history
   const history = LS.get('card_history') || [];
-  history.unshift({ 
-    id: cardId, 
-    question: card.question || card.q, 
-    subject: card.subject, 
-    topic: card.topic_name || card.topic, 
-    grade: grade, 
-    date: new Date().toISOString(), 
-    reps: (LS.get('card_progress')?.[cardId]?.reps || 0) + 1 
+  history.unshift({
+    cardId,
+    question: card?.question || card?.q,
+    subject: card?.subject,
+    topic: card?.topic_name || card?.topic,
+    grade: gradeNum,
+    date: new Date().toISOString()
   });
   LS.set('card_history', history.slice(0, 200));
-  
-  // Update SRS scheduling but don't advance yet
-  const progress = LS.get('card_progress') || {};
-  const p = progress[cardId] || { easeFactor: 2.5, interval: 1, reps: 0 };
-  if (gradeNum === 0) {
-    p.reps = 0; p.interval = 1;
-  } else if (gradeNum === 1) {
-    p.reps++; p.interval = Math.max(1, p.interval - 1);
-  } else if (gradeNum === 2) {
-    p.reps++; p.interval = p.reps === 1 ? 1 : p.reps === 2 ? 6 : Math.round(p.interval * p.easeFactor);
-    p.easeFactor = Math.max(1.3, p.easeFactor - 0.15 + 0.1);
-  } else {
-    p.reps++; p.interval = p.reps === 1 ? 1 : p.reps === 2 ? 6 : Math.round(p.interval * p.easeFactor);
-    p.easeFactor = Math.min(3.0, p.easeFactor + 0.1);
-  }
-  p.nextReview = new Date(Date.now() + p.interval * 86400000).toISOString();
-  progress[cardId] = p;
-  LS.set('card_progress', progress);
   
   // Show next button instead of auto-advancing
   const ratingWrap = document.getElementById('rating-wrap');
@@ -4540,6 +4570,17 @@ function flipCard() {
 
 function selfGrade(cardId, grade) {
   recordGrade(cardId, grade);
+  if (grade === 0 || grade === 1) {
+    const msgs = [
+      "This one's being stubborn! 💪 We'll keep coming back to it until you've got it",
+      "Not quite there yet — but repetition is how it sticks! 🧠",
+      "This card isn't going anywhere until you nail it! 🎯",
+      "Keep going — every time you see this it's getting closer to locked in! 🔒",
+      "Science is hard — that's why we keep coming back! You've got this 💥"
+    ];
+    STATE._encourageIdx = ((STATE._encourageIdx || 0) + 1) % msgs.length;
+    showToast(msgs[STATE._encourageIdx]);
+  }
   nextCard();
 }
 
@@ -4594,8 +4635,8 @@ function recordGrade(cardId, grade) {
   const card = STATE.cardQueue[STATE.currentCardIndex];
   const history = LS.get('card_history') || [];
   history.unshift({
-    cardId, question: card?.question, subject: card?.subject,
-    topic: card?.topic_name, grade, date: new Date().toISOString()
+    cardId, question: card?.question || card?.q, subject: card?.subject,
+    topic: card?.topic_name || card?.topic, grade, date: new Date().toISOString()
   });
   LS.set('card_history', history.slice(0, 200));
 }
