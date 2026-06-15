@@ -1828,8 +1828,8 @@ textarea.input { resize: vertical; min-height: 100px; }
   cursor: pointer;
   font-family: Nunito, sans-serif;
 }
-@media (max-width: 768px) {
-  #ai-chat-widget { right: 0; width: 100%; border-radius: 16px 16px 0 0; }
+@media (max-width: 767px) {
+  #ai-chat-widget { display: none !important; }
 }
 
 </style>
@@ -4193,7 +4193,7 @@ function renderNavBar(active) {
   const items = [
     { id: 'home', icon: '🏠', label: 'Learn', fn: 'showHome()' },
     { id: 'history', icon: '📖', label: 'History', fn: 'showStudyHistory()' },
-    { id: 'dashboard', icon: '📊', label: 'Dashboard', fn: 'showDashboard()' },
+    { id: 'ai-chat', icon: '✨', label: 'AI Tutor', fn: 'showAIChatTab()' },
     { id: 'profile', icon: '👤', label: 'Profile', fn: 'showProfile()' },
   ];
 
@@ -5596,6 +5596,31 @@ function doLogout() {
 }
 
 // ============================================================
+// AI TUTOR CHAT TAB (mobile full-screen)
+// ============================================================
+function showAIChatTab() {
+  STATE.screen = 'ai-chat';
+  const html = `
+<div class="screen has-topbar" id="screen-ai-chat">
+  ${renderNavBar('ai-chat')}
+  <div style="padding:20px 20px 12px;border-bottom:1px solid #E2E8F0;">
+    <div style="font-size:20px;font-weight:900;">✨ AI Tutor</div>
+    <div style="font-size:13px;color:#64748B;font-weight:600;margin-top:2px;">Ask me anything about GCSE Science</div>
+  </div>
+  <div style="display:flex;flex-direction:column;min-height:calc(100vh - 200px);">
+    <div id="ai-tab-messages" style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
+      <div class="ai-msg-ai">Hi! I'm your AI Tutor 🎓 Ask me anything about GCSE Science — topics, exam questions, or tricky concepts.</div>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid #E2E8F0;display:flex;gap:8px;align-items:center;background:white;position:sticky;bottom:0;">
+      <input id="ai-tab-input" type="text" placeholder="Ask me anything..." style="flex:1;padding:10px 14px;border:2px solid #E2E8F0;border-radius:12px;font-size:14px;font-family:Nunito,sans-serif;outline:none;" onkeydown="if(event.key==='Enter')sendAITabChat()">
+      <button onclick="sendAITabChat()" style="padding:10px 18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Send</button>
+    </div>
+  </div>
+</div>`;
+  render(html);
+}
+
+// ============================================================
 // TEACHER DASHBOARD
 // ============================================================
 async function showTeacherDashboard(selectedClass) {
@@ -6328,7 +6353,7 @@ function hideAIChatWidget() {
 }
 
 function updateChatWidgetVisibility() {
-  const hideOn = ['auth', 'flashcards'];
+  const hideOn = ['auth', 'flashcards', 'ai-chat'];
   if (hideOn.includes(STATE.screen)) hideAIChatWidget();
   else showAIChatWidget();
 }
@@ -6417,11 +6442,55 @@ async function sendAIChat() {
   msgs.scrollTop = msgs.scrollHeight;
 }
 
+async function sendAITabChat() {
+  const input = document.getElementById('ai-tab-input');
+  const msgs = document.getElementById('ai-tab-messages');
+  if (!input || !msgs) return;
+  const message = input.value.trim();
+  if (!message) return;
+
+  const userDiv = document.createElement('div');
+  userDiv.className = 'ai-msg-user';
+  userDiv.textContent = message;
+  msgs.appendChild(userDiv);
+  input.value = '';
+  msgs.scrollTop = msgs.scrollHeight;
+
+  const aiDiv = document.createElement('div');
+  aiDiv.className = 'ai-msg-ai';
+  aiDiv.textContent = 'Thinking...';
+  msgs.appendChild(aiDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    const user = (typeof STATE !== 'undefined' && STATE.user) || {};
+    const year = user.year_group || 11;
+    const tier = (user.tier || 'combined higher').replace(/_/g, ' ');
+    const res = await fetch('https://sciencespark-worker.sciencespark.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 600,
+        system: 'You are a friendly GCSE science tutor for Year ' + year + ' ' + tier + ' tier AQA. Give clear concise answers. After each answer suggest a follow-up question.',
+        messages: [{ role: 'user', content: message }]
+      })
+    });
+    const data = await res.json();
+    aiDiv.innerHTML = renderMarkdown(data.content?.[0]?.text || 'Sorry, try again!');
+  } catch(e) {
+    aiDiv.textContent = 'Something went wrong. Please try again.';
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
 window.toggleAIChat = toggleAIChat;
 window.showAIChatWidget = showAIChatWidget;
 window.hideAIChatWidget = hideAIChatWidget;
 window.sendAIChat = sendAIChat;
 window.updateChatWidgetVisibility = updateChatWidgetVisibility;
+window.showAIChatTab = showAIChatTab;
+window.sendAITabChat = sendAITabChat;
 
 </script>
 
