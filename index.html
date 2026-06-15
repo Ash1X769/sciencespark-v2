@@ -1531,7 +1531,6 @@ textarea.input { resize: vertical; min-height: 100px; }
 .topbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .topbar-streak { display: flex; align-items: center; gap: 4px; background: #FFF7ED; border: 2px solid #F97316; border-radius: 20px; padding: 4px 12px; font-size: 14px; font-weight: 900; color: #F97316; }
 .topbar-avatar { width: 34px; height: 34px; border-radius: 50%; background: #F0F4F8; border: 2px solid #E2E8F0; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
-.desktop-topbar { position: relative; }
 
 /* ═══════════════════════════════════════════════
    SCIENCESPARK V2 — CLEAN LAYOUT
@@ -3571,6 +3570,7 @@ const app = document.getElementById('app');
 
 function render(html) {
   app.innerHTML = html;
+  window.scrollTo(0, 0);
   updateChatWidgetVisibility();
 }
 
