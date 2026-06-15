@@ -4864,7 +4864,7 @@ function renderEmbedCard() {
 
     <div class="flashcard">
       <div class="flashcard-tag" style="color:${subjectColor(card.subject)};">${card.subject} · ${card.topic}</div>
-      <div class="flashcard-question">${card.question}</div>
+      <div class="flashcard-question">${card.q || card.question || ''}</div>
     </div>
 
     <div class="ai-answer-input" style="margin-top:16px;">
@@ -4910,7 +4910,8 @@ async function submitEmbedAnswer() {
   const btn = document.querySelector('.ai-answer-input .btn');
   if (btn) { btn.textContent = 'Grading...'; btn.disabled = true; }
 
-  const result = await gradeAnswer(card.question, card.answer, answer, timeSeconds);
+  const correctAnswer = Array.isArray(card.a) ? card.a.join('; ') : (card.answer || '');
+  const result = await gradeAnswer(card.q || card.question || '', correctAnswer, answer, timeSeconds);
   const gradeNum = { 'again': 0, 'hard': 1, 'good': 2, 'easy': 3 }[result.grade] ?? 2;
   recordGrade(card.id, gradeNum);
 
@@ -4926,9 +4927,10 @@ async function submitEmbedAnswer() {
       ${result.copy_paste_suspected ? ' ⚠️ Very fast — make sure you\'re thinking it through!' : ''}
     </div>`;
 
-  document.getElementById('embed-correct-answer').textContent = card.answer;
-  document.getElementById('exam-q-text').textContent = card.exam_q;
-  document.getElementById('exam-q-marks').textContent = card.mark_scheme;
+  const displayAnswer = Array.isArray(card.a) ? card.a.join('\n') : (card.answer || '');
+  document.getElementById('embed-correct-answer').textContent = displayAnswer;
+  document.getElementById('exam-q-text').textContent = card.exam_q || '';
+  document.getElementById('exam-q-marks').textContent = card.examA || card.mark_scheme || '';
 }
 
 function toggleExamQ() {
