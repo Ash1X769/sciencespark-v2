@@ -81,6 +81,7 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -113,8 +114,8 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
@@ -1538,15 +1539,7 @@ textarea.input { resize: vertical; min-height: 100px; }
    Mobile: bottom nav + full width content
 ═══════════════════════════════════════════════ */
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-  font-family: 'Nunito', sans-serif;
-  background: white;
-  color: #0F172A;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
 
 /* ── Main content wrapper ── */
 #app {
@@ -1737,7 +1730,7 @@ body {
 @media (max-width: 767px) {
   .desktop-topbar { display: none !important; }
   .nav-bar { display: flex !important; }
-  .screen { padding-top: 16px; padding-left: 16px; padding-right: 16px; }
+  .screen { padding-top: 0; padding-left: 16px; padding-right: 16px; }
 }
 
 /* ── AI Tutor Chat Widget ── */
