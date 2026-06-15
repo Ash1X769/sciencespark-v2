@@ -4849,6 +4849,7 @@ function renderEmbedCard() {
   STATE.flashcardFlipped = false;
 
   if (!card) { showTransition('embed-to-apply'); return; }
+  console.log('[EMBED] card object:', JSON.stringify(card, null, 2));
 
   const html = `
 <div class="screen" id="screen-embed">
