@@ -4505,9 +4505,18 @@ function recordAndAdvance(cardId, grade) {
       nextBtn.onclick = () => {
         STATE.currentCardIndex++;
         if (STATE.currentCardIndex >= STATE.cardQueue.length) {
-          endSession();
+          if (STATE.sessionPhase === 'embed') {
+            if (STATE._timerInterval) clearInterval(STATE._timerInterval);
+            showTransition('embed-to-apply');
+          } else {
+            endSession();
+          }
         } else {
-          renderFlashcard();
+          if (STATE.sessionPhase === 'embed') {
+            renderEmbedCard();
+          } else {
+            renderFlashcard();
+          }
         }
       };
       ratingWrap.appendChild(nextBtn);
@@ -4594,9 +4603,18 @@ function recordGrade(cardId, grade) {
 function nextCard() {
   STATE.currentCardIndex++;
   if (STATE.currentCardIndex >= STATE.cardQueue.length) {
-    showSessionEnd();
+    if (STATE.sessionPhase === 'embed') {
+      if (STATE._timerInterval) clearInterval(STATE._timerInterval);
+      showTransition('embed-to-apply');
+    } else {
+      showSessionEnd();
+    }
   } else {
-    renderFlashcard();
+    if (STATE.sessionPhase === 'embed') {
+      renderEmbedCard();
+    } else {
+      renderFlashcard();
+    }
   }
 }
 
@@ -4843,62 +4861,84 @@ function renderEmbedPhase() {
 
 function renderEmbedCard() {
   const card = STATE.cardQueue[STATE.currentCardIndex];
+  if (!card) { showTransition('embed-to-apply'); return; }
+
   const total = STATE.cardQueue.length;
   const current = STATE.currentCardIndex;
   STATE.pendingAnswerTime = Date.now();
   STATE.flashcardFlipped = false;
 
-  if (!card) { showTransition('embed-to-apply'); return; }
-  console.log('[EMBED] card object:', JSON.stringify(card, null, 2));
+  let answerBullets;
+  if (Array.isArray(card.a) && card.a.length > 0) {
+    answerBullets = card.a.map(b => '<li>' + bold(b) + '</li>').join('');
+  } else {
+    const ans = card.answer || '';
+    const parts = ans.split(/(?:\. |; | — | \/ )/).filter(p => p.trim().length > 5);
+    if (parts.length > 1) {
+      answerBullets = parts.map(p => '<li>' + p.trim() + '</li>').join('');
+    } else {
+      answerBullets = '<li>' + ans + '</li>';
+    }
+  }
+
+  const questionHTML = bold(card.question || card.q || '');
+  const hasExamQ = !!(card.exam_q || card.examQ);
+  const examQText = bold(card.exam_q || card.examQ || '');
+  const examMarks = card.examMarks || '1';
+  const examMS = fmtMs(card.examA || card.mark_scheme || '');
+  const subColor = subjectColor(card.subject);
+  const tierLabel = (card.tier === 'H') ? 'Higher' : 'Foundation';
+  const tierClass = (card.tier === 'H') ? 'h' : 'f';
 
   const html = `
 <div class="screen" id="screen-embed">
-  <div class="top-bar">
-    <button class="btn btn-ghost btn-sm" onclick="endSession()">✕</button>
-    <div style="font-size:16px;font-weight:800;">Phase 2 — Practice</div>
-    <div class="timer-badge" id="session-timer">${formatTime(STATE.sessionTimer)}</div>
-  </div>
   ${renderSessionHeader('embed')}
 
-  <div style="flex:1;overflow-y:auto;padding:20px 20px 20px;">
-    <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:16px;">${current+1} of ${total}</div>
+  <div class="flashcard-area">
+    <div class="card" style="padding:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:11px;font-weight:800;color:${subColor};background:${subColor}22;padding:3px 10px;border-radius:20px;">${card.subject} · ${card.topic_name || card.topic}</span>
+        <span class="c-tier ${tierClass}">${tierLabel}</span>
+      </div>
+      <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
+    </div>
+    <div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea><button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for marking</button></div>
+    <div id="ai-result" style="display:none;"></div>
 
-    <div class="flashcard">
-      <div class="flashcard-tag" style="color:${subjectColor(card.subject)};">${card.subject} · ${card.topic}</div>
-      <div class="flashcard-question">${card.q || card.question || ''}</div>
+    <div id="answer-sec" style="display:none;">
+      <div class="card" style="padding:16px;">
+        <div class="ans-lbl">✅ Answer</div>
+        <ul class="ans-list">${answerBullets}</ul>
+      </div>
     </div>
 
-    <div class="ai-answer-input" style="margin-top:16px;">
-      <label class="label">Your Answer</label>
-      <textarea id="embed-answer" class="input" placeholder="Write your answer here..." rows="4"></textarea>
-      <button class="btn btn-blue btn-full" style="margin-top:10px;" onclick="submitEmbedAnswer()">Submit →</button>
-    </div>
-
-    <div id="embed-feedback" class="hidden" style="margin-top:16px;display:flex;flex-direction:column;gap:12px;">
-      <div id="embed-fb-text"></div>
-
-      <div class="flashcard">
-        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">✓ Correct Answer</div>
-        <div id="embed-correct-answer" style="font-size:15px;font-weight:600;line-height:1.5;"></div>
+    <div id="rating-wrap" style="display:none;">
+      <div class="rating-prompt">How did you find that?</div>
+      <div class="rating-grid">
+        <button class="rate-btn again" onclick="selfGrade('${card.id}',0)"><span class="em">😵</span>Again</button>
+        <button class="rate-btn hard" onclick="selfGrade('${card.id}',1)"><span class="em">😰</span>Hard</button>
+        <button class="rate-btn good" onclick="selfGrade('${card.id}',2)"><span class="em">🙂</span>Good</button>
+        <button class="rate-btn easy" onclick="selfGrade('${card.id}',3)"><span class="em">🌟</span>Easy!</button>
       </div>
 
-      <div class="exam-q-dropdown">
-        <div class="exam-q-toggle" onclick="toggleExamQ()">
-          <span>📝 Exam Question</span>
-          <span id="exam-q-arrow">▼</span>
-        </div>
-        <div class="exam-q-body hidden" id="exam-q-body">
-          <div id="exam-q-text" style="font-weight:700;margin-bottom:8px;"></div>
-          <div class="mark-scheme" id="exam-q-marks"></div>
-        </div>
-      </div>
-
-      <button class="btn btn-primary btn-full btn-lg" onclick="nextEmbedCard()">Next →</button>
+      ${hasExamQ ? `
+      <button class="exam-reveal-btn" id="exam-reveal-btn" onclick="toggleExamCard()">
+        <span>🎯</span><span style="flex:1;">See the exam question this unlocks</span><span id="exam-chev">▼</span>
+      </button>
+      <div class="exam-card" id="exam-card">
+        <div class="exam-wow">💡 WOW moment</div>
+        <div style="font-size:12px;font-weight:800;color:#4F46E5;margin-bottom:8px;">That fact unlocks this exam question</div>
+        <div class="exam-q-box">${examQText}</div>
+        <span class="exam-marks-pill">${examMarks} mark${examMarks != 1 ? 's' : ''}</span>
+        <div class="exam-ms-lbl">AQA Mark Scheme</div>
+        <div>${examMS}</div>
+      </div>` : ''}
     </div>
   </div>
 </div>`;
 
-  render(html);
+  document.getElementById('app').innerHTML = html;
+  STATE.examOpen = false;
   startSessionTimerTick();
 }
 
