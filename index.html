@@ -3569,6 +3569,7 @@ const app = document.getElementById('app');
 
 function render(html) {
   app.innerHTML = html;
+  updateChatWidgetVisibility();
 }
 
 function renderScreen(name, content) {
@@ -6265,6 +6266,9 @@ async function init() {
 
 // Start app
 init();
+// Widget div is after this script tag, so sync DOM isn't available yet.
+// DOMContentLoaded fires after the full HTML is parsed.
+document.addEventListener('DOMContentLoaded', updateChatWidgetVisibility);
 
     // ── AI Tutor ──
     function openAITutor() {
@@ -6333,6 +6337,12 @@ function hideAIChatWidget() {
   if (w) { w.classList.add('hidden'); w.classList.add('closed'); }
 }
 
+function updateChatWidgetVisibility() {
+  const hideOn = ['auth', 'flashcards'];
+  if (hideOn.includes(STATE.screen)) hideAIChatWidget();
+  else showAIChatWidget();
+}
+
 async function sendAIChat() {
   const input = document.getElementById('ai-chat-input');
   const msgs = document.getElementById('ai-chat-messages');
@@ -6378,8 +6388,26 @@ window.toggleAIChat = toggleAIChat;
 window.showAIChatWidget = showAIChatWidget;
 window.hideAIChatWidget = hideAIChatWidget;
 window.sendAIChat = sendAIChat;
+window.updateChatWidgetVisibility = updateChatWidgetVisibility;
 
 </script>
+
+<div id="ai-chat-widget" class="closed hidden">
+  <div id="ai-chat-header" onclick="toggleAIChat()">
+    <span class="chat-title">✨ AI Tutor</span>
+    <span id="ai-chat-icon">▲</span>
+  </div>
+  <div id="ai-chat-body">
+    <div id="ai-chat-messages">
+      <div class="ai-msg-ai">Hi! I'm your AI Tutor 🎓 Ask me anything about GCSE Science — topics, exam questions, or tricky concepts.</div>
+    </div>
+    <div id="ai-chat-input-area">
+      <input id="ai-chat-input" type="text" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendAIChat()">
+      <button onclick="sendAIChat()">Send</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
  
