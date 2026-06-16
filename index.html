@@ -1850,6 +1850,9 @@ const CONFIG = {
   SUPABASE_URL: 'https://aevafcycbehvhcplpmms.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFldmFmY3ljYmVodmhjcGxwbW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjU4ODksImV4cCI6MjA5NjE0MTg4OX0.Ai9W5Whwu86YaOGI_2sXazDD2E4jW1p0ZyTET1C8-VM',
   VAPID_PUBLIC_KEY: 'BH7MZHLzPeQLlBlgzePbsFLrdDnvU-pEbJh4CpoAsyRy_63vbLauvsnxZltk-sJR7iei8FJu_5FDGhdwHYykjXM',
+  STRIPE_PK: 'pk_test_51Tj1Hd0ZgKdgW0uhukdhCtYtkWuilKof5f5tnUKQuETCsRgmhqhm3Oo5bTMpscnoWQurLoDFZRZTcqKgFbg3Flch00hThqLdl5',
+  FREE_CARDS_PER_WEEK: 15,
+  FREE_AI_PER_DAY: 2,
   CLAUDE_API_KEY: '', // Handled securely by Netlify function
   CLAUDE_MODEL: 'claude-sonnet-4-5',
   XP_PER_SESSION: 50,
@@ -3505,7 +3508,9 @@ function getCardsForUser(user) {
 }
 
 function getDueCards(user) {
-  const cards = getCardsForUser(user);
+  const allCards = getCardsForUser(user);
+  // Free tier: restrict to primary subject only
+  const cards = user.is_paid ? allCards : allCards.filter(c => c.subject === (user.primary_subject || 'Biology'));
   const progress = LS.get('card_progress') || {};
   const now = new Date();
   const today = new Date().toDateString();
@@ -3680,6 +3685,14 @@ function showAuth() {
           <label class="label">Class Code (optional)</label>
           <input type="text" id="su-classcode" class="input" placeholder="Ask your teacher for this">
         </div>
+        <div class="form-group">
+          <label class="label">Primary Subject <span style="color:#64748B;font-size:11px;font-weight:700;">(free plan — upgrade for all 3)</span></label>
+          <select id="su-subject" class="select">
+            <option value="Biology">🌿 Biology</option>
+            <option value="Chemistry">⚗️ Chemistry</option>
+            <option value="Physics">⚡ Physics</option>
+          </select>
+        </div>
       </div>
 
       <div id="signup-teacher-fields" class="hidden">
@@ -3777,6 +3790,8 @@ async function doLogin() {
     class_code: meta.class_code || null,
     parent_code: meta.parent_code || null,
     linked_parent_code: meta.linked_parent_code || null,
+    primary_subject: meta.primary_subject || 'Biology',
+    is_paid: false,
     xp: 0, streak: 0, level: 1,
     ai_mode: true, ai_mode_locked: false,
   };
@@ -3849,6 +3864,7 @@ async function doSignup() {
     meta.tier = document.getElementById('su-tier').value;
     meta.exam_board = document.getElementById('su-board').value;
     meta.class_code = document.getElementById('su-classcode').value.trim() || null;
+    meta.primary_subject = document.getElementById('su-subject')?.value || 'Biology';
     meta.parent_code = generateCode(8);
   } else if (role === 'teacher') {
     meta.class_code = generateCode(6);
@@ -3878,6 +3894,8 @@ async function doSignup() {
         class_code: m.class_code || null,
         parent_code: m.parent_code || null,
         linked_parent_code: m.linked_parent_code || null,
+        primary_subject: m.primary_subject || 'Biology',
+        is_paid: false,
         xp: 0, streak: 0, level: 1,
         ai_mode: true, ai_mode_locked: false,
       };
@@ -3892,6 +3910,8 @@ async function doSignup() {
 }
 
 function afterLogin(startScreen) {
+  // Always refresh paid status in background after login
+  loadUserPaidStatus();
   if (startScreen === 'history') { showStudyHistory(); return; }
   if (startScreen === 'teacher') { showTeacherDashboard(); return; }
   if (startScreen === 'parent') { showParentPortal(); setTimeout(requestPushPermission, 1500); return; }
@@ -3902,6 +3922,101 @@ function afterLogin(startScreen) {
 
 function saveScreen(name) {
   LS.set('last_screen', name);
+}
+
+// ============================================================
+// PAYWALL / FREE TIER
+// ============================================================
+
+async function loadUserPaidStatus() {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  try {
+    const res = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject',
+      { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+    );
+    const profiles = res.ok ? await res.json() : [];
+    if (profiles[0]) {
+      STATE.user.is_paid = profiles[0].is_paid || false;
+      STATE.user.trial_ends_at = profiles[0].trial_ends_at || null;
+      if (profiles[0].primary_subject) STATE.user.primary_subject = profiles[0].primary_subject;
+      LS.set('demo_user', STATE.user);
+    }
+  } catch(e) {}
+}
+
+function getWeeklyCardCount() {
+  const history = LS.get('card_history') || [];
+  const now = new Date();
+  const daysFromMonday = now.getDay() === 0 ? 6 : now.getDay() - 1;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - daysFromMonday);
+  monday.setHours(0, 0, 0, 0);
+  return history.filter(h => h.date && new Date(h.date) >= monday).length;
+}
+
+function getAIDailyCount() {
+  const today = new Date().toISOString().slice(0, 10);
+  const daily = LS.get('ai_daily') || { date: '', count: 0 };
+  return daily.date === today ? daily.count : 0;
+}
+
+function incrementAIDailyCount() {
+  const today = new Date().toISOString().slice(0, 10);
+  const daily = LS.get('ai_daily') || { date: today, count: 0 };
+  LS.set('ai_daily', { date: today, count: (daily.date === today ? daily.count : 0) + 1 });
+}
+
+function showUpgradeModal(reason) {
+  showModal(`
+    <div class="modal-handle"></div>
+    <div style="text-align:center;padding:8px 0 0;">
+      <div style="font-size:44px;margin-bottom:10px;">⚡</div>
+      <div class="modal-title" style="font-size:19px;">ScienceSpark Premium</div>
+      <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;margin:10px 0;">${reason}</p>
+      <div style="background:#F8FAFC;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:left;">
+        ${['✅ Unlimited cards — all 3 subjects','✅ AI marking on every answer','✅ Full Learning Sessions','✅ Unlimited AI Tutor','✅ Parent progress portal','🎁 Code <strong>TRIAL2026</strong> — 3 months free!'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);font-size:15px;" onclick="closeModal();startCheckout()">Upgrade — £12.99/month →</button>
+      <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Maybe later</button>
+      <div style="font-size:11px;color:#94A3B8;font-weight:600;margin-top:10px;">Cancel any time · No commitment</div>
+    </div>
+  `);
+}
+
+async function startCheckout() {
+  const token = STATE.user?.token;
+  if (!token) { showAuth(); return; }
+  showToast('Loading checkout...');
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/functions/v1/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY }
+    });
+    const data = await res.json();
+    if (data.url) { window.location.href = data.url; }
+    else showToast('Could not start checkout — try again');
+  } catch(e) {
+    showToast('Could not start checkout — check connection');
+  }
+}
+
+function showUpgradedCelebration() {
+  // Clear ?upgraded=true from URL without reload
+  if (window.history?.replaceState) window.history.replaceState({}, '', window.location.pathname);
+  // Reload paid status silently, then show toast
+  STATE.user.is_paid = true;
+  LS.set('demo_user', STATE.user);
+  loadUserPaidStatus(); // refresh from DB in background
+  render(`<div style="min-height:100vh;background:linear-gradient(135deg,#4F46E5,#7C3AED);display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 24px;">
+    <div>
+      <div style="font-size:72px;margin-bottom:20px;">🎉</div>
+      <div style="font-size:28px;font-weight:900;color:white;margin-bottom:12px;">You're Premium!</div>
+      <div style="font-size:16px;color:rgba(255,255,255,0.85);font-weight:600;line-height:1.6;margin-bottom:32px;">Welcome to ScienceSpark Premium.<br>Unlimited cards, AI marking, all subjects — unlocked.</div>
+      <button onclick="showHome()" style="background:white;color:#4F46E5;border:none;border-radius:14px;padding:16px 40px;font-size:17px;font-weight:900;cursor:pointer;font-family:inherit;">Start Revising →</button>
+    </div>
+  </div>`);
 }
 
 // ============================================================
@@ -4376,6 +4491,16 @@ function renderNavBar(active) {
 // ============================================================
 function startFlashcards() {
   const user = STATE.user;
+
+  // Free tier: weekly card limit
+  if (!user.is_paid) {
+    const weekCount = getWeeklyCardCount();
+    if (weekCount >= CONFIG.FREE_CARDS_PER_WEEK) {
+      showUpgradeModal(`You've used your ${CONFIG.FREE_CARDS_PER_WEEK} cards this week 🎉 Upgrade to ScienceSpark Premium for unlimited revision — £12.99/month`);
+      return;
+    }
+  }
+
   STATE.cardQueue = getDueCards(user);
   STATE.cardsDone = [];
   STATE.currentCardIndex = 0;
@@ -4396,7 +4521,7 @@ function renderFlashcard() {
   const current = STATE.currentCardIndex;
   STATE.flashcardFlipped = false;
   STATE.pendingAnswerTime = Date.now();
-  const aiMode = STATE.aiMode !== false;
+  const aiMode = (user.is_paid) ? (STATE.aiMode !== false) : false;
 
   // Build answer bullets - support both old (string) and V1 (array) format
   let answerBullets;
@@ -4445,15 +4570,24 @@ function renderFlashcard() {
 
   <div class="flashcard-area">
 <!-- AI Toggle -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;margin-bottom:8px;">
-      <div>
-        <div style="font-size:13px;font-weight:800;">${aiMode ? '✨ AI Marking ON' : '🙋 Self Rate ON'}</div>
-        <div style="font-size:11px;color:#64748B;font-weight:600;">${aiMode ? 'Type your answer — marked against key terms' : 'Reveal and rate yourself honestly'}</div>
-      </div>
-      <div onclick="toggleAIMode()" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:${aiMode ? '#22C55E' : '#E2E8F0'};position:relative;transition:background 0.2s;flex-shrink:0;">
-        <div style="position:absolute;top:3px;${aiMode ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>
-      </div>
-    </div>
+    ${user.is_paid
+      ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;margin-bottom:8px;">
+          <div>
+            <div style="font-size:13px;font-weight:800;">${aiMode ? '✨ AI Marking ON' : '🙋 Self Rate ON'}</div>
+            <div style="font-size:11px;color:#64748B;font-weight:600;">${aiMode ? 'Type your answer — marked against key terms' : 'Reveal and rate yourself honestly'}</div>
+          </div>
+          <div onclick="toggleAIMode()" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:${aiMode ? '#22C55E' : '#E2E8F0'};position:relative;transition:background 0.2s;flex-shrink:0;">
+            <div style="position:absolute;top:3px;${aiMode ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>
+          </div>
+        </div>`
+      : `<div onclick="showUpgradeModal('AI marking grades every answer instantly — upgrade to Premium to unlock it ✨')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#FAFAFA;border-radius:12px;border:1.5px dashed #CBD5E1;margin-bottom:8px;cursor:pointer;">
+          <div>
+            <div style="font-size:13px;font-weight:800;color:#64748B;">🙋 Self Rate (free plan)</div>
+            <div style="font-size:11px;color:#94A3B8;font-weight:600;">Tap to unlock AI marking ✨</div>
+          </div>
+          <div style="font-size:11px;font-weight:800;color:#4F46E5;background:#EEF2FF;padding:4px 10px;border-radius:20px;">UPGRADE</div>
+        </div>`
+    }
 
         <div class="card" style="padding:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -4759,6 +4893,10 @@ function nextCard() {
 // FULL LEARNING SESSION
 // ============================================================
 function startFullSession() {
+  if (!STATE.user?.is_paid) {
+    showUpgradeModal('Full Learning Sessions are a Premium feature 📚 Upgrade to unlock timed sessions with embed, practise, and apply phases — £12.99/month');
+    return;
+  }
   const html = `
 <div class="screen" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
   <div class="top-bar">
@@ -5673,6 +5811,25 @@ function showProfile() {
       </div>
     </div>
 
+    <!-- Premium Status -->
+    ${user.is_paid
+      ? `<div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#EEF2FF,#F5F3FF);border:1.5px solid #C7D2FE;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:15px;font-weight:900;color:#4F46E5;">⚡ ScienceSpark Premium</div>
+              <div style="font-size:13px;color:#6366F1;font-weight:600;margin-top:3px;">All features unlocked · All subjects</div>
+            </div>
+            <div style="font-size:28px;">✅</div>
+          </div>
+        </div>`
+      : `<div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#FFF7ED,#FFF);border:1.5px solid #FED7AA;">
+          <div style="font-size:15px;font-weight:900;color:#C2410C;margin-bottom:6px;">⚡ Free Plan</div>
+          <div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:12px;line-height:1.5;">15 cards/week · 1 subject · 2 AI messages/day<br>Upgrade for everything unlimited.</div>
+          <button onclick="startCheckout()" class="btn btn-primary btn-full" style="background:linear-gradient(135deg,#F97316,#EA580C);">Upgrade to Premium — £12.99/month →</button>
+          <div style="font-size:11px;color:#94A3B8;font-weight:600;text-align:center;margin-top:8px;">Use code TRIAL2026 for 3 months free</div>
+        </div>`
+    }
+
     <!-- Parent Code -->
     <div class="card" style="margin-bottom:16px;">
       <div style="font-size:15px;font-weight:800;margin-bottom:4px;">👨‍👩‍👧 Parent Code</div>
@@ -5719,6 +5876,14 @@ function showProfile() {
           <option value="triple_higher" ${user.tier==='triple_higher'?'selected':''}>Triple Higher</option>
         </select>
       </div>
+      ${!user.is_paid ? `<div class="form-group">
+        <label class="label">Free Subject <span style="color:#F97316;font-size:11px;font-weight:800;">(upgrade for all 3)</span></label>
+        <select id="edit-subject" class="select">
+          <option value="Biology" ${(user.primary_subject||'Biology')==='Biology'?'selected':''}>🌿 Biology</option>
+          <option value="Chemistry" ${user.primary_subject==='Chemistry'?'selected':''}>⚗️ Chemistry</option>
+          <option value="Physics" ${user.primary_subject==='Physics'?'selected':''}>⚡ Physics</option>
+        </select>
+      </div>` : ''}
       <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>
     </div>
 
@@ -5772,12 +5937,22 @@ function saveProfile() {
   const name = document.getElementById('edit-name')?.value?.trim();
   const board = document.getElementById('edit-board')?.value;
   const tier = document.getElementById('edit-tier')?.value;
+  const subject = document.getElementById('edit-subject')?.value;
 
   if (STATE.user) {
     STATE.user.display_name = name || STATE.user.display_name;
     STATE.user.exam_board = board;
     STATE.user.tier = tier;
+    if (subject) STATE.user.primary_subject = subject;
     LS.set('demo_user', STATE.user);
+    // Persist primary_subject to Supabase if logged in
+    if (subject && STATE.user.token) {
+      fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + STATE.user.id, {
+        method: 'PATCH',
+        headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + STATE.user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ primary_subject: subject })
+      }).catch(() => {});
+    }
   }
   showToast('Profile saved! ✓');
 }
@@ -5885,6 +6060,22 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
 async function showTeacherDashboard(selectedClass) {
   STATE.screen = 'teacher'; saveScreen('teacher');
   const user = STATE.user;
+
+  // Free tier: teacher dashboard requires Premium
+  if (!user.is_paid) {
+    render(`<div style="min-height:100vh;background:#F8FAFC;display:flex;align-items:center;justify-content:center;padding:24px;">
+      <div style="text-align:center;max-width:400px;">
+        <div style="font-size:56px;margin-bottom:16px;">🔒</div>
+        <div style="font-size:20px;font-weight:900;margin-bottom:8px;">Teacher Dashboard is Premium</div>
+        <div style="font-size:14px;color:#64748B;font-weight:600;line-height:1.6;margin-bottom:24px;">Upgrade to ScienceSpark Premium to manage classes, track student progress, and view RAG analysis.</div>
+        <button onclick="startCheckout()" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:white;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;margin-bottom:10px;">Upgrade — £12.99/month →</button>
+        <div style="font-size:12px;color:#94A3B8;font-weight:600;margin-bottom:20px;">Use code TRIAL2026 for 3 months free · Cancel any time</div>
+        <button onclick="doLogout()" style="background:none;border:none;color:#64748B;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
+      </div>
+    </div>`);
+    return;
+  }
+
   selectedClass = selectedClass || 'all';
 
   const realClasses = await loadTeacherClasses();
@@ -6420,6 +6611,22 @@ function showStudentDetail(name) {
 async function showParentPortal() {
   STATE.screen = 'parent'; saveScreen('parent');
   const user = STATE.user;
+
+  // Free tier: parent portal requires Premium
+  if (!user.is_paid) {
+    render(`<div style="min-height:100vh;background:#F8FAFC;display:flex;align-items:center;justify-content:center;padding:24px;">
+      <div style="text-align:center;max-width:400px;">
+        <div style="font-size:56px;margin-bottom:16px;">🔒</div>
+        <div style="font-size:20px;font-weight:900;margin-bottom:8px;">Parent Portal is Premium</div>
+        <div style="font-size:14px;color:#64748B;font-weight:600;line-height:1.6;margin-bottom:24px;">Upgrade to ScienceSpark Premium to track your child's progress, view their study history, and send reminders.</div>
+        <button onclick="startCheckout()" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:white;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;margin-bottom:10px;">Upgrade — £12.99/month →</button>
+        <div style="font-size:12px;color:#94A3B8;font-weight:600;margin-bottom:20px;">Use code TRIAL2026 for 3 months free · Cancel any time</div>
+        <button onclick="doLogout()" style="background:none;border:none;color:#64748B;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
+      </div>
+    </div>`);
+    return;
+  }
+
   const token = user.token;
   const headers = { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token };
 
@@ -6885,6 +7092,17 @@ function closeModal() {
 // INIT
 // ============================================================
 async function init() {
+  // Handle Stripe redirect
+  if (window.location.search.includes('upgraded=true')) {
+    const saved = LS.get('demo_user');
+    if (saved && saved.id) {
+      STATE.user = saved;
+      STATE.role = saved.role || 'student';
+      showUpgradedCelebration();
+      return;
+    }
+  }
+
   const saved = LS.get('demo_user');
 
   // Restore session instantly — no network call, no delay, no logout on refresh
@@ -7070,6 +7288,14 @@ function renderMarkdown(text) {
 }
 
 async function sendAIChat() {
+  if (!STATE.user?.is_paid) {
+    const count = getAIDailyCount();
+    if (count >= CONFIG.FREE_AI_PER_DAY) {
+      showUpgradeModal(`You've used your ${CONFIG.FREE_AI_PER_DAY} free AI Tutor messages today ✨ Upgrade to Premium for unlimited AI tutoring — £12.99/month`);
+      return;
+    }
+    incrementAIDailyCount();
+  }
   const input = document.getElementById('ai-chat-input');
   const msgs = document.getElementById('ai-chat-messages');
   const message = input.value.trim();
@@ -7111,6 +7337,15 @@ async function sendAIChat() {
 }
 
 async function sendAITabChat() {
+  if (!STATE.user?.is_paid) {
+    const count = getAIDailyCount();
+    if (count >= CONFIG.FREE_AI_PER_DAY) {
+      closeModal();
+      showUpgradeModal(`You've used your ${CONFIG.FREE_AI_PER_DAY} free AI Tutor messages today ✨ Upgrade to Premium for unlimited AI tutoring — £12.99/month`);
+      return;
+    }
+    incrementAIDailyCount();
+  }
   const input = document.getElementById('ai-tab-input');
   const msgs = document.getElementById('ai-tab-messages');
   if (!input || !msgs) return;
