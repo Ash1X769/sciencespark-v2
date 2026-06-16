@@ -2,12 +2,12 @@
 <html lang="en">
 <head><!-- v2.1 -->
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ScienceSpark — GCSE Science Revision</title>
 <link rel="manifest" href="/sciencespark-v2/manifest.json">
 <meta name="theme-color" content="#16A34A">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ScienceSpark">
 <link rel="apple-touch-icon" href="/sciencespark-v2/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -88,6 +88,7 @@ body {
   color: var(--text);
   overflow-x: clip;
   -webkit-font-smoothing: antialiased;
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* ============================================================
@@ -1857,8 +1858,8 @@ textarea.input { resize: vertical; min-height: 100px; }
   to   { transform:perspective(600px) rotateX(0deg);   opacity:1; }
 }
 @keyframes slideUpFade {
-  from { transform:translateX(-50%) translateY(20px); opacity:0; }
-  to   { transform:translateX(-50%) translateY(0);    opacity:1; }
+  from { transform:translateY(20px); opacity:0; }
+  to   { transform:translateY(0);    opacity:1; }
 }
 
 </style>
@@ -7593,7 +7594,7 @@ function showInstallBanner() {
   if (window.matchMedia('(display-mode: standalone)').matches) return;
   const banner = document.createElement('div');
   banner.id = 'pwa-install-banner';
-  banner.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:440px;background:#0F172A;color:white;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;z-index:9500;box-shadow:0 4px 24px rgba(0,0,0,0.3);animation:slideUpFade 0.35s ease;';
+  banner.style.cssText = 'position:fixed;bottom:80px;left:16px;right:16px;margin:0 auto;max-width:440px;background:#0F172A;color:white;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;z-index:9500;box-shadow:0 4px 24px rgba(0,0,0,0.3);animation:slideUpFade 0.35s ease;';
   banner.innerHTML = `
     <div style="font-size:26px;flex-shrink:0;">📱</div>
     <div style="flex:1;min-width:0;">
