@@ -1833,6 +1833,23 @@ textarea.input { resize: vertical; min-height: 100px; }
 @media (max-width: 767px) {
   #ai-chat-widget { display: none !important; }
 }
+@keyframes confettiFall {
+  0%   { transform: translateY(-10px) rotate(var(--rot,0deg)) scale(1); opacity:1; }
+  100% { transform: translateY(110vh) rotate(calc(var(--rot,0deg) + 360deg)) scale(0.5); opacity:0; }
+}
+@keyframes streakPulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(220,38,38,0.5); }
+  50%      { box-shadow:0 0 0 10px rgba(220,38,38,0); }
+}
+@keyframes levelUpEntry {
+  0%   { transform:scale(0.6); opacity:0; }
+  70%  { transform:scale(1.08); opacity:1; }
+  100% { transform:scale(1); }
+}
+@keyframes cardRevealIn {
+  from { transform:perspective(600px) rotateX(-90deg); opacity:0; }
+  to   { transform:perspective(600px) rotateX(0deg);   opacity:1; }
+}
 
 </style>
 </head>
@@ -4305,6 +4322,8 @@ function showHome() {
     const isToday = i === todayIdx;
     return '<div style="width:32px;height:32px;border-radius:50%;background:' + (done || isToday ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)') + ';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:' + (done || isToday ? '#E8720C' : 'rgba(255,255,255,0.7)') + ';">' + d + '</div>';
   }).join('');
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const studiedToday = history.some(h => h.date && h.date.startsWith(todayStr));
 
   const badges = [
     { icon: '🌱', label: 'First Steps', earned: history.length > 0 },
@@ -4351,14 +4370,23 @@ function showHome() {
         <div style="width:${Math.min(100,(xpInLevel/200)*100)}%;background:linear-gradient(90deg,#818CF8,#6366F1);height:100%;border-radius:8px;"></div>
       </div>
     </div>
-    <div style="background:#F97316;border-radius:16px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;">
+    ${streak > 0 && !studiedToday ? `<div style="background:linear-gradient(135deg,#DC2626,#F97316);border-radius:16px;padding:18px 20px;margin-bottom:12px;animation:streakPulse 1.5s ease-in-out infinite;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="font-size:36px;">🔥</div>
+        <div style="flex:1;">
+          <div style="font-size:17px;font-weight:900;color:white;">Your ${streak}-day streak is at risk!</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.9);font-weight:700;">Study now to keep it alive!</div>
+        </div>
+      </div>
+      <button onclick="startFlashcards()" style="width:100%;padding:12px;background:white;color:#DC2626;border:none;border-radius:12px;font-weight:900;font-size:15px;cursor:pointer;font-family:inherit;">⚡ Study now — protect your streak!</button>
+    </div>` : `<div style="background:#F97316;border-radius:16px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;">
       <div style="font-size:36px;">🔥</div>
       <div style="flex:1;">
         <div style="font-size:17px;font-weight:900;color:white;">${streak} Day Streak!</div>
         <div style="font-size:13px;color:rgba(255,255,255,0.85);font-weight:600;margin-bottom:10px;">${streak > 0 ? 'Keep it up — come back tomorrow!' : 'Start your streak today!'}</div>
         <div style="display:flex;gap:6px;">${dayDots}</div>
       </div>
-    </div>
+    </div>`}
     <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">TODAY'S SESSION</div>
     <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;">
       <div>
@@ -4390,12 +4418,14 @@ function showHome() {
         <div style="font-size:20px;color:rgba(255,255,255,0.8);">→</div>
       </div>
     <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">BADGES</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;padding-bottom:100px;">${badgeHTML}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">${badgeHTML}</div>
+    <div id="leaderboard-section" style="padding-bottom:100px;"></div>
   </div>
 </div>`;
 
   render(html);
   checkStudentPings();
+  loadClassLeaderboard();
 }
 
 async function checkStudentPings() {
@@ -4589,7 +4619,7 @@ function renderFlashcard() {
         </div>`
     }
 
-        <div class="card" style="padding:20px;">
+        <div class="card" id="question-card" style="padding:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <span style="font-size:11px;font-weight:800;color:${subColor};background:${subColor}22;padding:3px 10px;border-radius:20px;">${card.subject} · ${card.topic_name || card.topic}</span>
         <span class="c-tier ${tierClass}">${tierLabel}</span>
@@ -4636,9 +4666,25 @@ function renderFlashcard() {
 }
 
 function revealFlashcardAnswer() {
-  document.getElementById('reveal-btn').style.display = 'none';
-  document.getElementById('answer-sec').style.display = 'block';
-  document.getElementById('rating-wrap').style.display = 'block';
+  const revealBtn = document.getElementById('reveal-btn');
+  if (revealBtn) revealBtn.style.display = 'none';
+  const qCard = document.getElementById('question-card');
+  const answerSec = document.getElementById('answer-sec');
+  const ratingWrap = document.getElementById('rating-wrap');
+  if (qCard && answerSec) {
+    qCard.style.transition = 'transform 0.22s ease, opacity 0.22s ease';
+    qCard.style.transform = 'perspective(600px) rotateX(90deg)';
+    qCard.style.opacity = '0';
+    setTimeout(() => {
+      qCard.style.display = 'none';
+      answerSec.style.display = 'block';
+      answerSec.style.animation = 'cardRevealIn 0.28s ease forwards';
+      if (ratingWrap) ratingWrap.style.display = 'block';
+    }, 220);
+  } else {
+    if (answerSec) answerSec.style.display = 'block';
+    if (ratingWrap) ratingWrap.style.display = 'block';
+  }
 }
 
 function toggleExamCard() {
@@ -4730,6 +4776,8 @@ function showAIResult(grade, feedback, copyPaste) {
 function recordAndAdvance(cardId, grade) {
   const card = STATE.cardQueue[STATE.currentCardIndex];
   const gradeNum = { again:0, hard:1, good:2, easy:3 }[grade] ?? 0;
+  playGradeSound(gradeNum);
+  if (gradeNum === 3) launchConfetti();
 
   // Update SRS via shared sm2Next
   const progress = LS.get('card_progress') || {};
@@ -4799,6 +4847,8 @@ function flipCard() {
 }
 
 function selfGrade(cardId, grade) {
+  playGradeSound(grade);
+  if (grade === 3) launchConfetti();
   recordGrade(cardId, grade);
   if (grade === 0 || grade === 1) {
     const msgs = [
@@ -5367,15 +5417,21 @@ function endSession() {
 // ============================================================
 function showSessionEnd() {
   if (STATE._timerInterval) clearInterval(STATE._timerInterval);
-  const cardsDone = STATE.cardsDone?.length || STATE.currentCardIndex || 0;
   const xpEarned = CONFIG.XP_PER_SESSION;
-
-  // Update XP
   if (STATE.user) {
+    const oldLevel = Math.floor((STATE.user.xp || 0) / CONFIG.XP_PER_LEVEL) + 1;
     STATE.user.xp = (STATE.user.xp || 0) + xpEarned;
+    const newLevel = Math.floor(STATE.user.xp / CONFIG.XP_PER_LEVEL) + 1;
     STATE.user.streak = (STATE.user.streak || 0) + 1;
     LS.set('demo_user', STATE.user);
+    if (newLevel > oldLevel) { showLevelUpCelebration(newLevel, _renderSessionEnd); return; }
   }
+  _renderSessionEnd();
+}
+
+function _renderSessionEnd() {
+  const cardsDone = STATE.cardsDone?.length || STATE.currentCardIndex || 0;
+  const xpEarned = CONFIG.XP_PER_SESSION;
 
   // Calculate accuracy from this session
   const history = LS.get('card_history') || [];
@@ -5430,6 +5486,121 @@ function showSessionEnd() {
 </div>`;
 
   render(html);
+}
+
+// ============================================================
+// ENGAGEMENT: SOUND, CONFETTI, LEVEL-UP, LEADERBOARD
+// ============================================================
+
+function playGradeSound(grade) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    if (grade >= 2) {
+      osc.type = 'sine';
+      const f1 = grade === 3 ? 660 : 528;
+      const f2 = grade === 3 ? 880 : 660;
+      osc.frequency.setValueAtTime(f1, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(f2, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.28, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.5);
+      if (grade === 3) {
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.frequency.setValueAtTime(1320, ctx.currentTime + 0.18);
+        gain2.gain.setValueAtTime(0.22, ctx.currentTime + 0.18);
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+        osc2.start(ctx.currentTime + 0.18);
+        osc2.stop(ctx.currentTime + 0.55);
+      }
+    } else {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(grade === 1 ? 300 : 220, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(grade === 1 ? 240 : 160, ctx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.14, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.35);
+    }
+  } catch(e) {}
+}
+
+function launchConfetti() {
+  const colors = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#F97316','#6366F1','#22C55E'];
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99999;overflow:hidden;';
+  document.body.appendChild(container);
+  for (let i = 0; i < 70; i++) {
+    const piece = document.createElement('div');
+    const color = colors[i % colors.length];
+    const x = (i * 13.7) % 100;
+    const size = 7 + (i % 5);
+    const duration = 0.9 + (i % 4) * 0.15;
+    const delay = (i % 8) * 0.05;
+    const rot = (i * 37) % 360;
+    const isCircle = i % 3 === 0;
+    piece.style.cssText = `position:absolute;left:${x}%;top:-15px;width:${size}px;height:${isCircle ? size : Math.round(size*0.55)}px;background:${color};border-radius:${isCircle ? '50%' : '2px'};animation:confettiFall ${duration}s ${delay}s ease-in forwards;--rot:${rot}deg;`;
+    container.appendChild(piece);
+  }
+  setTimeout(() => { if (container.parentNode) container.remove(); }, 2000);
+}
+
+function showLevelUpCelebration(newLevel, callback) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:linear-gradient(135deg,#4F46E5,#818CF8,#A78BFA);z-index:99998;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;animation:levelUpEntry 0.4s ease;';
+  overlay.innerHTML = `
+    <div style="font-size:80px;margin-bottom:12px;">⬆️</div>
+    <div style="font-size:38px;font-weight:900;color:white;letter-spacing:0.02em;margin-bottom:6px;">LEVEL UP!</div>
+    <div style="font-size:24px;font-weight:900;color:rgba(255,255,255,0.92);margin-bottom:10px;">Level ${newLevel} unlocked 🎉</div>
+    <div style="font-size:15px;color:rgba(255,255,255,0.75);font-weight:700;">Keep sparking — you're on fire! 🔥</div>
+  `;
+  document.body.appendChild(overlay);
+  launchConfetti();
+  playGradeSound(3);
+  setTimeout(() => {
+    overlay.style.transition = 'opacity 0.5s ease';
+    overlay.style.opacity = '0';
+    setTimeout(() => { if (overlay.parentNode) overlay.remove(); if (callback) callback(); }, 500);
+  }, 2200);
+}
+
+async function loadClassLeaderboard() {
+  const user = STATE.user;
+  const section = document.getElementById('leaderboard-section');
+  if (!section || !user?.token || !user?.class_code) {
+    if (section) section.style.display = 'none';
+    return;
+  }
+  try {
+    const res = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?class_code=eq.' + encodeURIComponent(user.class_code) + '&role=eq.student&select=display_name,xp&order=xp.desc&limit=10',
+      { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+    );
+    if (!res.ok) { section.style.display = 'none'; return; }
+    const classmates = await res.json();
+    if (!classmates || classmates.length < 2) { section.style.display = 'none'; return; }
+    const medals = ['👑','🥈','🥉'];
+    const rows = classmates.map((s, i) => {
+      const isMe = s.display_name === user.display_name;
+      const medal = i < 3 ? medals[i] : (i + 1) + '.';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:${isMe ? '#EEF2FF' : 'white'};border-radius:12px;margin-bottom:6px;border:${isMe ? '1.5px solid #6366F1' : '1px solid #F0F4F8'};">
+        <div style="font-size:${i === 0 ? '20px' : '15px'};font-weight:900;width:28px;text-align:center;">${medal}</div>
+        <div style="flex:1;font-size:14px;font-weight:${isMe ? 900 : 700};color:${isMe ? '#4F46E5' : '#0F172A'};">${s.display_name}${isMe ? ' (you)' : ''}</div>
+        <div style="font-size:14px;font-weight:900;color:#6366F1;">${s.xp}<span style="font-size:11px;font-weight:700;color:#94A3B8;"> XP</span></div>
+      </div>`;
+    }).join('');
+    section.innerHTML = `
+      <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">CLASS LEADERBOARD</div>
+      <div style="background:white;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">${rows}</div>`;
+  } catch(e) { if (section) section.style.display = 'none'; }
 }
 
 // ============================================================
