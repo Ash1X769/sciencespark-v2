@@ -5803,6 +5803,7 @@ async function showTeacherDashboard(selectedClass) {
   STATE.teacherClasses = classes;
 
   const students = await loadStudentsForTeacher(selectedClass, classes, user.token);
+  STATE.teacherStudents = students;
   const selectedName = classes.find(c => c.id === selectedClass)?.name || 'All Classes';
   const selectedCode = classes.find(c => c.id === selectedClass)?.code || '';
 
@@ -5913,6 +5914,7 @@ async function showTeacherDashboard(selectedClass) {
             <div style="width:${s.accuracy}%;height:100%;background:${ragColor(s.accuracy)};border-radius:6px;"></div>
           </div>
           <div style="text-align:center;font-size:13px;font-weight:900;color:${ragColor(s.accuracy)};">${s.accuracy}% accuracy</div>
+          <button onclick="event.stopPropagation();showStudentHistory('${s.user_id}')" style="width:100%;margin-top:12px;padding:8px 0;border-radius:8px;border:1.5px solid #E2E8F0;background:white;color:#374151;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">📖 View History</button>
           <div id="${safeId}" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid #F1F5F9;">
             ${topicEntries.length > 0 ? topicEntries.map(([topic,td]) =>
               `<div style="margin-bottom:9px;">
@@ -5979,6 +5981,93 @@ function toggleStudentCard(userId) {
   const isOpen = el.style.display !== 'none';
   document.querySelectorAll('[id^="sc-"]').forEach(d => { d.style.display = 'none'; });
   if (!isOpen) el.style.display = 'block';
+}
+
+async function showStudentHistory(userId) {
+  const student = (STATE.teacherStudents || []).find(s => s.user_id === userId);
+  const studentName = student?.name || 'Student';
+
+  // Show overlay immediately with loading state
+  let overlay = document.getElementById('teacher-history-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'teacher-history-overlay';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;overflow-y:auto;background:#F8FAFC;';
+  overlay.innerHTML = `
+    <div style="background:white;border-bottom:1px solid #E2E8F0;padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;">
+      <button onclick="closeStudentHistory()" style="width:36px;height:36px;border-radius:50%;border:none;background:#F1F5F9;font-size:18px;line-height:1;cursor:pointer;font-family:inherit;">←</button>
+      <div>
+        <div style="font-size:16px;font-weight:900;color:#1E293B;">${studentName}</div>
+        <div style="font-size:12px;color:#64748B;font-weight:600;">📖 Study History</div>
+      </div>
+    </div>
+    <div style="padding:20px;text-align:center;color:#64748B;font-weight:700;padding-top:60px;">Loading...</div>`;
+
+  try {
+    const token = STATE.user?.token;
+    const headers = { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token };
+    const res = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=eq.' + encodeURIComponent(userId) + '&select=card_id,question,subject,topic_name,grade,created_at&order=created_at.desc',
+      { headers }
+    );
+    const rows = res.ok ? await res.json() : [];
+
+    const gradeColor = { 0:'#DC2626', 1:'#D97706', 2:'#16A34A', 3:'#4F46E5' };
+    const gradeLabel = { 0:'Again', 1:'Hard', 2:'Good', 3:'Easy' };
+    const gradeEmoji = { 0:'😵', 1:'😰', 2:'🙂', 3:'🌟' };
+
+    // Aggregate: one row per unique card_id (newest-first = most recent grade)
+    const byCard = {};
+    rows.forEach(h => {
+      const key = h.card_id;
+      if (!byCard[key]) {
+        byCard[key] = { question: h.question, subject: h.subject, topic: h.topic_name, grade: h.grade, date: h.created_at, attempts: 1 };
+      } else {
+        byCard[key].attempts++;
+      }
+    });
+    const cards = Object.values(byCard);
+
+    const cardRows = cards.length === 0
+      ? '<div style="text-align:center;padding:48px;color:#64748B;font-weight:700;">No study history yet.</div>'
+      : cards.map(h => {
+          const col = gradeColor[h.grade] ?? '#64748B';
+          const lbl = gradeLabel[h.grade] ?? h.grade;
+          const em  = gradeEmoji[h.grade] ?? '📚';
+          const date = h.date ? new Date(h.date).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
+          const subjectEmoji = h.subject === 'Biology' ? '🌿' : h.subject === 'Chemistry' ? '⚗️' : h.subject === 'Physics' ? '⚡' : '📚';
+          const questionText = h.question || h.topic || 'Flashcard';
+          return `<div style="background:white;border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
+            <div style="flex:1;min-width:0;margin-right:12px;">
+              <div style="font-size:14px;font-weight:800;color:#0F172A;margin-bottom:4px;">${questionText}</div>
+              <div style="font-size:12px;color:#64748B;font-weight:600;">${subjectEmoji} ${h.subject || ''} &nbsp;·&nbsp; ${h.topic || ''} &nbsp;·&nbsp; Last seen ${date}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-size:13px;font-weight:900;color:${col};">${em} ${lbl}</div>
+              <div style="font-size:11px;color:#64748B;font-weight:600;margin-top:2px;">${h.attempts} attempt${h.attempts !== 1 ? 's' : ''}</div>
+            </div>
+          </div>`;
+        }).join('');
+
+    overlay.innerHTML = `
+      <div style="background:white;border-bottom:1px solid #E2E8F0;padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;">
+        <button onclick="closeStudentHistory()" style="width:36px;height:36px;border-radius:50%;border:none;background:#F1F5F9;font-size:18px;line-height:1;cursor:pointer;font-family:inherit;">←</button>
+        <div>
+          <div style="font-size:16px;font-weight:900;color:#1E293B;">${studentName}</div>
+          <div style="font-size:12px;color:#64748B;font-weight:600;">📖 Study History &nbsp;·&nbsp; ${cards.length} card${cards.length !== 1 ? 's' : ''} studied</div>
+        </div>
+      </div>
+      <div style="padding:16px;padding-bottom:40px;">${cardRows}</div>`;
+  } catch(e) {
+    overlay.innerHTML += '<div style="padding:16px;color:#DC2626;font-weight:700;">Could not load history — check connection.</div>';
+  }
+}
+
+function closeStudentHistory() {
+  const overlay = document.getElementById('teacher-history-overlay');
+  if (overlay) overlay.remove();
 }
 
 async function showCreateClass() {
