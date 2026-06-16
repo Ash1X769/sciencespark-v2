@@ -3963,7 +3963,7 @@ async function doSignup() {
 function afterLogin(startScreen) {
   // Always refresh paid status in background after login
   loadUserPaidStatus();
-  if (startScreen === 'history') { showStudyHistory(); return; }
+  // Students always land on Home — never restore to a sub-screen on load
   if (startScreen === 'teacher') { showTeacherDashboard(); return; }
   if (startScreen === 'parent') { showParentPortal(); setTimeout(requestPushPermission, 1500); return; }
   if (STATE.role === 'student') { showHome(); setTimeout(requestPushPermission, 1500); }
