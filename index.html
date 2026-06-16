@@ -5725,26 +5725,34 @@ function showAIChatTab() {
 // ============================================================
 // TEACHER DASHBOARD
 // ============================================================
-async function loadStudentsForTeacher(selectedClass, teacherClassCode, token) {
+async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
   const headers = { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token };
-  let profiles = [];
   try {
-    if (selectedClass && selectedClass !== 'all') {
-      const mRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/class_members?class_id=eq.' + selectedClass + '&select=student_id', { headers });
-      const members = mRes.ok ? await mRes.json() : [];
-      if (!members.length) return [];
-      const ids = members.map(m => m.student_id).join(',');
-      const pRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=in.(' + ids + ')&role=eq.student&select=user_id,display_name,tier,streak,xp', { headers });
-      profiles = pRes.ok ? await pRes.json() : [];
+    let classCodes = [];
+    if (selectedClassId === 'all') {
+      classCodes = classesArr.filter(c => c.id !== 'all').map(c => c.code).filter(Boolean);
     } else {
-      if (!teacherClassCode || teacherClassCode === 'N/A') return [];
-      const pRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?class_code=eq.' + encodeURIComponent(teacherClassCode) + '&role=eq.student&select=user_id,display_name,tier,streak,xp', { headers });
-      profiles = pRes.ok ? await pRes.json() : [];
+      const cls = classesArr.find(c => c.id === selectedClassId);
+      if (cls && cls.code) classCodes = [cls.code];
     }
+    if (!classCodes.length) return [];
+
+    const codeParam = classCodes.length === 1
+      ? 'class_code=eq.' + encodeURIComponent(classCodes[0])
+      : 'class_code=in.(' + classCodes.map(c => encodeURIComponent(c)).join(',') + ')';
+
+    const pRes = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?' + codeParam + '&role=eq.student&select=user_id,display_name,tier,streak,xp',
+      { headers }
+    );
+    const profiles = pRes.ok ? await pRes.json() : [];
     if (!profiles.length) return [];
 
     const ids = profiles.map(p => p.user_id).join(',');
-    const hRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=in.(' + ids + ')&select=user_id,topic_name,grade', { headers });
+    const hRes = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=in.(' + ids + ')&select=user_id,subject,topic_name,grade',
+      { headers }
+    );
     const history = hRes.ok ? await hRes.json() : [];
 
     return profiles.map(p => {
@@ -5755,16 +5763,19 @@ async function loadStudentsForTeacher(selectedClass, teacherClassCode, token) {
       const topicMap = {};
       sh.forEach(h => {
         if (!h.topic_name) return;
-        if (!topicMap[h.topic_name]) topicMap[h.topic_name] = { total: 0, correct: 0 };
+        if (!topicMap[h.topic_name]) topicMap[h.topic_name] = { total: 0, correct: 0, subject: h.subject || '' };
         topicMap[h.topic_name].total++;
         if (h.grade >= 2) topicMap[h.topic_name].correct++;
       });
       const topics = {};
-      Object.entries(topicMap).forEach(([t, d]) => { topics[t] = Math.round((d.correct / d.total) * 100); });
+      Object.entries(topicMap).forEach(([t, d]) => {
+        topics[t] = { pct: Math.round((d.correct / d.total) * 100), subject: d.subject };
+      });
       return {
         name: p.display_name || 'Student',
         user_id: p.user_id,
         tier: (p.tier || '').includes('higher') ? 'Higher' : 'Foundation',
+        tierFull: p.tier || '',
         streak: p.streak || 0,
         xp: p.xp || 0,
         cards,
@@ -5781,105 +5792,193 @@ async function loadStudentsForTeacher(selectedClass, teacherClassCode, token) {
 async function showTeacherDashboard(selectedClass) {
   STATE.screen = 'teacher'; saveScreen('teacher');
   const user = STATE.user;
-  const classCode = user.class_code || 'N/A';
   selectedClass = selectedClass || 'all';
 
-  // Load real classes from Supabase
   const realClasses = await loadTeacherClasses();
-  let classes = [{ id: 'all', name: 'All Classes' }];
-  if (realClasses.length > 0) {
-    classes = [{ id: 'all', name: 'All Classes' }, ...realClasses.map(cl => ({ id: cl.id, name: cl.name, code: cl.code }))];
-  }
-
-  // Load real student data from Supabase
-  const students = await loadStudentsForTeacher(selectedClass, classCode, user.token);
-
-  // Compute topics dynamically from students' study history
-  const topicSet = new Set();
-  students.forEach(s => Object.keys(s.topics).forEach(t => topicSet.add(t)));
-  const topics = [...topicSet].slice(0, 5);
-
-  const ragColor = (p) => p >= 75 ? '#22C55E' : p >= 40 ? '#F59E0B' : '#EF4444';
-  const ragBg = (p) => p >= 75 ? '#F0FDF4' : p >= 40 ? '#FFFBEB' : '#FEF2F2';
-  const selectedName = classes.find(c => c.id === selectedClass)?.name || 'All Classes';
-
-  const emptyState = '<div style="text-align:center;padding:48px 24px;color:#64748B;"><div style="font-size:40px;margin-bottom:12px;">👋</div><div style="font-size:16px;font-weight:800;color:#0F172A;margin-bottom:6px;">No students yet</div><div style="font-size:13px;font-weight:600;">Share your class code <strong>' + classCode + '</strong> with students at signup.</div></div>';
-
-  // Store for saveClassName() and settings tab
+  const classes = [
+    { id: 'all', name: 'All Classes', code: '' },
+    ...realClasses.map(cl => ({ id: cl.id, name: cl.name, code: cl.code }))
+  ];
   STATE.teacherSelectedClass = selectedClass;
   STATE.teacherClasses = classes;
 
-  const html = `<div style="min-height:100vh;background:#F8FAFC;">
-  <div style="background:linear-gradient(135deg,var(--ss-green),var(--ss-purple));padding:28px 24px 20px;color:white;position:relative;">
-    <div style="font-size:12px;font-weight:700;opacity:0.85;margin-bottom:6px;">Welcome, ${user.display_name || 'Teacher'}</div>
-    <div style="font-size:28px;font-weight:900;line-height:1.1;">${selectedName}</div>
-    <button onclick="doLogout()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
-  </div>
+  const students = await loadStudentsForTeacher(selectedClass, classes, user.token);
+  const selectedName = classes.find(c => c.id === selectedClass)?.name || 'All Classes';
+  const selectedCode = classes.find(c => c.id === selectedClass)?.code || '';
 
-  <!-- Class filter bar -->
-  <div style="background:white;border-bottom:1px solid #E2E8F0;padding:12px 20px;display:flex;align-items:center;gap:10px;">
-    <select onchange="showTeacherDashboard(this.value)" style="flex:1;padding:8px 12px;border-radius:10px;border:2px solid #E2E8F0;font-size:14px;font-weight:800;font-family:inherit;color:#0F172A;background:white;cursor:pointer;">
-      ${classes.map(cl => '<option value="' + cl.id + '"' + (cl.id === selectedClass ? ' selected' : '') + '>' + cl.name + '</option>').join('')}
-    </select>
+  const avgStreak = students.length ? Math.round(students.reduce((a,s) => a+s.streak, 0)/students.length) : 0;
+  const avgCards  = students.length ? Math.round(students.reduce((a,s) => a+s.cards,  0)/students.length) : 0;
+  const avgAcc    = students.length ? Math.round(students.reduce((a,s) => a+s.accuracy,0)/students.length) : 0;
 
-    <button onclick="(() => { const sel = document.getElementById('class-select'); const id = sel?.value; const name = sel?.options[sel?.selectedIndex]?.text; if(id && id !== 'all') deleteClass(id, name); })()" style="padding:8px 12px;border-radius:10px;border:2px solid #FEE2E2;background:#FEF2F2;font-size:14px;cursor:pointer;font-family:inherit;" title="Delete selected class">🗑️</button>
-    <button onclick="showCreateClass()" style="padding:8px 16px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">➕ Create Class</button>
-  </div>
+  const topicSet = new Set();
+  students.forEach(s => Object.keys(s.topics).forEach(t => topicSet.add(t)));
+  const allTopics = [...topicSet].slice(0, 6);
 
-  <!-- Tabs -->
-  <div style="display:flex;background:white;border-bottom:1px solid #E2E8F0;padding:0 16px;gap:4px;">
-    <button id="ttab-overview" onclick="teacherTab('overview')" style="padding:14px 16px;border:none;border-bottom:3px solid #0F172A;background:none;font-size:14px;font-weight:800;color:#0F172A;cursor:pointer;font-family:inherit;white-space:nowrap;">👥 Overview</button>
-    <button id="ttab-rag" onclick="teacherTab('rag')" style="padding:14px 16px;border:none;border-bottom:3px solid transparent;background:none;font-size:14px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;white-space:nowrap;">🔴 RAG Grid</button>
-    <button id="ttab-students" onclick="teacherTab('students')" style="padding:14px 16px;border:none;border-bottom:3px solid transparent;background:none;font-size:14px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;white-space:nowrap;">📋 Students</button>
-    <button id="ttab-settings" onclick="teacherTab('settings')" style="padding:14px 16px;border:none;border-bottom:3px solid transparent;background:none;font-size:14px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;white-space:nowrap;">⚙️ Settings</button>
-  </div>
+  const ragColor = p => p >= 75 ? '#16A34A' : p >= 40 ? '#D97706' : '#DC2626';
+  const ragBg    = p => p >= 75 ? '#F0FDF4' : p >= 40 ? '#FEFCE8' : '#FEF2F2';
+  const tierLabel = t => {
+    if (!t) return 'Foundation';
+    const lvl = t.includes('higher') ? 'Higher' : 'Foundation';
+    return (t.includes('triple') ? 'Triple ' : '') + lvl;
+  };
+  const avatarColors = ['#6366F1','#F59E0B','#10B981','#EF4444','#8B5CF6','#3B82F6','#F97316','#06B6D4'];
+  const avatarBgs   = ['#EEF2FF','#FFFBEB','#ECFDF5','#FEF2F2','#F3E8FF','#EFF6FF','#FFF7ED','#ECFEFF'];
 
-  <div style="padding:20px;max-width:960px;margin:0 auto;padding-bottom:60px;">
+  const emptyState = `<div style="text-align:center;padding:60px 24px;">
+    <div style="font-size:48px;margin-bottom:14px;">👩‍🎓</div>
+    <div style="font-size:17px;font-weight:800;color:#1E293B;margin-bottom:8px;">No students yet</div>
+    <div style="font-size:13px;color:#64748B;font-weight:600;line-height:1.6;">Share the class code <strong style="color:#8B5CF6;letter-spacing:1px;">${selectedCode || '(see Settings)'}</strong> with students so they can join at signup.</div>
+  </div>`;
 
-    <!-- OVERVIEW -->
-    <div id="tcontent-overview">
-      <div style="font-size:13px;font-weight:800;color:#64748B;margin-bottom:12px;">${selectedName} · ${students.length} student${students.length !== 1 ? 's' : ''}</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
-        <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:#0F172A;">${students.length}</div>
-          <div style="font-size:11px;font-weight:800;color:#64748B;">STUDENTS</div>
-        </div>
-        <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:#F97316;">${students.length ? Math.round(students.reduce((a,s)=>a+s.streak,0)/students.length) : 0}</div>
-          <div style="font-size:11px;font-weight:800;color:#64748B;">AVG STREAK</div>
-        </div>
-        <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:#3B82F6;">${students.length ? Math.round(students.reduce((a,s)=>a+s.cards,0)/students.length) : 0}</div>
-          <div style="font-size:11px;font-weight:800;color:#64748B;">AVG CARDS</div>
-        </div>
-        <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:#22C55E;">${students.length ? Math.round(students.reduce((a,s)=>a+s.accuracy,0)/students.length) : 0}%</div>
-          <div style="font-size:11px;font-weight:800;color:#64748B;">AVG ACCURACY</div>
+  // ── OVERVIEW ──
+  const overviewHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;">
+      ${[[''+students.length,'#1E293B','Students'],['🔥 '+avgStreak,'#F97316','Avg Streak'],[''+avgCards,'#3B82F6','Avg Cards'],[''+avgAcc+'%','#22C55E','Avg Accuracy']].map(([v,c,l]) =>
+        `<div style="background:white;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,0.06);border:1px solid #F1F5F9;text-align:center;">
+          <div style="font-size:30px;font-weight:900;color:${c};line-height:1;">${v}</div>
+          <div style="font-size:11px;font-weight:800;color:#94A3B8;margin-top:6px;text-transform:uppercase;letter-spacing:0.5px;">${l}</div>
+        </div>`).join('')}
+    </div>
+    ${students.length === 0 ? emptyState : `<div style="background:white;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,0.06);border:1px solid #F1F5F9;overflow:hidden;">
+      <div style="padding:15px 20px;border-bottom:1px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:14px;font-weight:800;color:#1E293B;">All Students</span>
+        <span style="font-size:12px;font-weight:600;color:#94A3B8;">${selectedName} · ${students.length} student${students.length!==1?'s':''}</span>
+      </div>
+      ${students.map((s,si) => {
+        const col = avatarColors[si%avatarColors.length], bg = avatarBgs[si%avatarBgs.length];
+        return `<div style="display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid #F8FAFC;">
+          <div style="width:38px;height:38px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:${col};flex-shrink:0;">${s.name.charAt(0).toUpperCase()}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:800;color:#1E293B;">${s.name}</div>
+            <div style="font-size:12px;color:#94A3B8;font-weight:600;">${tierLabel(s.tierFull)} · 🔥${s.streak} · ${s.cards} cards</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:72px;background:#F1F5F9;border-radius:4px;height:6px;overflow:hidden;"><div style="width:${s.accuracy}%;height:100%;background:${ragColor(s.accuracy)};border-radius:4px;"></div></div>
+            <span style="min-width:34px;text-align:right;font-size:13px;font-weight:900;color:${ragColor(s.accuracy)};">${s.accuracy}%</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`}`;
+
+  // ── RAG GRID ──
+  const ragHTML = allTopics.length === 0 ? emptyState : `
+    <div style="background:white;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,0.06);border:1px solid #F1F5F9;overflow:hidden;">
+      <div style="padding:15px 20px;border-bottom:1px solid #F1F5F9;">
+        <div style="font-size:14px;font-weight:800;color:#1E293B;">Topic Accuracy Grid</div>
+        <div style="font-size:12px;font-weight:600;color:#94A3B8;margin-top:3px;">
+          <span style="color:#16A34A;">●</span> 75%+ &nbsp;
+          <span style="color:#D97706;">●</span> 40–74% &nbsp;
+          <span style="color:#DC2626;">●</span> Under 40% &nbsp;
+          <span style="color:#CBD5E1;">—</span> Not studied
         </div>
       </div>
-      ${students.length === 0 ? emptyState : students.map(s => '<div style="background:white;border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;display:flex;align-items:center;gap:14px;"><div style="width:40px;height:40px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#4F46E5;flex-shrink:0;">' + s.name.charAt(0).toUpperCase() + '</div><div style="flex:1;"><div style="font-size:15px;font-weight:800;">' + s.name + '</div><div style="font-size:12px;color:#64748B;font-weight:600;">' + s.tier + ' · 🔥' + s.streak + ' · ' + s.cards + ' cards · ' + s.accuracy + '% accuracy</div></div><span style="background:' + ragBg(s.accuracy) + ';color:' + ragColor(s.accuracy) + ';padding:4px 10px;border-radius:8px;font-size:13px;font-weight:800;">' + s.accuracy + '%</span>' + (selectedClass !== 'all' ? '<button onclick="confirmRemoveStudent(\'' + s.name + '\', \'' + selectedClass + '\')" style="margin-left:8px;padding:4px 10px;border-radius:6px;border:1px solid #FEE2E2;background:#FEF2F2;font-size:11px;font-weight:700;cursor:pointer;color:#EF4444;font-family:inherit;">Remove</button>' : '') + '</div>').join('')}
-      <div style="background:#EEF2FF;border-radius:14px;padding:16px;margin-top:16px;border:1px solid #C7D2FE;">
-        <div style="font-size:14px;font-weight:800;color:#4F46E5;margin-bottom:6px;">🔗 Default Class Code</div>
-        <div style="font-size:28px;font-weight:900;color:#0F172A;letter-spacing:0.1em;margin-bottom:8px;">${classCode}</div>
-        <div style="font-size:13px;color:#64748B;font-weight:600;">Share with students at signup to join your class.</div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;min-width:480px;">
+          <thead><tr style="background:#F8FAFC;">
+            <th style="padding:11px 16px;text-align:left;font-size:12px;font-weight:800;color:#64748B;">Student</th>
+            ${allTopics.map(t => `<th style="padding:11px 10px;text-align:center;font-size:11px;font-weight:800;color:#64748B;">${t}</th>`).join('')}
+          </tr></thead>
+          <tbody>
+            ${students.map(s => `<tr style="border-top:1px solid #F1F5F9;">
+              <td style="padding:11px 16px;font-size:13px;font-weight:700;">${s.name}</td>
+              ${allTopics.map(t => {
+                const td = s.topics[t];
+                return td !== undefined
+                  ? `<td style="padding:7px 10px;text-align:center;"><div style="display:inline-block;background:${ragBg(td.pct)};color:${ragColor(td.pct)};border-radius:8px;padding:5px 10px;font-size:12px;font-weight:900;">${td.pct}%</div></td>`
+                  : `<td style="padding:7px 10px;text-align:center;color:#CBD5E1;font-size:15px;">—</td>`;
+              }).join('')}
+            </tr>`).join('')}
+          </tbody>
+        </table>
       </div>
+    </div>`;
+
+  // ── STUDENTS PHOTO GRID ──
+  const studentsHTML = students.length === 0 ? emptyState : `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;">
+      ${students.map((s,si) => {
+        const col = avatarColors[si%avatarColors.length], bg = avatarBgs[si%avatarBgs.length];
+        const safeId = 'sc-' + s.user_id.replace(/-/g,'');
+        const topicEntries = Object.entries(s.topics);
+        return `<div onclick="toggleStudentCard('${s.user_id}')" style="background:white;border-radius:16px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.06);border:1px solid #F1F5F9;cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;" onmouseover="this.style.boxShadow='0 6px 22px rgba(0,0,0,0.12)';this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='0 2px 10px rgba(0,0,0,0.06)';this.style.transform='none'">
+          <div style="width:56px;height:56px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:${col};margin:0 auto 12px;">${s.name.charAt(0).toUpperCase()}</div>
+          <div style="text-align:center;margin-bottom:12px;">
+            <div style="font-size:14px;font-weight:800;color:#1E293B;margin-bottom:5px;">${s.name}</div>
+            <span style="background:${bg};color:${col};border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;">${tierLabel(s.tierFull)}</span>
+          </div>
+          <div style="display:flex;justify-content:center;gap:10px;margin-bottom:12px;font-size:12px;font-weight:700;color:#64748B;">
+            <span>🔥 ${s.streak}</span><span>📚 ${s.cards}</span><span>${s.xp} XP</span>
+          </div>
+          <div style="background:#F1F5F9;border-radius:6px;height:8px;overflow:hidden;margin-bottom:5px;">
+            <div style="width:${s.accuracy}%;height:100%;background:${ragColor(s.accuracy)};border-radius:6px;"></div>
+          </div>
+          <div style="text-align:center;font-size:13px;font-weight:900;color:${ragColor(s.accuracy)};">${s.accuracy}% accuracy</div>
+          <div id="${safeId}" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid #F1F5F9;">
+            ${topicEntries.length > 0 ? topicEntries.map(([topic,td]) =>
+              `<div style="margin-bottom:9px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                  <span style="font-size:11px;font-weight:700;color:#374151;">${topic}</span>
+                  <span style="font-size:11px;font-weight:900;color:${ragColor(td.pct)};">${td.pct}%</span>
+                </div>
+                <div style="background:#F1F5F9;border-radius:4px;height:5px;"><div style="width:${td.pct}%;height:100%;background:${ragColor(td.pct)};border-radius:4px;"></div></div>
+              </div>`).join('')
+            : '<div style="font-size:12px;color:#94A3B8;text-align:center;padding:6px 0;">No study data yet</div>'}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // ── SETTINGS ──
+  const aiAttr = (user && user.ai_mode !== false) ? 'checked' : '';
+  const settingsHTML = selectedClass === 'all'
+    ? `<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:14px;padding:28px;text-align:center;">
+        <div style="font-size:28px;margin-bottom:10px;">ℹ️</div>
+        <div style="font-size:15px;font-weight:800;color:#1E40AF;margin-bottom:6px;">Select a class to manage settings</div>
+        <div style="font-size:13px;color:#3B82F6;font-weight:600;">Choose a specific class from the dropdown above.</div>
+       </div>`
+    : buildSettingsHTML(selectedCode, aiAttr, selectedName);
+
+  const html = `<div style="min-height:100vh;background:#F8FAFC;padding-bottom:60px;">
+    <div style="background:linear-gradient(135deg,#22C55E 0%,#8B5CF6 100%);padding:22px 18px 20px;color:white;position:relative;">
+      <div style="font-size:11px;font-weight:700;opacity:0.75;text-transform:uppercase;letter-spacing:0.5px;">Welcome</div>
+      <div style="font-size:13px;font-weight:700;opacity:0.9;margin-bottom:3px;">${user.display_name || 'Teacher'}</div>
+      <div style="font-size:26px;font-weight:900;line-height:1.15;">${selectedName}</div>
+      ${selectedCode ? `<div style="margin-top:7px;display:inline-block;background:rgba(255,255,255,0.2);border-radius:8px;padding:4px 12px;font-size:12px;font-weight:800;letter-spacing:1.5px;">${selectedCode}</div>` : ''}
+      <button onclick="doLogout()" style="position:absolute;top:18px;right:16px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Log out</button>
     </div>
 
-    <!-- RAG GRID -->
-    <div id="tcontent-rag" style="display:none;">
-      <div style="font-size:13px;font-weight:700;color:#64748B;margin-bottom:16px;">${selectedName} · 🟢 75%+ · 🟡 40-74% · 🔴 Under 40%</div>
-      ${students.length === 0 || topics.length === 0 ? emptyState : '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:white;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);"><thead><tr style="background:#F8FAFC;"><th style="padding:12px 16px;text-align:left;font-size:13px;font-weight:800;color:#64748B;border-bottom:1px solid #E2E8F0;">Student</th>' + topics.map(t => '<th style="padding:12px 16px;text-align:center;font-size:12px;font-weight:800;color:#64748B;border-bottom:1px solid #E2E8F0;">' + t + '</th>').join('') + '</tr></thead><tbody>' + students.map(s => '<tr style="border-bottom:1px solid #F0F4F8;"><td style="padding:12px 16px;font-size:14px;font-weight:800;">' + s.name + '</td>' + topics.map(t => { const p = s.topics[t] !== undefined ? s.topics[t] : null; return '<td style="padding:12px 16px;text-align:center;">' + (p !== null ? '<div style="background:' + ragBg(p) + ';color:' + ragColor(p) + ';border-radius:8px;padding:6px 10px;font-size:13px;font-weight:900;display:inline-block;min-width:48px;">' + p + '%</div>' : '<div style="color:#CBD5E1;font-size:13px;">—</div>') + '</td>'; }).join('') + '</tr>').join('') + '</tbody></table></div>'}
+    <div style="background:white;border-bottom:1px solid #E2E8F0;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+      <select onchange="showTeacherDashboard(this.value)" style="flex:1;padding:9px 12px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:13px;font-weight:700;font-family:inherit;color:#1E293B;background:white;cursor:pointer;">
+        ${classes.map(cl => `<option value="${cl.id}"${cl.id===selectedClass?' selected':''}>${cl.name}${cl.code?' · '+cl.code:''}</option>`).join('')}
+      </select>
+      <button onclick="showCreateClass()" style="padding:9px 14px;border-radius:10px;border:none;background:#8B5CF6;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ New Class</button>
     </div>
 
-    <!-- STUDENTS -->
-    <div id="tcontent-students" style="display:none;">
-      ${students.length === 0 ? emptyState : students.map(s => '<div style="background:white;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #F0F4F8;"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;"><div style="width:44px;height:44px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#4F46E5;">' + s.name.charAt(0).toUpperCase() + '</div><div style="flex:1;"><div style="font-size:16px;font-weight:900;">' + s.name + '</div><div style="font-size:12px;color:#64748B;font-weight:600;">' + s.tier + ' · ' + s.xp + ' XP</div></div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;"><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#F97316;">' + s.streak + '</div><div style="font-size:11px;color:#64748B;font-weight:700;">Streak</div></div><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#3B82F6;">' + s.cards + '</div><div style="font-size:11px;color:#64748B;font-weight:700;">Cards</div></div><div style="text-align:center;background:#F8FAFC;border-radius:10px;padding:10px;"><div style="font-size:20px;font-weight:900;color:#22C55E;">' + s.accuracy + '%</div><div style="font-size:11px;color:#64748B;font-weight:700;">Accuracy</div></div></div>' + (Object.keys(s.topics).length > 0 ? Object.entries(s.topics).map(([topic,pct]) => '<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:700;">' + topic + '</div><div style="font-size:13px;font-weight:800;color:' + ragColor(pct) + ';">' + pct + '%</div></div><div style="background:#F0F4F8;border-radius:4px;height:6px;"><div style="width:' + pct + '%;background:' + ragColor(pct) + ';height:100%;border-radius:4px;"></div></div></div>').join('') : '<div style="font-size:13px;color:#94A3B8;font-weight:600;margin-bottom:12px;">No cards studied yet</div>') + '</div>').join('')}
+    <div style="background:white;border-bottom:1px solid #E2E8F0;display:flex;padding:0 10px;gap:2px;">
+      <button id="ttab-overview" onclick="teacherTab('overview')" style="padding:12px 14px;border:none;border-radius:8px 8px 0 0;background:#F3E8FF;font-size:13px;font-weight:700;color:#7C3AED;cursor:pointer;font-family:inherit;white-space:nowrap;">Overview</button>
+      <button id="ttab-rag"      onclick="teacherTab('rag')"      style="padding:12px 14px;border:none;border-radius:8px 8px 0 0;background:none;font-size:13px;font-weight:700;color:#64748B;cursor:pointer;font-family:inherit;white-space:nowrap;">RAG Grid</button>
+      <button id="ttab-students" onclick="teacherTab('students')" style="padding:12px 14px;border:none;border-radius:8px 8px 0 0;background:none;font-size:13px;font-weight:700;color:#64748B;cursor:pointer;font-family:inherit;white-space:nowrap;">Students</button>
+      <button id="ttab-settings" onclick="teacherTab('settings')" style="padding:12px 14px;border:none;border-radius:8px 8px 0 0;background:none;font-size:13px;font-weight:700;color:#64748B;cursor:pointer;font-family:inherit;white-space:nowrap;">Settings</button>
     </div>
 
-  </div>
-</div>`;
+    <div style="padding:18px 14px;max-width:960px;margin:0 auto;">
+      <div id="tcontent-overview">${overviewHTML}</div>
+      <div id="tcontent-rag"      style="display:none;">${ragHTML}</div>
+      <div id="tcontent-students" style="display:none;">${studentsHTML}</div>
+      <div id="tcontent-settings" style="display:none;">${settingsHTML}</div>
+    </div>
+  </div>`;
 
   render(html);
+}
+
+function toggleStudentCard(userId) {
+  const safeId = 'sc-' + userId.replace(/-/g,'');
+  const el = document.getElementById(safeId);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  document.querySelectorAll('[id^="sc-"]').forEach(d => { d.style.display = 'none'; });
+  if (!isOpen) el.style.display = 'block';
 }
 
 async function showCreateClass() {
@@ -5941,6 +6040,7 @@ function toggleStudentHistory(name) {
   const el = document.getElementById(id);
   if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
+
 
 async function editClassName(classId, currentName) {
   const newName = prompt('Rename class:', currentName);
@@ -6022,27 +6122,12 @@ function teacherTab(tab) {
   ['overview','rag','students','settings'].forEach(t => {
     const btn = document.getElementById('ttab-' + t);
     const content = document.getElementById('tcontent-' + t);
-    if (btn) { btn.style.borderBottomColor = t===tab?'#0F172A':'transparent'; btn.style.color = t===tab?'#0F172A':'#64748B'; }
-    if (content) content.style.display = t===tab?'block':'none';
-  });
-  if (tab === 'settings') {
-    let el = document.getElementById('tcontent-settings');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'tcontent-settings';
-      el.style.cssText = 'padding:20px 24px;max-width:800px;margin:0;';
-      const ref = document.getElementById('tcontent-students');
-      if (ref && ref.parentNode) ref.parentNode.appendChild(el);
+    if (btn) {
+      btn.style.background = t === tab ? '#F3E8FF' : 'none';
+      btn.style.color = t === tab ? '#7C3AED' : '#64748B';
     }
-    el.style.display = 'block';
-    const code = (STATE.user && STATE.user.class_code) ? STATE.user.class_code : 'N/A';
-    const aiAttr = (STATE.user && STATE.user.ai_mode !== false) ? 'checked' : '';
-    const selectedCls = STATE.teacherSelectedClass;
-    const clsList = STATE.teacherClasses || [];
-    const currentCls = clsList.find(c => c.id === selectedCls);
-    const currentName = currentCls ? currentCls.name : '';
-    el.innerHTML = buildSettingsHTML(code, aiAttr, currentName);
-  }
+    if (content) content.style.display = t === tab ? 'block' : 'none';
+  });
 }
 
 function copySettingsCode() {
@@ -6113,7 +6198,10 @@ async function saveClassName() {
 }
 
 function deleteClassConfirm() {
-  if (confirm('Delete this class? This cannot be undone.')) showToast('Coming soon');
+  const selectedClass = STATE.teacherSelectedClass;
+  if (!selectedClass || selectedClass === 'all') { showToast('Select a specific class first'); return; }
+  const cls = (STATE.teacherClasses || []).find(c => c.id === selectedClass);
+  deleteClass(selectedClass, cls?.name || 'this class');
 }
 
 
