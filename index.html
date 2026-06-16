@@ -1849,6 +1849,7 @@ textarea.input { resize: vertical; min-height: 100px; }
 const CONFIG = {
   SUPABASE_URL: 'https://aevafcycbehvhcplpmms.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFldmFmY3ljYmVodmhjcGxwbW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjU4ODksImV4cCI6MjA5NjE0MTg4OX0.Ai9W5Whwu86YaOGI_2sXazDD2E4jW1p0ZyTET1C8-VM',
+  VAPID_PUBLIC_KEY: 'BH7MZHLzPeQLlBlgzePbsFLrdDnvU-pEbJh4CpoAsyRy_63vbLauvsnxZltk-sJR7iei8FJu_5FDGhdwHYykjXM',
   CLAUDE_API_KEY: '', // Handled securely by Netlify function
   CLAUDE_MODEL: 'claude-sonnet-4-5',
   XP_PER_SESSION: 50,
@@ -3893,14 +3894,66 @@ async function doSignup() {
 function afterLogin(startScreen) {
   if (startScreen === 'history') { showStudyHistory(); return; }
   if (startScreen === 'teacher') { showTeacherDashboard(); return; }
-  if (startScreen === 'parent') { showParentPortal(); return; }
-  if (STATE.role === 'student') showHome();
+  if (startScreen === 'parent') { showParentPortal(); setTimeout(requestPushPermission, 1500); return; }
+  if (STATE.role === 'student') { showHome(); setTimeout(requestPushPermission, 1500); }
   else if (STATE.role === 'teacher') showTeacherDashboard();
-  else showParentPortal();
+  else { showParentPortal(); setTimeout(requestPushPermission, 1500); }
 }
 
 function saveScreen(name) {
   LS.set('last_screen', name);
+}
+
+// ============================================================
+// PUSH NOTIFICATIONS
+// ============================================================
+
+async function requestPushPermission() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+  if (Notification.permission === 'granted') { registerPushSubscription(); return; }
+  if (Notification.permission === 'denied') return;
+  showModal(`
+    <div class="modal-handle"></div>
+    <div style="text-align:center;padding:8px 0;">
+      <div style="font-size:40px;margin-bottom:12px;">📚</div>
+      <div class="modal-title">Stay on track!</div>
+      <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;">Get reminders when it's time to study 📚 — we'll only ping you when it matters.</p>
+      <button class="btn btn-primary btn-full" style="margin-top:20px;" onclick="closeModal();doRequestPushPermission()">Allow Notifications</button>
+      <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Not now</button>
+    </div>
+  `);
+}
+
+async function doRequestPushPermission() {
+  const permission = await Notification.requestPermission();
+  if (permission === 'granted') registerPushSubscription();
+}
+
+async function registerPushSubscription() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register('/sciencespark-v2/sw.js');
+    await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      const keyBytes = urlBase64ToUint8Array(CONFIG.VAPID_PUBLIC_KEY);
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes });
+    }
+    const token = STATE.user?.token;
+    if (!token || !sub) return;
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + STATE.user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ push_subscription: sub.toJSON() })
+    });
+  } catch(e) { console.warn('Push registration failed:', e); }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
 
 // ============================================================
@@ -4168,6 +4221,7 @@ function showHome() {
   const html = `
 <div class="screen has-topbar" id="screen-home">
   ${renderNavBar('home')}
+  <div id="ping-banner-student"></div>
   <div class="home-content">
     <div style="text-align:center;padding:16px 20px 12px;">
       <div style="font-size:24px;font-weight:900;margin-bottom:6px;">Let's spark some learning! ⚡</div>
@@ -4226,8 +4280,45 @@ function showHome() {
 </div>`;
 
   render(html);
+  checkStudentPings();
 }
 
+async function checkStudentPings() {
+  const user = STATE.user;
+  if (!user?.token || user?.role !== 'student') return;
+  const banner = document.getElementById('ping-banner-student');
+  if (!banner) return;
+  try {
+    const res = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/pings?student_id=eq.' + user.id + '&read_at=is.null&order=sent_at.desc&limit=1&select=id,message,deadline',
+      { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+    );
+    const pings = res.ok ? await res.json() : [];
+    if (!pings.length) return;
+    const p = pings[0];
+    const deadlineText = p.deadline ? ' · by ' + p.deadline : '';
+    banner.innerHTML = `<div style="background:#EEF2FF;border-bottom:2px solid #6366F1;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:900;color:#4F46E5;letter-spacing:0.05em;margin-bottom:3px;">💬 MESSAGE FROM YOUR PARENT</div>
+        <div style="font-size:14px;font-weight:700;color:#1e293b;">${p.message}${deadlineText}</div>
+      </div>
+      <button onclick="dismissStudentPing('${p.id}')" style="background:none;border:none;color:#94A3B8;font-size:20px;cursor:pointer;flex-shrink:0;padding:4px;line-height:1;">✕</button>
+    </div>`;
+  } catch(e) {}
+}
+
+async function dismissStudentPing(pingId) {
+  const banner = document.getElementById('ping-banner-student');
+  if (banner) banner.innerHTML = '';
+  if (!STATE.user?.token) return;
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/pings?id=eq.' + pingId, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + STATE.user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ read_at: new Date().toISOString() })
+    });
+  } catch(e) {}
+}
 
 function renderNavBar(active) {
   const items = [
@@ -6409,6 +6500,25 @@ async function showParentPortal() {
     .map(([name, d]) => ({ name, pct: Math.round((d.correct / d.total) * 100), subject: d.subject }))
     .sort((a, b) => a.pct - b.pct);
 
+  // ── 4b. Today's study check ──
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const studiedToday = childHistory.some(h => h.created_at && h.created_at.startsWith(todayStr));
+  const cardsToday = childHistory.filter(h => h.created_at && h.created_at.startsWith(todayStr)).length;
+  const nowHour = new Date().getHours();
+  const isAfter5pm = nowHour >= 17;
+
+  // ── 4c. Recent pings ──
+  let recentPings = [];
+  if (child.user_id) {
+    try {
+      const pRes = await fetch(
+        CONFIG.SUPABASE_URL + '/rest/v1/pings?student_id=eq.' + child.user_id + '&order=sent_at.desc&limit=5&select=id,message,deadline,sent_at',
+        { headers }
+      );
+      recentPings = pRes.ok ? await pRes.json() : [];
+    } catch(e) {}
+  }
+
   // ── 5. Build history card rows (aggregated, same format as student's own history) ──
   const gradeColor = { 0:'#DC2626', 1:'#D97706', 2:'#16A34A', 3:'#4F46E5' };
   const gradeLabel = { 0:'Again', 1:'Hard', 2:'Good', 3:'Easy' };
@@ -6453,6 +6563,48 @@ async function showParentPortal() {
   }
 
   // ── 7. Build full portal HTML ──
+
+  // Study status banner (shown across all tabs)
+  const safeChildName = child.name.replace(/'/g, '&#39;');
+  const safeChildUserId = child.user_id || '';
+  const studyBannerHTML = studiedToday
+    ? `<div style="background:#F0FDF4;border-bottom:2px solid #22C55E;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-size:14px;font-weight:800;color:#16A34A;">✅ ${child.name} has studied today</div>
+        <div style="font-size:12px;color:#166534;font-weight:600;">${cardsToday} card${cardsToday !== 1 ? 's' : ''} done</div></div>
+        <div style="font-size:28px;">🎉</div>
+      </div>`
+    : isAfter5pm
+    ? `<div style="background:#FFF7ED;border-bottom:2px solid #F97316;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div>
+          <div style="font-size:14px;font-weight:800;color:#C2410C;">📚 ${child.name} hasn't done flashcards today</div>
+          <div style="font-size:12px;color:#9A3412;font-weight:600;">Send a quick reminder</div>
+        </div>
+        <button onclick="showPingComposer('${safeChildUserId}','${safeChildName}')" style="background:#F97316;color:white;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 8px rgba(249,115,22,0.35);flex-shrink:0;">📨 PING</button>
+      </div>`
+    : `<div style="background:#EFF6FF;border-bottom:2px solid #93C5FD;padding:14px 20px;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:22px;">⏰</div>
+        <div><div style="font-size:14px;font-weight:800;color:#1D4ED8;">No study session yet today</div>
+        <div style="font-size:12px;color:#1E40AF;font-weight:600;">PING button appears after 5pm if they haven't studied</div></div>
+      </div>`;
+
+  const pingHistoryHTML = recentPings.length === 0 ? '' : `
+    <div style="margin-top:20px;">
+      <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">RECENT PINGS</div>
+      ${recentPings.map(p => {
+        const dt = new Date(p.sent_at);
+        const timeStr = dt.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+        const dateStr = dt.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+        return `<div style="background:white;border-radius:12px;padding:12px 16px;margin-bottom:8px;border:1px solid #F0F4F8;box-shadow:0 1px 3px rgba(0,0,0,0.04);display:flex;align-items:center;gap:10px;">
+          <div style="font-size:20px;flex-shrink:0;">📨</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:800;">${p.message}${p.deadline ? ' · by ' + p.deadline : ''}</div>
+            <div style="font-size:11px;color:#94A3B8;font-weight:600;margin-top:2px;">${timeStr} · ${dateStr}</div>
+          </div>
+        </div>`;
+      }).join('')}
+      <button onclick="showPingComposer('${safeChildUserId}','${safeChildName}')" style="width:100%;padding:12px;border-radius:10px;border:2px solid #F97316;background:white;color:#F97316;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:4px;">📨 Send Another Ping</button>
+    </div>`;
+
   const progressHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
       ${[['🔥 STREAK',''+child.streak,'days in a row','#F97316'],['⚡ TOTAL XP',''+child.xp,'xp earned','#6366F1'],['📚 CARDS DONE',''+cardsDone,'reviewed','#3B82F6'],['🏆 LEVEL','Lvl '+child.level,'current level','#A855F7']].map(([lbl,val,sub,col]) =>
@@ -6493,7 +6645,8 @@ async function showParentPortal() {
       <div style="font-size:14px;font-weight:800;margin-bottom:6px;">📬 Contact Teacher</div>
       <div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:12px;">Send a message to your child's science teacher</div>
       <button onclick="alert('Email feature coming soon')" style="width:100%;padding:12px;border-radius:10px;border:2px solid #E2E8F0;background:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;color:#0F172A;">✉️ Email Teacher</button>
-    </div>`;
+    </div>
+    ${pingHistoryHTML}`;
 
   const historyHTML = historyCards.length === 0
     ? '<div style="text-align:center;padding:48px 20px;color:#94A3B8;"><div style="font-size:36px;margin-bottom:12px;">📖</div><div style="font-size:15px;font-weight:700;">No study history yet</div><div style="font-size:13px;margin-top:6px;">Cards studied will appear here.</div></div>'
@@ -6539,6 +6692,8 @@ async function showParentPortal() {
       <button onclick="doLogout()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
     </div>
 
+    ${studyBannerHTML}
+
     <div style="display:flex;background:white;border-bottom:1px solid #E2E8F0;padding:0 16px;gap:4px;">
       <button id="ptab-progress" onclick="parentTab('progress')" style="padding:14px 16px;border:none;border-bottom:3px solid #4F46E5;background:none;font-size:14px;font-weight:800;color:#4F46E5;cursor:pointer;font-family:inherit;">📊 Progress</button>
       <button id="ptab-history" onclick="parentTab('history')" style="padding:14px 16px;border:none;border-bottom:3px solid transparent;background:none;font-size:14px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;">📖 History</button>
@@ -6576,6 +6731,54 @@ async function linkParentAccount() {
     }
   } catch(e) {
     showToast('Could not link — check connection');
+  }
+}
+
+function showPingComposer(childUserId, childName) {
+  showModal(`
+    <div class="modal-handle"></div>
+    <div class="modal-title">📨 Ping ${childName}</div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:800;color:#64748B;display:block;margin-bottom:6px;">MESSAGE</label>
+      <textarea id="ping-message" rows="3" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:14px;font-family:inherit;resize:none;outline:none;box-sizing:border-box;">Time to do your ScienceSpark cards! 🧠</textarea>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:12px;font-weight:800;color:#64748B;display:block;margin-bottom:6px;">DEADLINE (OPTIONAL)</label>
+      <select id="ping-deadline" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:14px;font-family:inherit;background:white;outline:none;">
+        <option value="">No deadline</option>
+        <option value="6pm">By 6pm</option>
+        <option value="7pm">By 7pm</option>
+        <option value="8pm">By 8pm</option>
+        <option value="9pm">By 9pm</option>
+        <option value="10pm">By 10pm</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="sendPing('${childUserId}','${childName.replace(/'/g, "\\'")}')">📨 Send Ping</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>
+  `);
+}
+
+async function sendPing(childUserId, childName) {
+  const message = (document.getElementById('ping-message')?.value || '').trim() || 'Time to do your ScienceSpark cards! 🧠';
+  const deadline = document.getElementById('ping-deadline')?.value || '';
+  closeModal();
+  showToast('Sending ping...');
+  const token = STATE.user?.token;
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/functions/v1/send-notification', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ student_user_id: childUserId, child_name: childName, message, deadline: deadline || null })
+    });
+    if (res.ok) {
+      showToast('Ping sent to ' + childName + '! 📨');
+      setTimeout(() => showParentPortal(), 2000);
+    } else {
+      showToast('Ping sent! (email may need domain setup)');
+      setTimeout(() => showParentPortal(), 2000);
+    }
+  } catch(e) {
+    showToast('Could not send ping — check your connection');
   }
 }
 
