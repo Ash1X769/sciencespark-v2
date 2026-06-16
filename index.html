@@ -3976,7 +3976,7 @@ function showUpgradeModal(reason) {
       <div class="modal-title" style="font-size:19px;">ScienceSpark Premium</div>
       <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;margin:10px 0;">${reason}</p>
       <div style="background:#F8FAFC;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:left;">
-        ${['✅ Unlimited cards — all 3 subjects','✅ AI marking on every answer','✅ Full Learning Sessions','✅ Unlimited AI Tutor','✅ Parent progress portal','🎁 Code <strong>TRIAL2026</strong> — 3 months free!'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
+        ${['✅ Unlimited cards — all 3 subjects','✅ AI marking on every answer','✅ Full Learning Sessions','✅ Unlimited AI Tutor','✅ Parent progress portal'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
       </div>
       <button class="btn btn-primary btn-full btn-lg" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);font-size:15px;" onclick="closeModal();startCheckout()">Upgrade — £12.99/month →</button>
       <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Maybe later</button>
@@ -5826,7 +5826,6 @@ function showProfile() {
           <div style="font-size:15px;font-weight:900;color:#C2410C;margin-bottom:6px;">⚡ Free Plan</div>
           <div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:12px;line-height:1.5;">15 cards/week · 1 subject · 2 AI messages/day<br>Upgrade for everything unlimited.</div>
           <button onclick="startCheckout()" class="btn btn-primary btn-full" style="background:linear-gradient(135deg,#F97316,#EA580C);">Upgrade to Premium — £12.99/month →</button>
-          <div style="font-size:11px;color:#94A3B8;font-weight:600;text-align:center;margin-top:8px;">Use code TRIAL2026 for 3 months free</div>
         </div>`
     }
 
@@ -6069,7 +6068,7 @@ async function showTeacherDashboard(selectedClass) {
         <div style="font-size:20px;font-weight:900;margin-bottom:8px;">Teacher Dashboard is Premium</div>
         <div style="font-size:14px;color:#64748B;font-weight:600;line-height:1.6;margin-bottom:24px;">Upgrade to ScienceSpark Premium to manage classes, track student progress, and view RAG analysis.</div>
         <button onclick="startCheckout()" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:white;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;margin-bottom:10px;">Upgrade — £12.99/month →</button>
-        <div style="font-size:12px;color:#94A3B8;font-weight:600;margin-bottom:20px;">Use code TRIAL2026 for 3 months free · Cancel any time</div>
+        <div style="font-size:12px;color:#94A3B8;font-weight:600;margin-bottom:20px;">Cancel any time</div>
         <button onclick="doLogout()" style="background:none;border:none;color:#64748B;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
       </div>
     </div>`);
@@ -6620,7 +6619,7 @@ async function showParentPortal() {
         <div style="font-size:20px;font-weight:900;margin-bottom:8px;">Parent Portal is Premium</div>
         <div style="font-size:14px;color:#64748B;font-weight:600;line-height:1.6;margin-bottom:24px;">Upgrade to ScienceSpark Premium to track your child's progress, view their study history, and send reminders.</div>
         <button onclick="startCheckout()" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:white;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;margin-bottom:10px;">Upgrade — £12.99/month →</button>
-        <div style="font-size:12px;color:#94A3B8;font-weight:600;margin-bottom:20px;">Use code TRIAL2026 for 3 months free · Cancel any time</div>
+        <div style="font-size:12px;color:#94A3B8;font-weight:600;margin-bottom:20px;">Cancel any time</div>
         <button onclick="doLogout()" style="background:none;border:none;color:#64748B;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
       </div>
     </div>`);
