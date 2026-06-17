@@ -6064,8 +6064,16 @@ async function joinClass() {
 }
 
 function copyParentCode(code) {
-  const msg = `Hi! I'm using ScienceSpark for GCSE revision. You can track my progress using this code: ${code}. Download ScienceSpark and sign up as a parent, then enter this code.`;
-  navigator.clipboard?.writeText(msg).then(() => showToast('Message copied to clipboard! 📋'));
+  const name = STATE.user?.display_name || 'your child';
+  const msg = `Hi! I'm using ScienceSpark to revise for my GCSEs — it's a free app that uses flashcards and AI marking to help me study every day.
+
+You can track my progress by signing up as a parent:
+1. Go to stepaheadscience.co.uk
+2. Tap "Sign Up" and choose "Parent"
+3. Enter my parent code: ${code}
+
+You'll be able to see my streak, which topics I'm struggling with, and send me a nudge if I forget to study! 📚`;
+  navigator.clipboard?.writeText(msg).then(() => showToast('Message copied! 📋'));
 }
 
 function saveProfile() {
@@ -6222,6 +6230,7 @@ async function showTeacherDashboard(selectedClass) {
   STATE.teacherStudents = students;
   const selectedName = classes.find(c => c.id === selectedClass)?.name || 'All Classes';
   const selectedCode = classes.find(c => c.id === selectedClass)?.code || '';
+  STATE.teacherSelectedClassName = selectedName;
 
   const avgStreak = students.length ? Math.round(students.reduce((a,s) => a+s.streak, 0)/students.length) : 0;
   const avgCards  = students.length ? Math.round(students.reduce((a,s) => a+s.cards,  0)/students.length) : 0;
@@ -6663,7 +6672,7 @@ function buildSettingsHTML(code, aiAttr, currentName) {
     + '<label style="font-size:0.75rem;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Class Code</label>'
     + '<div style="display:flex;gap:10px;align-items:center;">'
     + '<span id="settings-class-code" style="flex:1;padding:10px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:1rem;font-weight:700;color:#6366f1;letter-spacing:2px;">' + code + '</span>'
-    + '<button onclick="copySettingsCode()" style="padding:10px 18px;background:#f1f5f9;color:#374151;border:1px solid #e2e8f0;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;">Copy</button>'
+    + '<button onclick="copySettingsCode()" style="padding:10px 18px;background:#f1f5f9;color:#374151;border:1px solid #e2e8f0;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;">Copy Invite</button>'
     + '</div>'
     + '<p style="font-size:0.78rem;color:#475569;margin:8px 0 0;">Share this with students so they can join your class.</p>'
     + '</div>'
@@ -6695,8 +6704,17 @@ function teacherTab(tab) {
 
 function copySettingsCode() {
   const el = document.getElementById('settings-class-code');
-  const code = el ? el.textContent : ((STATE.user && STATE.user.class_code) || '');
-  navigator.clipboard.writeText(code).then(() => showToast('Class code copied!'));
+  const code = el ? el.textContent.trim() : ((STATE.user && STATE.user.class_code) || '');
+  const className = STATE.teacherSelectedClassName || 'my class';
+  const msg = `Hi! I've added you to ${className} on ScienceSpark — a GCSE science revision app that uses spaced repetition flashcards to help you study smarter, not longer.
+
+To join:
+1. Go to stepaheadscience.co.uk on your phone
+2. Tap "Sign Up" and create a student account
+3. Enter this class code when prompted: ${code}
+
+It only takes 10–15 minutes a day and the AI marks your answers instantly. See you in class! 🔬`;
+  navigator.clipboard.writeText(msg).then(() => showToast('Invite message copied! 📋'));
 }
 
 function buildAIToggle(aiOn) {
