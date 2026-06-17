@@ -7311,77 +7311,70 @@ async function init() {
   }
 
   function _clearAllStorage() {
-    [localStorage, sessionStorage].forEach(store => {
-      Object.keys(store).filter(k => k.startsWith('ss_')).forEach(k => store.removeItem(k));
-    });
-    Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token')).forEach(k => localStorage.removeItem(k));
+    try {
+      [localStorage, sessionStorage].forEach(store => {
+        Object.keys(store).filter(k => k.startsWith('ss_')).forEach(k => store.removeItem(k));
+      });
+      Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token')).forEach(k => localStorage.removeItem(k));
+    } catch(e) {}
   }
 
   const saved = LS.get('demo_user');
 
   if (saved && saved.id && saved.refresh_token) {
-    try {
-      const r = await fetch(CONFIG.SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY },
-        body: JSON.stringify({ refresh_token: saved.refresh_token })
-      });
-      const data = await r.json();
+    // Restore session immediately so there's no blank screen
+    STATE.user = saved;
+    STATE.role = saved.role || 'student';
+    afterLogin();
+    // Validate token in background — redirect to auth silently if expired
+    fetch(CONFIG.SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ refresh_token: saved.refresh_token })
+    }).then(r => r.json()).then(data => {
       if (data.access_token) {
-        STATE.user = { ...saved, token: data.access_token, refresh_token: data.refresh_token };
-        STATE.role = STATE.user.role || 'student';
+        STATE.user = { ...STATE.user, token: data.access_token, refresh_token: data.refresh_token };
         LS.set('demo_user', STATE.user);
-        afterLogin();
-        return;
+      } else {
+        // Token rejected by server — log out cleanly
+        _clearAllStorage();
+        STATE.user = null; STATE.role = null;
+        showAuth();
       }
-    } catch(e) {}
-    _clearAllStorage();
-    showAuth();
+    }).catch(() => {
+      // Network error — keep showing app (user may be offline)
+    });
     return;
   }
 
-  // Try reading Supabase session directly from localStorage
+  // Try reading Supabase native session from localStorage
   try {
     const sbKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
     if (sbKey) {
       const sbSession = JSON.parse(localStorage.getItem(sbKey));
-      if (sbSession && sbSession.refresh_token) {
-        const r = await fetch(CONFIG.SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY },
-          body: JSON.stringify({ refresh_token: sbSession.refresh_token })
-        });
-        const data = await r.json();
-        if (data.access_token && data.user) {
-          const u = data.user;
-          const meta = u.user_metadata || {};
-          STATE.user = {
-            id: u.id,
-            email: u.email,
-            token: data.access_token,
-            refresh_token: data.refresh_token,
-            display_name: meta.display_name || u.email,
-            role: meta.role || 'student',
-            year_group: meta.year_group || 11,
-            tier: meta.tier || 'combined_higher',
-            exam_board: meta.exam_board || 'AQA',
-            class_code: meta.class_code || null,
-            parent_code: meta.parent_code || null,
-            xp: meta.xp || 0,
-            streak: meta.streak || 0,
-            level: meta.level || 1,
-            ai_mode: meta.ai_mode !== false,
-          };
-          STATE.role = STATE.user.role;
-          LS.set('demo_user', STATE.user);
-          afterLogin();
-          return;
-        }
+      if (sbSession && sbSession.access_token && sbSession.user) {
+        const u = sbSession.user;
+        const meta = u.user_metadata || {};
+        STATE.user = {
+          id: u.id, email: u.email,
+          token: sbSession.access_token, refresh_token: sbSession.refresh_token,
+          display_name: meta.display_name || u.email,
+          role: meta.role || 'student',
+          year_group: meta.year_group || 11,
+          tier: meta.tier || 'combined_higher',
+          exam_board: meta.exam_board || 'AQA',
+          class_code: meta.class_code || null,
+          parent_code: meta.parent_code || null,
+          xp: meta.xp || 0, streak: meta.streak || 0, level: meta.level || 1,
+          ai_mode: meta.ai_mode !== false,
+        };
+        STATE.role = STATE.user.role;
+        LS.set('demo_user', STATE.user);
+        afterLogin();
+        return;
       }
     }
-  } catch(e) {
-    console.log('Supabase session read error:', e);
-  }
+  } catch(e) {}
 
   showAuth();
 }
