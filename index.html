@@ -3864,8 +3864,40 @@ async function doSignup() {
       showToast('Account created! Please log in.');
     }
   } else {
-    showToast(res.error?.message || 'Signup failed');
+    const rawMsg = res.msg || res.error_description || (typeof res.error === 'string' ? res.error : '') || 'Signup failed';
+    showSignupError(friendlyAuthError(rawMsg));
   }
+}
+
+function friendlyAuthError(msg) {
+  if (!msg) return 'Something went wrong — please try again.';
+  const m = msg.toLowerCase();
+  if (m.includes('already registered') || m.includes('already been registered') || m.includes('user_already_exists') || m.includes('already in use'))
+    return 'That email is already registered. Try logging in instead.';
+  if (m.includes('password should be at least') || m.includes('password must be at least') || m.includes('too short') || m.includes('weak password'))
+    return 'Password must be at least 6 characters.';
+  if (m.includes('invalid format') || m.includes('invalid email') || m.includes('validate email') || m.includes('valid email'))
+    return 'Please enter a valid email address.';
+  if (m.includes('rate limit') || m.includes('too many requests') || m.includes('too many'))
+    return 'Too many attempts — please wait a minute and try again.';
+  if (m.includes('email not confirmed') || m.includes('not confirmed'))
+    return 'Please check your inbox and confirm your email first.';
+  if (m.includes('signup disabled') || m.includes('signups not allowed'))
+    return 'New signups are temporarily unavailable. Please try again later.';
+  return msg.charAt(0).toUpperCase() + msg.slice(1).replace(/\.$/, '') + '.';
+}
+
+function showSignupError(msg) {
+  document.querySelectorAll('.signup-error-msg').forEach(el => el.remove());
+  const btn = document.querySelector('[onclick="doSignup()"]');
+  if (btn) {
+    const err = document.createElement('div');
+    err.className = 'signup-error-msg';
+    err.style.cssText = 'margin-top:10px;padding:10px 14px;background:#FEF2F2;border:1.5px solid #FCA5A5;border-radius:10px;font-size:13px;font-weight:700;color:#DC2626;line-height:1.5;';
+    err.textContent = '⚠️ ' + msg;
+    btn.insertAdjacentElement('afterend', err);
+  }
+  showToast(msg, 5000);
 }
 
 function afterLogin(startScreen) {
