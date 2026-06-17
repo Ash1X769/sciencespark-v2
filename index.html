@@ -6063,9 +6063,9 @@ ${renderNavBar('ai-chat')}
     <div id="ai-tab-messages" style="flex:1;overflow-y:auto;overflow-x:hidden;padding:16px 20px;display:flex;flex-direction:column;gap:10px;padding-bottom:80px;max-width:100%;">
       <div class="ai-msg-ai">Hi! I'm your AI Tutor 🎓 Ask me anything about GCSE Science — topics, exam questions, or tricky concepts.</div>
     </div>
-    <div style="position:fixed;bottom:env(safe-area-inset-bottom, 0px);left:0;right:0;padding:12px 16px;border-top:1px solid #E2E8F0;display:flex;gap:8px;align-items:center;background:white;">
-      <input id="ai-tab-input" type="text" placeholder="Ask me anything..." style="flex:1;padding:10px 14px;border:2px solid #E2E8F0;border-radius:12px;font-size:14px;font-family:Nunito,sans-serif;outline:none;" onkeydown="if(event.key==='Enter')sendAITabChat()">
-      <button onclick="sendAITabChat()" style="flex-shrink:0;padding:10px 18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Send</button>
+    <div style="position:fixed;bottom:env(safe-area-inset-bottom, 0px);left:0;right:0;padding:12px 16px;border-top:1px solid #E2E8F0;display:flex;gap:8px;align-items:center;background:white;box-sizing:border-box;width:100%;">
+      <input id="ai-tab-input" type="text" placeholder="Ask me anything..." style="flex:1;min-width:0;padding:10px 14px;border:2px solid #E2E8F0;border-radius:12px;font-size:16px;font-family:Nunito,sans-serif;outline:none;touch-action:manipulation;" onkeydown="if(event.key==='Enter')sendAITabChat()">
+      <button onclick="sendAITabChat()" style="flex-shrink:0;padding:10px 18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;touch-action:manipulation;">Send</button>
     </div>
   </div>
 </div>`;
