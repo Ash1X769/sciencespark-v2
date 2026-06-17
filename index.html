@@ -1282,15 +1282,17 @@ textarea.input { resize: vertical; min-height: 100px; }
 .badge-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 12px;
   margin-top: 12px;
+  place-items: center;
 }
 
 .badge-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  width: 100%;
 }
 
 .badge-icon {
@@ -1302,10 +1304,15 @@ textarea.input { resize: vertical; min-height: 100px; }
   align-items: center;
   justify-content: center;
   font-size: 26px;
+  flex-shrink: 0;
 }
 
 .badge-icon.earned { background: #FEF3C7; }
-.badge-label { font-size: 10px; font-weight: 700; color: var(--text-secondary); text-align: center; }
+.badge-label { font-size: 10px; font-weight: 700; color: var(--text-secondary); text-align: center; line-height: 1.3; }
+
+@media (max-width: 380px) {
+  .badge-grid { grid-template-columns: repeat(3, 1fr); }
+}
 
 /* ============================================================
    KNOWLEDGE ORGANISER
@@ -3422,12 +3429,22 @@ function bold(t) {
 
 function fmtMs(ans) {
   if (!ans) return '';
-  // Split on '/' or '. 1 mark:' patterns to get individual mark points
-  const parts = ans.split(/\s*\/\s*|\s+(?=\d+ mark)/).filter(p => p.trim().length > 3);
-  if (parts.length > 1) {
-    return parts.map((p, i) => '<div style="padding:4px 0;font-size:13px;font-weight:700;color:var(--text);border-bottom:1px solid #F0F4F8;">' + p.trim() + ' <span style="color:#64748B;font-weight:600;">(' + (i+1) + ' mark)</span></div>').join('');
+  // Parse "N mark(s) [each]: text. N mark(s): text." format
+  const rawParts = ans.split(/\.\s+(?=\d+\s+mark)/i);
+  const points = rawParts.map(part => {
+    const m = part.match(/^(\d+)\s+marks?\s*(?:each)?\s*:\s*(.*)/i);
+    if (!m) return null;
+    return { marks: parseInt(m[1]), text: m[2].trim().replace(/\.$/, '') };
+  }).filter(Boolean);
+  if (points.length === 0) {
+    return '<div style="font-size:13px;font-weight:700;color:var(--text);">' + bold(ans) + '</div>';
   }
-  return '<div style="font-size:13px;font-weight:700;color:var(--text);">' + ans + '</div>';
+  return points.map((p, i, arr) => {
+    const label = p.marks === 1 ? '(1 mark)' : '(' + p.marks + ' marks)';
+    const bdr = i < arr.length - 1 ? 'border-bottom:1px solid #F0F4F8;' : '';
+    return '<div style="padding:5px 0;' + bdr + 'font-size:13px;font-weight:700;color:var(--text);line-height:1.5;">'
+      + bold(p.text) + '. <span style="color:#6366F1;font-weight:800;">' + label + '</span></div>';
+  }).join('');
 }
 
 function subjectColor(subj) {
@@ -3563,9 +3580,6 @@ function showAuth() {
         <input type="password" id="login-password" class="input" placeholder="••••••••">
       </div>
       <button class="btn btn-primary btn-full btn-lg" onclick="doLogin()" style="margin-top:8px;">Log In</button>
-      <div style="margin-top:16px;text-align:center;">
-        <button class="btn btn-ghost" onclick="demoLogin()">Try Demo (no account needed)</button>
-      </div>
     </div>
 
     <!-- SIGNUP (hidden initially) -->
@@ -4946,26 +4960,18 @@ function renderLearnPhase() {
         </div>
         ${ko.pairs.map(p => `
           <div class="ko-item">
-            <div class="ko-item-q">${p.q}</div>
-            <div class="ko-item-a">${p.a}</div>
+            <div class="ko-item-q">${bold(p.q)}</div>
+            <div class="ko-item-a">${bold(p.a)}</div>
           </div>
         `).join('')}
       </div>
     ` : '<div class="loading-screen"><div class="spinner"></div><div>Loading content...</div></div>'}
 
-    <!-- MCQs -->
-    <div style="margin-top:24px;">
-      <div style="font-size:17px;font-weight:800;margin-bottom:4px;">Quick Check</div>
-      <div style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:16px;">Answer these questions before moving on</div>
-      <div id="mcq-container">
-        ${renderMCQs()}
-      </div>
-    </div>
   </div>
 
   <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:16px 20px;">
-    <button class="btn btn-primary btn-full btn-lg" id="continue-btn" onclick="showTransition('learn-to-embed')" disabled style="opacity:0.5;">
-      Continue to Practice →
+    <button class="btn btn-primary btn-full btn-lg" id="continue-btn" onclick="showFullSessionMCQ()" disabled style="opacity:0.5;">
+      Continue to Quick Check →
     </button>
   </div>
 </div>`;
@@ -4980,10 +4986,38 @@ function renderLearnPhase() {
   }, 8000);
 }
 
+function showFullSessionMCQ() {
+  const card = STATE.cardQueue[STATE.currentCardIndex];
+  const ko = card ? KNOWLEDGE_ORGANISERS[card.topic] : null;
+
+  const html = `
+<div class="screen" id="screen-session-mcq" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
+  <div class="top-bar">
+    <button class="btn btn-ghost btn-sm" onclick="showFullSessionLearn()">← Back</button>
+    <div style="font-size:17px;font-weight:800;">Quick Check</div>
+    <div></div>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;padding:20px 20px 100px;">
+    <div style="font-size:14px;color:var(--text-secondary);font-weight:600;margin-bottom:20px;">Answer these questions to check you understood the key ideas.</div>
+    <div id="mcq-container">
+      ${renderMCQs()}
+    </div>
+  </div>
+
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:16px 20px;">
+    <button class="btn btn-primary btn-full btn-lg" id="mcq-continue-btn" onclick="showTransition('learn-to-embed')" disabled style="opacity:0.5;">
+      Continue to Practice →
+    </button>
+  </div>
+</div>`;
+
+  render(html);
+}
+
 let mcqState = {};
 function renderMCQs() {
   mcqState = {};
-  // Only use cards from the primary topic of this session
   const primaryTopic = STATE.cardQueue[0]?.topic;
   const topicCards = STATE.cardQueue.filter(c => c.topic === primaryTopic);
   const cards = topicCards.slice(0, 4);
@@ -4992,7 +5026,6 @@ function renderMCQs() {
   return cards.map((card, i) => {
     const question = card.q || card.question || '';
     const answer = Array.isArray(card.a) ? card.a[0] : (card.answer || '');
-    // Get wrong options ONLY from same topic to avoid cross-subject confusion
     const sameTopicPool = SAMPLE_CARDS.filter(c => c.id !== card.id && c.topic === card.topic);
     const fallbackPool = SAMPLE_CARDS.filter(c => c.id !== card.id && c.subject === card.subject);
     const pool = sameTopicPool.length >= 3 ? sameTopicPool : fallbackPool;
@@ -5002,10 +5035,10 @@ function renderMCQs() {
 
     return `
 <div style="margin-bottom:20px;">
-  <div style="font-size:14px;font-weight:700;margin-bottom:10px;">${i+1}. ${question}</div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:10px;">${i+1}. ${bold(question)}</div>
   <div style="display:flex;flex-direction:column;gap:8px;" id="mcq-opts-${i}">
     ${opts.map(opt => `
-      <button class="mcq-option" onclick="selectMCQ(${i}, '${escapeAttr(opt)}', '${escapeAttr(answer)}')">${opt}</button>
+      <button class="mcq-option" data-val="${escapeAttr(opt)}" onclick="selectMCQ(${i}, this)">${bold(opt)}</button>
     `).join('')}
   </div>
 </div>`;
@@ -5020,15 +5053,16 @@ function escapeAttr(str) {
   return str.replace(/'/g, "&#39;").replace(/"/g, '&quot;');
 }
 
-function selectMCQ(qIdx, selected, correct) {
+function selectMCQ(qIdx, el) {
   if (mcqState[`q${qIdx}`]?.done) return;
+  const correct = mcqState[`q${qIdx}`].correct;
+  const selected = el.getAttribute('data-val');
   const container = document.getElementById(`mcq-opts-${qIdx}`);
   if (!container) return;
   const isCorrect = selected === correct;
   container.querySelectorAll('.mcq-option').forEach(btn => {
-    const text = btn.textContent.trim();
-    if (text === correct) btn.classList.add('correct');
-    else if (text === selected && !isCorrect) btn.classList.add('wrong');
+    if (btn.getAttribute('data-val') === correct) btn.classList.add('correct');
+    else if (btn === el && !isCorrect) btn.classList.add('wrong');
     btn.disabled = true;
   });
   if (isCorrect) {
@@ -5040,7 +5074,7 @@ function selectMCQ(qIdx, selected, correct) {
 function checkAllMCQsDone() {
   const allDone = Object.values(mcqState).every(s => s.done);
   if (allDone) {
-    const btn = document.getElementById('continue-btn');
+    const btn = document.getElementById('mcq-continue-btn') || document.getElementById('continue-btn');
     if (btn) {
       btn.disabled = false;
       btn.style.opacity = '1';
@@ -5393,40 +5427,34 @@ function _renderSessionEnd() {
 function playGradeSound(grade) {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    if (grade >= 2) {
+    const t = ctx.currentTime;
+    function chime(freq, start, vol) {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
       osc.type = 'sine';
-      const f1 = grade === 3 ? 660 : 528;
-      const f2 = grade === 3 ? 880 : 660;
-      osc.frequency.setValueAtTime(f1, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(f2, ctx.currentTime + 0.15);
-      gain.gain.setValueAtTime(0.28, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.5);
-      if (grade === 3) {
-        const osc2 = ctx.createOscillator();
-        const gain2 = ctx.createGain();
-        osc2.type = 'sine';
-        osc2.connect(gain2);
-        gain2.connect(ctx.destination);
-        osc2.frequency.setValueAtTime(1320, ctx.currentTime + 0.18);
-        gain2.gain.setValueAtTime(0.22, ctx.currentTime + 0.18);
-        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
-        osc2.start(ctx.currentTime + 0.18);
-        osc2.stop(ctx.currentTime + 0.55);
-      }
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(vol, start);
+      g.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(start); osc.stop(start + 0.45);
+    }
+    if (grade === 3) {
+      // Easy: bright three-note ascending arpeggio
+      chime(523.25, t,       0.22);
+      chime(659.25, t + 0.10, 0.20);
+      chime(783.99, t + 0.20, 0.18);
+    } else if (grade === 2) {
+      // Good: two-note ascending chime
+      chime(523.25, t,       0.20);
+      chime(783.99, t + 0.12, 0.17);
+    } else if (grade === 1) {
+      // Hard: soft descending (E4→C4)
+      chime(329.63, t,       0.10);
+      chime(261.63, t + 0.15, 0.08);
     } else {
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(grade === 1 ? 300 : 220, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(grade === 1 ? 240 : 160, ctx.currentTime + 0.25);
-      gain.gain.setValueAtTime(0.14, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.35);
+      // Again: very soft descending (D4→A3)
+      chime(293.66, t,       0.09);
+      chime(220.00, t + 0.15, 0.07);
     }
   } catch(e) {}
 }
@@ -5725,8 +5753,8 @@ function showKnowledgeOrganiser(key) {
       </div>
       ${ko.pairs.map(p => `
         <div class="ko-item">
-          <div class="ko-item-q">${p.q}</div>
-          <div class="ko-item-a">${p.a}</div>
+          <div class="ko-item-q">${bold(p.q)}</div>
+          <div class="ko-item-a">${bold(p.a)}</div>
         </div>
       `).join('')}
     </div>
@@ -6096,7 +6124,7 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
       : 'class_code=in.(' + classCodes.map(c => encodeURIComponent(c)).join(',') + ')';
 
     const pRes = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?' + codeParam + '&role=eq.student&select=user_id,display_name,tier,streak,xp',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?' + codeParam + '&role=eq.student&select=user_id,display_name,tier,streak,xp,locked_topics',
       { headers }
     );
     const profiles = pRes.ok ? await pRes.json() : [];
@@ -6134,7 +6162,8 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
         xp: p.xp || 0,
         cards,
         accuracy,
-        topics
+        topics,
+        lockedTopics: Array.isArray(p.locked_topics) ? p.locked_topics : []
       };
     });
   } catch(e) {
@@ -6295,6 +6324,21 @@ async function showTeacherDashboard(selectedClass) {
                 <div style="background:#F1F5F9;border-radius:4px;height:5px;"><div style="width:${td.pct}%;height:100%;background:${ragColor(td.pct)};border-radius:4px;"></div></div>
               </div>`).join('')
             : '<div style="font-size:12px;color:#94A3B8;text-align:center;padding:6px 0;">No study data yet</div>'}
+            ${topicEntries.length > 0 ? `
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #F1F5F9;">
+              <div style="font-size:11px;font-weight:800;color:#64748B;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Topic Controls</div>
+              ${topicEntries.map(([topic]) => {
+                const isLocked = (s.lockedTopics || []).includes(topic);
+                const safeUid = s.user_id.replace(/-/g,'');
+                return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <span style="font-size:12px;font-weight:700;color:#374151;">${topic}</span>
+                  <button id="tlk-${safeUid}-${topic.replace(/\s/g,'_')}"
+                    onclick="event.stopPropagation();toggleTopicLock('${s.user_id}','${topic}',${isLocked})"
+                    style="padding:4px 10px;border-radius:8px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:${isLocked ? '#FEE2E2' : '#F0FDF4'};color:${isLocked ? '#991B1B' : '#15803D'};"
+                  >${isLocked ? '🔒 Locked' : '🔓 Unlock'}</button>
+                </div>`;
+              }).join('')}
+            </div>` : ''}
           </div>
         </div>`;
       }).join('')}
@@ -6351,6 +6395,46 @@ function toggleStudentCard(userId) {
   const isOpen = el.style.display !== 'none';
   document.querySelectorAll('[id^="sc-"]').forEach(d => { d.style.display = 'none'; });
   if (!isOpen) el.style.display = 'block';
+}
+
+async function toggleTopicLock(studentUserId, topic, currentlyLocked) {
+  const token = STATE.user?.token;
+  const student = (STATE.teacherStudents || []).find(s => s.user_id === studentUserId);
+  if (!student) return;
+  const lockedTopics = student.lockedTopics || [];
+  const newLocked = currentlyLocked
+    ? lockedTopics.filter(t => t !== topic)
+    : [...lockedTopics, topic];
+  try {
+    const res = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + encodeURIComponent(studentUserId),
+      {
+        method: 'PATCH',
+        headers: {
+          'apikey': CONFIG.SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ locked_topics: newLocked })
+      }
+    );
+    if (res.ok) {
+      student.lockedTopics = newLocked;
+      const isNowLocked = newLocked.includes(topic);
+      showToast((isNowLocked ? '🔒 Locked' : '🔓 Unlocked') + ': ' + topic + ' for ' + student.name);
+      const safeUid = studentUserId.replace(/-/g,'');
+      const btn = document.getElementById('tlk-' + safeUid + '-' + topic.replace(/\s/g,'_'));
+      if (btn) {
+        btn.textContent = isNowLocked ? '🔒 Locked' : '🔓 Unlock';
+        btn.style.background = isNowLocked ? '#FEE2E2' : '#F0FDF4';
+        btn.style.color = isNowLocked ? '#991B1B' : '#15803D';
+        btn.onclick = function(e) { e.stopPropagation(); toggleTopicLock(studentUserId, topic, isNowLocked); };
+      }
+    } else {
+      showToast('Could not save — check Supabase has locked_topics column in profiles');
+    }
+  } catch(e) { showToast('Error saving topic lock'); }
 }
 
 async function showStudentHistory(userId) {
