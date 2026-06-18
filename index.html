@@ -6064,16 +6064,13 @@ async function joinClass() {
 }
 
 function copyParentCode(code) {
-  const name = STATE.user?.display_name || 'your child';
-  const msg = `Hi! I'm using ScienceSpark to revise for my GCSEs — it's a free app that uses flashcards and AI marking to help me study every day.
+  const msg = `Hi! I'm using ScienceSpark to revise for my GCSEs and I'd love you to be able to track my progress.
 
-You can track my progress by signing up as a parent:
-1. Go to stepaheadscience.co.uk
-2. Tap "Sign Up" and choose "Parent"
-3. Enter my parent code: ${code}
+• New to ScienceSpark? Go to stepaheadscience.co.uk, sign up as a Parent, then enter my parent code: ${code}
+• Already have the app? Log in and enter my parent code: ${code}
 
-You'll be able to see my streak, which topics I'm struggling with, and send me a nudge if I forget to study! 📚`;
-  navigator.clipboard?.writeText(msg).then(() => showToast('Message copied! 📋'));
+You'll be able to see my daily study streak, which topics I'm struggling with, and send me a nudge if I forget to revise. It's free! 📚`;
+  navigator.clipboard?.writeText(msg).then(() => showToast('Message copied! ✅'));
 }
 
 function saveProfile() {
@@ -6706,15 +6703,13 @@ function copySettingsCode() {
   const el = document.getElementById('settings-class-code');
   const code = el ? el.textContent.trim() : ((STATE.user && STATE.user.class_code) || '');
   const className = STATE.teacherSelectedClassName || 'my class';
-  const msg = `Hi! I've added you to ${className} on ScienceSpark — a GCSE science revision app that uses spaced repetition flashcards to help you study smarter, not longer.
+  const msg = `Hi! I've set up a class for you on ScienceSpark — a GCSE science revision app that uses spaced repetition flashcards and AI marking to help you revise smarter in just 10–15 minutes a day.
 
-To join:
-1. Go to stepaheadscience.co.uk on your phone
-2. Tap "Sign Up" and create a student account
-3. Enter this class code when prompted: ${code}
+• New to ScienceSpark? Go to stepaheadscience.co.uk, sign up as a Student, then enter this class code: ${code}
+• Already have an account? Log in, go to Profile, and enter the class code: ${code}
 
-It only takes 10–15 minutes a day and the AI marks your answers instantly. See you in class! 🔬`;
-  navigator.clipboard.writeText(msg).then(() => showToast('Invite message copied! 📋'));
+It's completely free during beta. See you in class! 🔬`;
+  navigator.clipboard.writeText(msg).then(() => showToast('Message copied! ✅'));
 }
 
 function buildAIToggle(aiOn) {
