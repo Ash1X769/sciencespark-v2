@@ -8572,23 +8572,20 @@ async function showParentPortal() {
   // ── 1. Get parent's linked children — linked_student_ids array is source of truth ──
   let linkedStudentId = null;
   try {
-    const ppUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=linked_student_ids,linked_student_id,linked_parent_code,parent_last_insight_at';
-    console.log('[ParentPortal] fetching parent profile:', ppUrl);
+    const ppUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=linked_student_ids,linked_student_id,parent_last_insight_at';
     const ppRes = await fetch(ppUrl, { headers });
     const pp = ppRes.ok ? await ppRes.json() : [];
-    console.log('[ParentPortal] parent profile response:', JSON.stringify(pp));
+    console.log('[ParentPortal] parent profile:', JSON.stringify(pp), 'status:', ppRes.status);
 
-    // Prefer linked_student_ids array; fall back to linked_student_id (legacy single value)
+    // linked_student_ids array is the source of truth; linked_student_id is legacy fallback
     const idsArray = (Array.isArray(pp[0]?.linked_student_ids) && pp[0].linked_student_ids.length > 0)
       ? pp[0].linked_student_ids
       : (pp[0]?.linked_student_id ? [pp[0].linked_student_id] : []);
 
     STATE.parentAllLinkedIds = idsArray;
-    // First item in array is primary child; respect parent's last explicit choice
     linkedStudentId = STATE.parentActiveChildId || idsArray[0] || null;
-    console.log('[ParentPortal] allLinkedIds:', idsArray, '→ active child:', linkedStudentId);
+    console.log('[ParentPortal] idsArray:', idsArray, '→ linkedStudentId:', linkedStudentId);
 
-    if (!user.linked_parent_code && pp[0]?.linked_parent_code) user.linked_parent_code = pp[0].linked_parent_code;
     STATE._parentLastInsightAt = pp[0]?.parent_last_insight_at || null;
   } catch(e) { console.error('[ParentPortal] parent profile fetch error:', e); }
 
