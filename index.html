@@ -8760,20 +8760,22 @@ async function showParentPortal() {
   const safeChildName = child.name.replace(/'/g, '&#39;');
   const safeChildUserId = child.user_id || '';
   const studyBannerHTML = studiedToday
-    ? `<div style="background:#F0FDF4;border-bottom:2px solid #22C55E;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
+    ? `<div id="parent-study-banner" style="background:#F0FDF4;border-bottom:2px solid #22C55E;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
         <div><div style="font-size:14px;font-weight:800;color:#16A34A;">✅ ${child.name} has studied today</div>
         <div style="font-size:12px;color:#166534;font-weight:600;">${cardsToday} card${cardsToday !== 1 ? 's' : ''} done</div></div>
         <div style="font-size:28px;">🎉</div>
       </div>`
+    : STATE.parentPingSentThisSession
+    ? ''
     : isAfter5pm
-    ? `<div style="background:#FFF7ED;border-bottom:2px solid #F97316;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    ? `<div id="parent-study-banner" style="background:#FFF7ED;border-bottom:2px solid #F97316;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
         <div>
           <div style="font-size:14px;font-weight:800;color:#C2410C;">📚 ${child.name} hasn't done flashcards today</div>
           <div style="font-size:12px;color:#9A3412;font-weight:600;">Send a quick reminder</div>
         </div>
         <button onclick="showPingComposer('${safeChildUserId}','${safeChildName}')" style="background:#F97316;color:white;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 8px rgba(249,115,22,0.35);flex-shrink:0;">📨 PING</button>
       </div>`
-    : `<div style="background:#EFF6FF;border-bottom:2px solid #93C5FD;padding:14px 20px;display:flex;align-items:center;gap:12px;">
+    : `<div id="parent-study-banner" style="background:#EFF6FF;border-bottom:2px solid #93C5FD;padding:14px 20px;display:flex;align-items:center;gap:12px;">
         <div style="font-size:22px;">⏰</div>
         <div><div style="font-size:14px;font-weight:800;color:#1D4ED8;">No study session yet today</div>
         <div style="font-size:12px;color:#1E40AF;font-weight:600;">PING button appears after 5pm if they haven't studied</div></div>
@@ -9027,6 +9029,9 @@ async function sendPing(childUserId, childName) {
   const message = (document.getElementById('ping-message')?.value || '').trim() || 'Time to do your ScienceSpark cards! 🧠';
   const deadline = document.getElementById('ping-deadline')?.value || '';
   closeModal();
+  STATE.parentPingSentThisSession = true;
+  const bannerEl = document.getElementById('parent-study-banner');
+  if (bannerEl) bannerEl.remove();
   showToast('Sending ping...');
   const token = STATE.user?.token;
   try {
