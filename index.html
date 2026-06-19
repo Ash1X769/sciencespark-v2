@@ -5033,7 +5033,7 @@ function showStudyHistory() {
         const em = gradeEmoji[grade] || '📚';
         const date = h.date ? new Date(h.date).toLocaleDateString('en-GB', {day:'numeric',month:'short'}) : '';
         const subjectEmoji = h.subject === 'Biology' ? '🌿' : h.subject === 'Chemistry' ? '⚗️' : '⚡';
-        const qText = (h.question || 'Card').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*]+)\*/g,'$1');
+        const qText = (h.question || 'Card').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
         const prog = progress[h.cardId];
         let dueStr = '';
         if (prog?.nextReview) {
@@ -5044,7 +5044,7 @@ function showStudyHistory() {
         }
         return `<div style="background:white;border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
           <div style="flex:1;min-width:0;margin-right:12px;">
-            <div style="font-size:14px;font-weight:800;color:#0F172A;margin-bottom:4px;">${qText}</div>
+            <div style="font-size:14px;font-weight:500;color:#0F172A;margin-bottom:4px;">${qText}</div>
             <div style="font-size:12px;color:#64748B;font-weight:600;">${subjectEmoji} ${h.subject || ''} &nbsp;·&nbsp; ${h.topic || ''} &nbsp;·&nbsp; Last seen ${date}</div>
             ${dueStr ? `<div style="font-size:11px;font-weight:700;color:#4F46E5;margin-top:3px;">📅 ${dueStr}</div>` : ''}
           </div>
@@ -6806,7 +6806,7 @@ ${renderNavBar('history')}
           const gradeMap = { 0: 'again', 1: 'hard', 2: 'good', 3: 'easy' };
           const grade = gradeMap[h.grade] || 'good';
           const date = new Date(h.date).toLocaleDateString('en-GB', {day:'numeric',month:'short'});
-          const q = (h.question || '—').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*]+)\*/g,'$1');
+          const q = (h.question || '—').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
           const prog = progress[h.cardId];
           let dueLine = '';
           if (prog?.nextReview) {
@@ -6819,7 +6819,7 @@ ${renderNavBar('history')}
             <div class="history-item">
               <div class="history-grade history-grade-${grade}">${grade.substring(0,1).toUpperCase()}</div>
               <div style="flex:1;min-width:0;">
-                <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${q}</div>
+                <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${q}</div>
                 <div style="font-size:11px;color:var(--text-secondary);font-weight:600;margin-top:2px;">${h.subject || ''} · ${h.topic || ''} · ${date}</div>
                 ${dueLine ? `<div style="font-size:11px;font-weight:700;color:#4F46E5;margin-top:2px;">📅 ${dueLine}</div>` : ''}
               </div>
