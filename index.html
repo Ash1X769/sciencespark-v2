@@ -8569,22 +8569,28 @@ async function showParentPortal() {
     </div>
   </div>`);
 
-  // ── 1. Get parent's linked_student_id from their profile ──
+  // ── 1. Get parent's linked children from their profile ──
   let linkedStudentId = user.linked_student_id || null;
   try {
-    const ppRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=linked_student_id,linked_student_ids,linked_parent_code,parent_last_insight_at', { headers });
+    const ppUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=linked_student_id,linked_student_ids,linked_parent_code,parent_last_insight_at';
+    console.log('[ParentPortal] fetching parent profile:', ppUrl);
+    const ppRes = await fetch(ppUrl, { headers });
     const pp = ppRes.ok ? await ppRes.json() : [];
+    console.log('[ParentPortal] parent profile response:', JSON.stringify(pp));
     const primaryId = pp[0]?.linked_student_id || null;
     const extraIds  = Array.isArray(pp[0]?.linked_student_ids) ? pp[0].linked_student_ids : [];
-    // Build deduplicated list, primary first
-    STATE.parentAllLinkedIds = primaryId
-      ? [primaryId, ...extraIds.filter(function(id) { return id !== primaryId; })]
-      : extraIds;
+    console.log('[ParentPortal] primaryId:', primaryId, 'extraIds:', extraIds);
+    // Build deduplicated list: all known child user_ids
+    const allIds = [];
+    if (primaryId) allIds.push(primaryId);
+    extraIds.forEach(function(id) { if (!allIds.includes(id)) allIds.push(id); });
+    STATE.parentAllLinkedIds = allIds;
     // Use whichever child the parent last chose, fall back to first
-    linkedStudentId = STATE.parentActiveChildId || primaryId || extraIds[0] || null;
+    linkedStudentId = STATE.parentActiveChildId || allIds[0] || null;
+    console.log('[ParentPortal] linkedStudentId resolved to:', linkedStudentId);
     if (!user.linked_parent_code && pp[0]?.linked_parent_code) user.linked_parent_code = pp[0].linked_parent_code;
     STATE._parentLastInsightAt = pp[0]?.parent_last_insight_at || null;
-  } catch(e) {}
+  } catch(e) { console.error('[ParentPortal] parent profile fetch error:', e); }
 
   // ── 2. If not linked, try auto-link via RPC using stored linked_parent_code ──
   if (!linkedStudentId && user.linked_parent_code) {
@@ -8595,6 +8601,7 @@ async function showParentPortal() {
         body: JSON.stringify({ p_code: user.linked_parent_code })
       });
       if (linkRes.ok) linkedStudentId = await linkRes.json().catch(() => null);
+      console.log('[ParentPortal] auto-link RPC result:', linkedStudentId);
     } catch(e) {}
   }
   if (linkedStudentId) STATE.user.linked_student_id = linkedStudentId;
@@ -8605,8 +8612,11 @@ async function showParentPortal() {
 
   if (linkedStudentId) {
     try {
-      const cRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + linkedStudentId + '&select=user_id,display_name,streak,xp,level,tier,year_group,exam_board,parent_code', { headers });
+      const cUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + linkedStudentId + '&select=user_id,display_name,streak,xp,level,tier,year_group,exam_board,parent_code';
+      console.log('[ParentPortal] fetching child profile:', cUrl);
+      const cRes = await fetch(cUrl, { headers });
       const cProfiles = cRes.ok ? await cRes.json() : [];
+      console.log('[ParentPortal] child profile response (status', cRes.status, '):', JSON.stringify(cProfiles));
       if (cProfiles[0]) {
         const cp = cProfiles[0];
         child = {
@@ -8619,15 +8629,21 @@ async function showParentPortal() {
           exam_board: cp.exam_board || 'AQA',
           user_id: cp.user_id
         };
+        console.log('[ParentPortal] child loaded:', child.name, 'user_id:', child.user_id);
+      } else {
+        console.warn('[ParentPortal] child profile returned empty — RLS may be blocking or wrong user_id');
       }
-    } catch(e) {}
+    } catch(e) { console.error('[ParentPortal] child profile fetch error:', e); }
 
     if (child.user_id) {
       try {
         const hRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=eq.' + child.user_id + '&select=card_id,question,subject,topic_name,grade,created_at&order=created_at.desc', { headers });
         childHistory = hRes.ok ? await hRes.json() : [];
+        console.log('[ParentPortal] study history rows:', childHistory.length);
       } catch(e) {}
     }
+  } else {
+    console.warn('[ParentPortal] no linkedStudentId — portal will show link screen');
   }
 
   // ── 4. Compute stats + topics from history ──
