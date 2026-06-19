@@ -5425,30 +5425,22 @@ function renderNavBar(active) {
 }
 
 function renderParentNavBar(activeTab, child, user) {
-  const tabs = [
-    { id: 'progress', label: 'Progress' },
-    { id: 'history',  label: 'History'  },
-    { id: 'insights', label: 'Insights' },
-    { id: 'feed',     label: 'Feed'     },
-    { id: 'profile',  label: 'Profile'  },
-  ];
   const initial = (user.display_name || 'P').charAt(0).toUpperCase();
-  const multi   = STATE.parentAllLinkedIds && STATE.parentAllLinkedIds.length > 1;
   return `<nav class="nav">
     <div class="logo">⚡<span class="logo-text">ScienceSpark</span></div>
     <div class="nav-tabs">
-      ${tabs.map(t => `<button class="nav-tab${activeTab === t.id ? ' active' : ''}" id="pnav-${t.id}" onclick="parentTab('${t.id}')">${t.label}${t.id === 'insights' ? '<span class="insight-badge" id="insight-badge-dot" style="display:none;margin-left:3px;"></span>' : ''}</button>`).join('')}
+      <button class="nav-tab${activeTab === 'progress' ? ' active' : ''}" id="pnav-progress" onclick="parentTab('progress')">Progress</button>
+      <button class="nav-tab${activeTab === 'history'  ? ' active' : ''}" id="pnav-history"  onclick="parentTab('history')">History</button>
     </div>
     <div class="nav-right">
       <div class="profile-wrap">
         <button class="profile-btn" onclick="toggleParentDropdown(event)" style="font-weight:900;font-size:15px;">${initial}</button>
         <div class="profile-dropdown" id="parent-profile-dropdown">
-          <div style="padding:10px 14px 10px;">
-            <div style="font-size:14px;font-weight:900;color:#0F172A;">${user.display_name || 'Parent'}</div>
-            <div style="font-size:12px;color:#64748B;font-weight:600;margin-top:2px;">${user.email || ''}</div>
-          </div>
+          <button class="pd-item" onclick="closeParentDropdown();parentTab('profile')">👤 My Profile</button>
           <div class="pd-sep"></div>
-          ${multi ? `<button class="pd-item" onclick="closeParentDropdown();showSwitchChildModal()">👨‍👩‍👧 Switch Child</button><div class="pd-sep"></div>` : ''}
+          <button class="pd-item" onclick="closeParentDropdown();parentTab('insights')">✨ Insights<span class="insight-badge" id="insight-badge-dot" style="display:none;margin-left:6px;vertical-align:middle;"></span></button>
+          <button class="pd-item" onclick="closeParentDropdown();parentTab('feed')">📰 Science of Learning Feed</button>
+          <div class="pd-sep"></div>
           <button class="pd-item" onclick="closeParentDropdown();showAbout()">ℹ️ About ScienceSpark</button>
           <div class="pd-sep"></div>
           <button class="pd-item" onclick="closeParentDropdown();doLogout()">🚪 Sign Out</button>
