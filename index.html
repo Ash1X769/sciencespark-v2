@@ -1810,7 +1810,24 @@ textarea.input { resize: vertical; min-height: 100px; }
 .pt-badge-m { background: #DCFCE7; color: #15803D; }
 .pt-badge-s { background: #14532D; color: #FFFFFF; }
 .pt-badge-t { font-size: 11px; font-weight: 600; color: #94A3B8; }
-
+/* ── Parent Insight + Feed ─────────────────────────────────────────────────── */
+.parent-insight-bg { background: #F5F0E8; min-height: 100vh; }
+.insight-tip-card { background: #FDF6EC; border: 1.5px solid #E8D5B0; border-radius: 20px; padding: 24px 20px; }
+.insight-tip-lbl { background: linear-gradient(135deg,#7C3AED,#4F46E5); color: white; border-radius: 10px; padding: 5px 12px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; display: inline-block; margin-bottom: 12px; }
+.feed-card { background: #F5F0E8; border-radius: 20px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+.feed-hdr-purple { background: linear-gradient(135deg,#7C3AED,#4F46E5); padding: 10px 20px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; color: white; text-transform: uppercase; }
+.feed-hdr-green { background: linear-gradient(135deg,#16A34A,#15803D); padding: 10px 20px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; color: white; text-transform: uppercase; }
+.feed-card-body { padding: 16px 20px 6px; }
+.feed-card-headline { font-size: 16px; font-weight: 900; color: #1E1409; margin-bottom: 8px; line-height: 1.3; }
+.feed-card-text { font-size: 13px; color: #5D4037; font-weight: 600; line-height: 1.6; }
+.feed-card-actions { display: flex; gap: 8px; padding: 10px 20px 16px; }
+.feed-btn { flex: 1; padding: 8px; border-radius: 8px; border: 1.5px solid #C4A882; background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit; color: #5D4037; transition: background .15s; }
+.feed-btn:hover { background: rgba(0,0,0,0.05); }
+.feed-btn.saved { border-color: #7C3AED; color: #7C3AED; }
+.insight-badge { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #EF4444; margin-left: 5px; vertical-align: middle; position: relative; top: -1px; }
+/* ── Student Revision Spark ────────────────────────────────────────────────── */
+.spark-screen { min-height: 100vh; background: #F0FDF4; padding-bottom: 100px; }
+.spark-hdr { background: linear-gradient(135deg,#16A34A,#15803D); padding: 22px 20px 18px; color: white; display: flex; align-items: center; gap: 12px; }
 </style>
 </head>
 <body>
@@ -5314,6 +5331,14 @@ ${renderNavBar('home')}
       </div>
       <div style="font-size:20px;">→</div>
     </div>
+    <div onclick="showRevisionSparkFeed()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
+      <div style="font-size:32px;">⚡</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:900;color:white;">Revision Spark</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:600;">Brain science that actually helps you revise</div>
+      </div>
+      <div style="font-size:20px;color:rgba(255,255,255,0.7);">→</div>
+    </div>
     <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">BADGES</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;padding:4px;width:100%;">${badgeHTML}</div>
     <div id="leaderboard-section" style="padding-bottom:100px;"></div>
@@ -7214,7 +7239,7 @@ function buildScheduleCardHTML(user) {
     h += '<tr style="border-top:1px solid #F1F5F9;">';
     h += '<td style="padding:8px 0;font-size:13px;font-weight:700;color:#374151;">' + label + '</td>';
     h += '<td style="padding:8px 4px;text-align:center;"><select id="sched-' + key + '-cpd" class="select"' + dis + ' style="font-size:13px;padding:6px 8px;' + op + '">';
-    [5,10,15,20,30].forEach(function(n) { h += '<option value="' + n + '"' + (n===+cpd?' selected':'') + '>' + n + '</option>'; });
+    [0,5,10,15,20,30].forEach(function(n) { h += '<option value="' + n + '"' + (n===+cpd?' selected':'') + '>' + (n===0?'Off':n) + '</option>'; });
     h += '</select></td>';
     h += '<td style="padding:8px 0 8px 4px;text-align:center;"><select id="sched-' + key + '-freq" class="select"' + dis + ' style="font-size:13px;padding:6px 8px;' + op + '">';
     FREQS.forEach(function(f) { h += '<option value="' + f[0] + '"' + (f[0]===freq?' selected':'') + '>' + f[1] + '</option>'; });
@@ -7267,7 +7292,7 @@ function buildStudentScheduleHTML(s) {
     h += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">';
     h += '<span style="font-size:12px;font-weight:700;color:#374151;min-width:46px;">' + em + ' ' + label + '</span>';
     h += '<select id="ts-' + stuId + '-' + k + '-cpd" onclick="event.stopPropagation()" style="flex:1;padding:3px 5px;border:1px solid #E2E8F0;border-radius:6px;font-size:11px;font-family:inherit;">';
-    [5,10,15,20,30].forEach(function(n) { h += '<option value="' + n + '"' + (n===+cpd?' selected':'') + '>' + n + '/d</option>'; });
+    [0,5,10,15,20,30].forEach(function(n) { h += '<option value="' + n + '"' + (n===+cpd?' selected':'') + '>' + (n===0?'Off':n+'/d') + '</option>'; });
     h += '</select>';
     h += '<select id="ts-' + stuId + '-' + k + '-freq" onclick="event.stopPropagation()" style="flex:1;padding:3px 5px;border:1px solid #E2E8F0;border-radius:6px;font-size:11px;font-family:inherit;">';
     FREQS.forEach(function(f) { h += '<option value="' + f[0] + '"' + (f[0]===freq?' selected':'') + '>' + f[1] + '</option>'; });
@@ -7339,7 +7364,7 @@ function buildClassScheduleSection() {
     var key = row[0], label = row[1];
     h += '<tr style="border-top:1px solid #F1F5F9;"><td style="padding:8px 0;font-size:13px;font-weight:700;color:#374151;">' + label + '</td>';
     h += '<td style="padding:8px 4px;text-align:center;"><select id="cs-' + key + '-cpd" style="padding:5px 8px;border:1px solid #E2E8F0;border-radius:6px;font-size:13px;font-family:inherit;">';
-    [5,10,15,20,30].forEach(function(n) { h += '<option value="' + n + '"' + (n===10?' selected':'') + '>' + n + '</option>'; });
+    [0,5,10,15,20,30].forEach(function(n) { h += '<option value="' + n + '"' + (n===10?' selected':'') + '>' + (n===0?'Off':n) + '</option>'; });
     h += '</select></td>';
     h += '<td style="padding:8px 0 8px 4px;text-align:center;"><select id="cs-' + key + '-freq" style="padding:5px 8px;border:1px solid #E2E8F0;border-radius:6px;font-size:13px;font-family:inherit;">';
     FREQS.forEach(function(f) { h += '<option value="' + f[0] + '">' + f[1] + '</option>'; });
@@ -8099,6 +8124,327 @@ function showStudentDetail(name) {
 // ============================================================
 // PARENT PORTAL
 // ============================================================
+// ── Tip content pools ─────────────────────────────────────────────────────────
+const PARENT_TIPS = [
+  { id:'p1', headline:'Why testing beats re-reading — every time', body:'The testing effect shows that retrieving information from memory strengthens it up to 2× more than re-reading. Every time your child answers a flashcard they\'re doing active retrieval — this is the single most evidence-backed learning strategy in cognitive psychology. Re-reading feels productive; retrieval actually is.' },
+  { id:'p2', headline:'The secret role of sleep in your child\'s revision', body:'Memory consolidates during slow-wave sleep. A 10-minute study session before bed is neurologically worth more than the same session the next morning. Encourage an evening revision habit then protect their sleep — the brain does the filing overnight and nothing can substitute it.' },
+  { id:'p3', headline:'5 minutes every day beats 2 hours on Sunday', body:'Spacing effect research shows that distributed practice over time creates far stronger memories than massed practice (cramming). We lose 50% of learned material within 24 hours without review. The ScienceSpark algorithm catches this exact moment — daily use is the whole point.' },
+  { id:'p4', headline:'What "Again" on a flashcard actually means', body:'"Again" is not failure — it\'s the algorithm identifying a gap to fill. Making errors during practice (called desirable difficulties) produces better long-term retention than only practising things you already know. Celebrate the honest attempt, not the score.' },
+  { id:'p5', headline:'The one question you should ask tonight', body:'Simply asking your child "what did you study today?" triggers the Protégé Effect — explaining to someone else deepens their own understanding by up to 20%. You don\'t need to know any science. Just asking and listening is enough to make a measurable difference to their exam performance.' },
+  { id:'p6', headline:'Why streaks are a learning superpower', body:'Identity-based habits are the most durable. When a child maintains a revision streak long enough they begin to identify as "someone who revises" — and that identity becomes self-reinforcing. Protecting the streak protects the habit. Even one card counts. Don\'t break the chain.' },
+  { id:'p7', headline:'Interleaving: the strategy top students use without knowing it', body:'Mixing subjects in a single session (biology card, then chemistry, then physics) is called interleaving and produces better retention than blocked practice (all biology, then all chemistry). It feels harder in the moment — that difficulty is exactly why it works.' },
+  { id:'p8', headline:'Why your child needs variety in their study environment', body:'Memory is context-dependent — we recall better in environments similar to where we learned. Studying in multiple locations (bedroom, kitchen, a café) paradoxically strengthens memories by untethering them from any single context. Variety isn\'t inconsistency; it\'s a technique.' },
+];
+
+const STUDENT_TIPS = [
+  { id:'s1', headline:'The 7-minute memory window 🧠', body:'Your brain decides what to keep in the first 7 minutes after learning something new. That\'s why the app shows you a real exam question right after each card — it locks the memory in before your brain "files it away." Those extra seconds are doing more work than you think.' },
+  { id:'s2', headline:'Getting it wrong makes you smarter ⚡', body:'Getting a card wrong then seeing the correct answer creates a stronger memory than getting it right first time — scientists call this the "generation effect." So don\'t stress the Again cards. They\'re doing the heavy lifting for your brain. The system is working.' },
+  { id:'s3', headline:'Your brain literally grows when you revise 🌱', body:'Every time you practise recalling something, you grow myelin around that neural pathway — like adding insulation to a wire. The signal gets faster and stronger. Revision isn\'t just memorising; it\'s physically restructuring your brain. You can actually feel it click into place.' },
+  { id:'s4', headline:'Sleep is revision. No, seriously. 😴', body:'Your hippocampus replays your day\'s learning during deep sleep, moving facts into long-term storage. Pulling an all-nighter deletes this process entirely. Study, then sleep — it\'s not lazy, it\'s the most efficient revision strategy known to neuroscience. The brain does the rest.' },
+  { id:'s5', headline:'The compound interest of daily flashcards 📈', body:'5 cards a day for a year = 1,825 facts you definitely know. Even 1 card a day = 365 facts you didn\'t have before. Streaks are compound interest for your brain — the returns get bigger every day you keep going. Missing one day costs more than it looks on the surface.' },
+  { id:'s6', headline:'Explaining out loud triples your recall 🗣️', body:'The Feynman Technique: explain what you just revised to someone (or your wall). The moment you get stuck, you\'ve found your actual gap. Students who teach or explain content score 20–28% higher on recall tests. Talk to your dog. Your mirror. It genuinely works.' },
+  { id:'s7', headline:'Science joke: Why did the atom feel lonely? 🧪', body:'Because it made up everything! 😂 — Seriously though: atoms are 99.99% empty space. Things only feel solid because electromagnetic repulsion between electron clouds prevents matter passing through matter. You have never actually touched anything. Wild, right?' },
+  { id:'s8', headline:'The exam secret nobody tells you 🎯', body:'Examiners write the mark scheme before they write the question. Every answer has specific keywords that unlock marks. The bold terms in every ScienceSpark answer card are those exact keywords — they\'re not just emphasis, they\'re literally what your examiner is trained to look for.' },
+];
+
+// ── Insight tip picker (rotates every 3 days) ─────────────────────────────────
+function getInsightTip(tipPool) {
+  const idx = Math.floor(Date.now() / (3 * 86400000)) % tipPool.length;
+  return tipPool[idx];
+}
+
+// ── Notification personalisation ─────────────────────────────────────────────
+function buildParentNotificationText(child) {
+  const name = child.name || 'your child';
+  const streak = child.streak || 0;
+  const candidates = [
+    streak >= 5 ? name + ' is on a ' + streak + '-day streak 🔥 Here\'s what the science says about that habit' : null,
+    streak >= 2 ? name + ' has been revising for ' + streak + ' days running — did you know you can boost that? 🧠' : null,
+    'Did you know one question tonight could change how ' + name + ' revises forever? 💡',
+    name + '\'s weekly learning insight is ready — takes 60 seconds to read 📖',
+    'Science says parents who ask about revision make a real difference to results. Here\'s how 🎯',
+  ].filter(Boolean);
+  const t = candidates[Math.floor(Date.now() / 86400000) % candidates.length];
+  return t.length > 120 ? t.slice(0, 117) + '...' : t;
+}
+
+// ── Fire device notification (service worker path, 3-day gate) ───────────────
+async function checkAndFireParentNotification(child, parentLastInsightAt, parentName) {
+  if (!child?.user_id) return;
+  const daysSince = parentLastInsightAt
+    ? (Date.now() - new Date(parentLastInsightAt).getTime()) / 86400000
+    : 99;
+  if (daysSince < 3) return;
+
+  // Mark new insight available
+  STATE.parentHasNewInsight = true;
+  const dot = document.getElementById('insight-badge-dot');
+  if (dot) dot.style.display = 'inline-block';
+
+  // Update timestamp in Supabase so we don't fire again for 3 days
+  const token = STATE.user?.token;
+  if (token) {
+    fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + STATE.user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ parent_last_insight_at: new Date().toISOString() })
+    }).catch(() => {});
+  }
+
+  // Fire device notification via service worker (works even when tab is backgrounded)
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const tip = getInsightTip(PARENT_TIPS);
+    const notifTitle = buildParentNotificationText(child);
+    const notifUrl = window.location.origin + '/sciencespark-v2/?screen=parent-insight';
+    await reg.showNotification(notifTitle, {
+      body: '✨ ' + tip.headline,
+      icon: '/sciencespark-v2/icon-192.png',
+      badge: '/sciencespark-v2/icon-192.png',
+      vibrate: [200, 100, 200],
+      data: { url: notifUrl, screen: 'parent-insight' }
+    });
+  } catch(e) {}
+}
+
+// ── Build parent insight screen HTML ─────────────────────────────────────────
+function buildParentInsightHTML(child, childHistory, parentName) {
+  const tip = getInsightTip(PARENT_TIPS);
+  const streak = child.streak || 0;
+  const pName = parentName || STATE.user?.display_name?.split(' ')[0] || 'there';
+  const cName = child.name || 'Your child';
+  // Mastered = grade 3 cards
+  const mastered = childHistory.filter(function(h) { return h.grade >= 3; }).length;
+
+  // Reflection questions (3 chosen from pool, stable per day)
+  const qPool = [
+    'When did you last ask ' + cName + ' to explain something they\'d just studied — in their own words?',
+    streak >= 3
+      ? cName + ' has studied ' + streak + ' days in a row. Have you told them that\'s genuinely impressive?'
+      : 'What\'s one small thing you could do this week to help ' + cName + ' build a daily revision habit?',
+    'Does ' + cName + ' know that getting a card wrong is actually the most valuable moment in their learning?',
+    'Which subject does ' + cName + ' seem most confident in right now — and have you asked them about it lately?',
+    'Could you sit with ' + cName + ' for just 5 minutes tonight while they do their flashcards?',
+    'What\'s one science fact ' + cName + ' has mentioned recently that surprised you?',
+  ];
+  const daySeed = new Date().toDateString().split('').reduce(function(a,c) { return a + c.charCodeAt(0); }, 0);
+  const reflections = [qPool[daySeed % qPool.length], qPool[(daySeed + 2) % qPool.length], qPool[(daySeed + 4) % qPool.length]];
+
+  const shareText = 'Just read something from ScienceSpark that made me think differently about ' + cName + '\'s revision:\n\n"' + tip.headline + '"\n\n' + tip.body.slice(0, 100) + '...\n\nWorth a read if you have a GCSE student at home 🧠';
+
+  return '<div class="parent-insight-bg">'
+    + '<div style="padding:28px 24px 6px;">'
+    + '<div style="font-size:26px;font-weight:900;color:#3D2C1E;margin-bottom:4px;">Hi ' + pName + ' ✨</div>'
+    + '<div style="font-size:13px;color:#7B5E45;font-weight:600;">Your personal learning insight</div>'
+    + '</div>'
+
+    // Celebration banner
+    + (streak > 0 || mastered > 0 ? '<div style="margin:16px 20px;background:linear-gradient(135deg,#7C3AED,#4F46E5);border-radius:16px;padding:18px 20px;color:white;display:flex;align-items:center;gap:14px;">'
+    + '<div style="font-size:36px;">' + (streak >= 3 ? '🔥' : '⭐') + '</div>'
+    + '<div><div style="font-size:16px;font-weight:900;">'
+    + (streak >= 3 ? cName + ' is on a ' + streak + '-day streak!' : cName + ' is building momentum!')
+    + '</div>'
+    + '<div style="font-size:12px;opacity:0.9;margin-top:2px;">'
+    + (mastered > 0 ? mastered + ' cards mastered · ' : '') + streak + ' day' + (streak !== 1 ? 's' : '') + ' in a row'
+    + '</div></div></div>' : '')
+
+    // Tip card
+    + '<div style="padding:0 20px;">'
+    + '<div class="insight-tip-card" style="margin-top:20px;">'
+    + '<div class="insight-tip-lbl">✨ THIS WEEK\'S INSIGHT</div>'
+    + '<div style="font-size:19px;font-weight:900;color:#1E1409;margin-bottom:10px;line-height:1.3;">' + tip.headline + '</div>'
+    + '<div style="font-size:14px;color:#5D4037;font-weight:600;line-height:1.65;">' + tip.body + '</div>'
+    + '</div>'
+
+    // Reflection questions
+    + '<div style="margin-top:24px;background:#FDF6EC;border:1.5px solid #E8D5B0;border-radius:16px;padding:20px;">'
+    + '<div style="font-size:12px;font-weight:800;color:#7B5E45;letter-spacing:0.1em;margin-bottom:14px;">💭 REFLECT ON THIS</div>'
+    + reflections.map(function(q) {
+        return '<div style="display:flex;gap:10px;margin-bottom:12px;"><div style="font-size:16px;flex-shrink:0;">•</div><div style="font-size:13px;color:#3D2C1E;font-weight:600;line-height:1.5;">' + q + '</div></div>';
+      }).join('')
+    + '</div>'
+
+    // Share button
+    + '<button onclick="var t=' + JSON.stringify(shareText) + ';navigator.share?navigator.share({text:t}).catch(function(){}):navigator.clipboard.writeText(t).then(function(){showToast(\'Copied to clipboard! ✅\');})" '
+    + 'style="width:100%;margin-top:16px;margin-bottom:28px;padding:14px;border-radius:12px;border:none;background:#7C3AED;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">📤 Share with a friend</button>'
+    + '</div></div>';
+}
+
+// ── Build one feed card ───────────────────────────────────────────────────────
+function buildFeedCard(tip, isSaved, hdrClass) {
+  const tipJson = JSON.stringify(tip).replace(/'/g, '&#39;');
+  const shareText = (tip.headline + '\n\n' + tip.body).replace(/'/g, '&#39;');
+  return '<div class="feed-card" id="fcard-' + tip.id + '">'
+    + '<div class="' + hdrClass + '">SCIENCE OF LEARNING</div>'
+    + '<div class="feed-card-body">'
+    + '<div class="feed-card-headline">' + tip.headline + '</div>'
+    + '<div class="feed-card-text">' + tip.body + '</div>'
+    + '</div>'
+    + '<div class="feed-card-actions">'
+    + '<button class="feed-btn' + (isSaved ? ' saved' : '') + '" id="bk-' + tip.id + '" onclick="toggleBookmark(\'' + tip.id + '\',this)">'
+    + (isSaved ? '🔖 Saved' : '🔖 Save') + '</button>'
+    + '<button class="feed-btn" onclick="var t=\'' + shareText.slice(0,200).replace(/\n/g,'\\n') + '...\';navigator.share?navigator.share({text:t}).catch(function(){}):navigator.clipboard.writeText(t).then(function(){showToast(\'Copied! ✅\');})">'
+    + '📤 Share</button>'
+    + '</div>'
+    + '</div>';
+}
+
+// ── Toggle tip bookmark ───────────────────────────────────────────────────────
+async function toggleBookmark(tipId, btn) {
+  const token = STATE.user?.token;
+  const userId = STATE.user?.id;
+  if (!STATE.parentSavedTips) STATE.parentSavedTips = new Set();
+  const alreadySaved = STATE.parentSavedTips.has(tipId);
+  if (alreadySaved) {
+    STATE.parentSavedTips.delete(tipId);
+    if (btn) { btn.textContent = '🔖 Save'; btn.classList.remove('saved'); }
+    if (token && userId) {
+      fetch(CONFIG.SUPABASE_URL + '/rest/v1/tip_bookmarks?user_id=eq.' + userId + '&tip_id=eq.' + tipId, {
+        method: 'DELETE', headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
+      }).catch(function() {});
+    }
+    showToast('Removed from saved');
+  } else {
+    STATE.parentSavedTips.add(tipId);
+    if (btn) { btn.textContent = '🔖 Saved'; btn.classList.add('saved'); }
+    if (token && userId) {
+      fetch(CONFIG.SUPABASE_URL + '/rest/v1/tip_bookmarks', {
+        method: 'POST',
+        headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ user_id: userId, tip_id: tipId })
+      }).catch(function() {});
+    }
+    showToast('Saved! 🔖');
+  }
+}
+
+// ── Lazy-load feed content ────────────────────────────────────────────────────
+async function loadParentFeedContent(savedIds, showSavedOnly) {
+  const el = document.getElementById('pcontent-feed');
+  if (!el) return;
+
+  // Try Supabase tips table first
+  let tips = null;
+  const token = STATE.user?.token;
+  if (token) {
+    try {
+      const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/tips?audience=eq.parent&order=created_at.desc&limit=30', {
+        headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        if (rows && rows.length > 0) tips = rows;
+      }
+    } catch(e) {}
+  }
+  // Fall back to hardcoded
+  if (!tips) tips = PARENT_TIPS;
+
+  const savedSet = savedIds || STATE.parentSavedTips || new Set();
+  const displayTips = showSavedOnly ? tips.filter(function(t) { return savedSet.has(t.id); }) : tips;
+
+  const toggleBtn = '<div style="display:flex;gap:8px;margin-bottom:16px;">'
+    + '<button onclick="loadParentFeedContent(null,false)" style="flex:1;padding:9px;border-radius:8px;border:none;' + (!showSavedOnly ? 'background:#7C3AED;color:white;' : 'background:#F5F0E8;color:#5D4037;border:1.5px solid #C4A882;') + 'font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">All Insights</button>'
+    + '<button onclick="loadParentFeedContent(null,true)" style="flex:1;padding:9px;border-radius:8px;border:none;' + (showSavedOnly ? 'background:#7C3AED;color:white;' : 'background:#F5F0E8;color:#5D4037;border:1.5px solid #C4A882;') + 'font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">🔖 Saved</button>'
+    + '</div>';
+
+  if (displayTips.length === 0) {
+    el.innerHTML = toggleBtn + '<div style="text-align:center;padding:40px 20px;color:#7B5E45;"><div style="font-size:36px;margin-bottom:12px;">🔖</div><div style="font-size:15px;font-weight:700;">No saved tips yet</div><div style="font-size:13px;margin-top:6px;">Tap 🔖 on any insight to save it here.</div></div>';
+    return;
+  }
+
+  el.innerHTML = toggleBtn + displayTips.map(function(t) {
+    return buildFeedCard(t, savedSet.has(t.id), 'feed-hdr-purple');
+  }).join('');
+}
+
+async function loadStudentFeedContent(showSavedOnly) {
+  const el = document.getElementById('spark-feed-list');
+  if (!el) return;
+  el.innerHTML = '<div style="padding:20px;text-align:center;color:#15803D;font-weight:700;">Loading... ✨</div>';
+
+  let tips = null;
+  const token = STATE.user?.token;
+  if (token) {
+    try {
+      const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/tips?audience=eq.student&order=created_at.desc&limit=30', {
+        headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
+      });
+      if (res.ok) { const rows = await res.json(); if (rows && rows.length > 0) tips = rows; }
+    } catch(e) {}
+  }
+  if (!tips) tips = STUDENT_TIPS;
+
+  if (!STATE.studentSavedTips) STATE.studentSavedTips = new Set();
+  const savedSet = STATE.studentSavedTips;
+  const displayTips = showSavedOnly ? tips.filter(function(t) { return savedSet.has(t.id); }) : tips;
+
+  if (displayTips.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#15803D;"><div style="font-size:36px;margin-bottom:12px;">🔖</div><div style="font-size:15px;font-weight:700;">No saved sparks yet</div><div style="font-size:13px;margin-top:6px;">Tap 🔖 on any card to save it.</div></div>';
+    return;
+  }
+
+  el.innerHTML = displayTips.map(function(t) {
+    const isSaved = savedSet.has(t.id);
+    const shareText = (t.headline + '\n\n' + t.body).replace(/'/g, '&#39;');
+    return '<div class="feed-card" id="spark-' + t.id + '" style="background:#F0FDF4;">'
+      + '<div class="feed-hdr-green">Revision Spark ⚡</div>'
+      + '<div class="feed-card-body">'
+      + '<div class="feed-card-headline" style="color:#14532D;">' + t.headline + '</div>'
+      + '<div class="feed-card-text" style="color:#166534;">' + t.body + '</div>'
+      + '</div>'
+      + '<div class="feed-card-actions">'
+      + '<button class="feed-btn' + (isSaved ? ' saved' : '') + '" style="border-color:#16A34A;color:#15803D;" id="spk-bk-' + t.id + '" onclick="toggleStudentBookmark(\'' + t.id + '\',this)">'
+      + (isSaved ? '🔖 Saved' : '🔖 Save') + '</button>'
+      + '<button class="feed-btn" style="border-color:#16A34A;color:#15803D;" onclick="var tx=\'' + shareText.slice(0,200).replace(/\n/g,'\\n') + '...\';navigator.share?navigator.share({text:tx}).catch(function(){}):navigator.clipboard.writeText(tx).then(function(){showToast(\'Copied! ✅\');})">'
+      + '📤 Share</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+async function toggleStudentBookmark(tipId, btn) {
+  if (!STATE.studentSavedTips) STATE.studentSavedTips = new Set();
+  const saved = STATE.studentSavedTips.has(tipId);
+  if (saved) {
+    STATE.studentSavedTips.delete(tipId);
+    if (btn) { btn.textContent = '🔖 Save'; btn.classList.remove('saved'); }
+    showToast('Removed');
+  } else {
+    STATE.studentSavedTips.add(tipId);
+    if (btn) { btn.textContent = '🔖 Saved'; btn.classList.add('saved'); }
+    showToast('Saved! 🔖');
+  }
+  const token = STATE.user?.token;
+  const userId = STATE.user?.id;
+  if (!token || !userId) return;
+  fetch(saved
+    ? CONFIG.SUPABASE_URL + '/rest/v1/tip_bookmarks?user_id=eq.' + userId + '&tip_id=eq.' + tipId
+    : CONFIG.SUPABASE_URL + '/rest/v1/tip_bookmarks',
+    { method: saved ? 'DELETE' : 'POST',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: saved ? undefined : JSON.stringify({ user_id: userId, tip_id: tipId })
+    }).catch(function() {});
+}
+
+// ── Student Revision Spark Feed screen ───────────────────────────────────────
+function showRevisionSparkFeed() {
+  STATE.screen = 'spark'; saveScreen('spark');
+  const html = '<div class="spark-screen">'
+    + '<div class="spark-hdr">'
+    + '<button onclick="showHome()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">← Back</button>'
+    + '<div style="flex:1;"><div style="font-size:18px;font-weight:900;">Revision Spark ⚡</div><div style="font-size:12px;opacity:0.85;font-weight:600;">Brain science for GCSE students</div></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;padding:16px 20px 8px;">'
+    + '<button onclick="loadStudentFeedContent(false)" style="flex:1;padding:9px;border-radius:8px;border:none;background:#16A34A;color:white;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">All Sparks</button>'
+    + '<button onclick="loadStudentFeedContent(true)" style="flex:1;padding:9px;border-radius:8px;border:1.5px solid #16A34A;background:transparent;color:#15803D;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">🔖 Saved</button>'
+    + '</div>'
+    + '<div id="spark-feed-list" style="padding:0 20px;"></div>'
+    + '</div>';
+  render(html);
+  loadStudentFeedContent(false);
+}
+
 async function showParentPortal() {
   STATE.screen = 'parent'; saveScreen('parent');
   const user = STATE.user;
@@ -8117,10 +8463,11 @@ async function showParentPortal() {
   // ── 1. Get parent's linked_student_id from their profile ──
   let linkedStudentId = user.linked_student_id || null;
   try {
-    const ppRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=linked_student_id,linked_parent_code', { headers });
+    const ppRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=linked_student_id,linked_parent_code,parent_last_insight_at', { headers });
     const pp = ppRes.ok ? await ppRes.json() : [];
     linkedStudentId = pp[0]?.linked_student_id || null;
     if (!user.linked_parent_code && pp[0]?.linked_parent_code) user.linked_parent_code = pp[0].linked_parent_code;
+    STATE._parentLastInsightAt = pp[0]?.parent_last_insight_at || null;
   } catch(e) {}
 
   // ── 2. If not linked, try auto-link via RPC using stored linked_parent_code ──
@@ -8377,23 +8724,33 @@ async function showParentPortal() {
 
     ${studyBannerHTML}
 
-    <div style="display:flex;background:white;border-bottom:1px solid #E2E8F0;padding:0 16px;gap:4px;">
-      <button id="ptab-progress" onclick="parentTab('progress')" style="padding:14px 16px;border:none;border-bottom:3px solid #4F46E5;background:none;font-size:14px;font-weight:800;color:#4F46E5;cursor:pointer;font-family:inherit;">📊 Progress</button>
-      <button id="ptab-history" onclick="parentTab('history')" style="padding:14px 16px;border:none;border-bottom:3px solid transparent;background:none;font-size:14px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;">📖 History</button>
-      <button id="ptab-tips" onclick="parentTab('tips')" style="padding:14px 16px;border:none;border-bottom:3px solid transparent;background:none;font-size:14px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;">💡 Tips</button>
+    <div style="display:flex;background:white;border-bottom:1px solid #E2E8F0;padding:0 8px;gap:0;overflow-x:auto;">
+      <button id="ptab-progress" onclick="parentTab('progress')" style="padding:12px 12px;border:none;border-bottom:3px solid #4F46E5;background:none;font-size:13px;font-weight:800;color:#4F46E5;cursor:pointer;font-family:inherit;white-space:nowrap;">📊 Progress</button>
+      <button id="ptab-history" onclick="parentTab('history')" style="padding:12px 12px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;white-space:nowrap;">📖 History</button>
+      <button id="ptab-feed" onclick="parentTab('feed')" style="padding:12px 12px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;white-space:nowrap;">📰 Feed</button>
+      <button id="ptab-insights" onclick="parentTab('insights')" style="padding:12px 12px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;font-weight:800;color:#64748B;cursor:pointer;font-family:inherit;white-space:nowrap;">✨ Insights<span class="insight-badge" id="insight-badge-dot" style="display:none;"></span></button>
     </div>
 
-    <div style="padding:20px;max-width:860px;margin:0 auto;padding-bottom:60px;">
-      <div style="background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:12px;padding:12px 14px;margin-bottom:16px;">
-        <div style="font-size:13px;font-weight:800;color:#15803D;line-height:1.6;">🎉 Free during beta! All features are unlocked for you as a beta tester. When we launch properly, Premium will be £12.99/month — beta testers get a special founding member discount.</div>
+    <div style="max-width:860px;margin:0 auto;padding-bottom:60px;">
+      <div style="padding:16px 20px 0;">
+        <div style="background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:12px;padding:12px 14px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:800;color:#15803D;line-height:1.6;">🎉 Free during beta! All features are unlocked for you as a beta tester. When we launch properly, Premium will be £12.99/month — beta testers get a special founding member discount.</div>
+        </div>
       </div>
-      <div id="pcontent-progress">${progressHTML}</div>
-      <div id="pcontent-history" style="display:none;">${historyHTML}</div>
-      <div id="pcontent-tips" style="display:none;">${tipsHTML}</div>
+      <div id="pcontent-progress" style="padding:0 20px;">${progressHTML}</div>
+      <div id="pcontent-history" style="display:none;padding:0 20px;">${historyHTML}</div>
+      <div id="pcontent-feed" style="display:none;padding:0 20px;">
+        <div style="text-align:center;padding:40px 20px;color:#7B5E45;"><div style="font-size:32px;margin-bottom:12px;">📰</div><div style="font-size:15px;font-weight:700;">Loading insights...</div></div>
+      </div>
+      <div id="pcontent-insights" style="display:none;">${buildParentInsightHTML(child, childHistory, user.display_name?.split(' ')[0] || 'there')}</div>
     </div>
   </div>`;
 
   render(html);
+
+  // Fire notification check after render so badge dot is in the DOM
+  const parentName = user.display_name?.split(' ')[0] || 'there';
+  checkAndFireParentNotification(child, STATE._parentLastInsightAt, parentName);
 }
 
 async function linkParentAccount() {
@@ -8469,15 +8826,26 @@ async function sendPing(childUserId, childName) {
 }
 
 function parentTab(tab) {
-  ['progress','history','tips'].forEach(t => {
+  ['progress','history','feed','insights'].forEach(t => {
     const btn = document.getElementById('ptab-' + t);
     const content = document.getElementById('pcontent-' + t);
     if (btn) {
-      btn.style.borderBottomColor = t === tab ? '#4F46E5' : 'transparent';
-      btn.style.color = t === tab ? '#4F46E5' : '#64748B';
+      btn.style.borderBottomColor = t === tab ? '#7C3AED' : 'transparent';
+      btn.style.color = t === tab ? '#7C3AED' : '#64748B';
     }
     if (content) content.style.display = t === tab ? 'block' : 'none';
   });
+  // Lazy-load feed on first switch to that tab
+  if (tab === 'feed' && !STATE._feedLoaded) {
+    STATE._feedLoaded = true;
+    loadParentFeedContent(STATE.parentSavedTips || new Set(), false);
+  }
+  // Clear insight badge when user opens insights tab
+  if (tab === 'insights') {
+    STATE.parentHasNewInsight = false;
+    const dot = document.getElementById('insight-badge-dot');
+    if (dot) dot.style.display = 'none';
+  }
 }
 
 
