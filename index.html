@@ -4836,14 +4836,22 @@ async function loadUserPaidStatus() {
   if (!user?.token || !user?.id) return;
   try {
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     const profiles = res.ok ? await res.json() : [];
     if (profiles[0]) {
-      STATE.user.is_paid = profiles[0].is_paid || false;
-      STATE.user.trial_ends_at = profiles[0].trial_ends_at || null;
-      if (profiles[0].primary_subject) STATE.user.primary_subject = profiles[0].primary_subject;
+      const p = profiles[0];
+      STATE.user.is_paid = p.is_paid || false;
+      STATE.user.trial_ends_at = p.trial_ends_at || null;
+      if (p.primary_subject) STATE.user.primary_subject = p.primary_subject;
+      STATE.user.bio_cards_per_day  = p.bio_cards_per_day  || 10;
+      STATE.user.chem_cards_per_day = p.chem_cards_per_day || 10;
+      STATE.user.phys_cards_per_day = p.phys_cards_per_day || 10;
+      STATE.user.bio_frequency  = p.bio_frequency  || 'daily';
+      STATE.user.chem_frequency = p.chem_frequency || 'daily';
+      STATE.user.phys_frequency = p.phys_frequency || 'daily';
+      STATE.user.schedule_locked = p.schedule_locked || false;
       LS.set('demo_user', STATE.user);
     }
   } catch(e) {}
@@ -6955,6 +6963,9 @@ ${renderNavBar('profile')}
       <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>
     </div>
 
+    <!-- Study Schedule -->
+    ${buildScheduleCardHTML(user)}
+
     <!-- Progress Tracker -->
     <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border:1.5px solid #86EFAC;">
       <div style="font-size:15px;font-weight:800;margin-bottom:6px;color:#14532D;">📈 Long Term Progress Tracker</div>
@@ -7178,6 +7189,195 @@ function saveProfile() {
   showToast('Profile saved! ✓');
 }
 
+// ── Study Schedule helpers ────────────────────────────────────────────────────
+function buildScheduleCardHTML(user) {
+  const locked = user.schedule_locked;
+  const FREQS = [['daily','Daily'],['every_2_days','Every 2 days'],['every_3_days','Every 3 days'],['weekly','Once a week']];
+  const subjs = [
+    ['bio',  '🌿 Biology',   user.bio_cards_per_day  || 10, user.bio_frequency  || 'daily'],
+    ['chem', '⚗️ Chemistry', user.chem_cards_per_day || 10, user.chem_frequency || 'daily'],
+    ['phys', '⚡ Physics',   user.phys_cards_per_day || 10, user.phys_frequency || 'daily'],
+  ];
+  let h = '<div class="card" style="margin-bottom:16px;">';
+  h += '<div style="font-size:15px;font-weight:800;margin-bottom:6px;">📅 Study Schedule</div>';
+  h += '<div style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:12px;">Cards to practise per day for each subject</div>';
+  if (locked) h += '<div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;font-weight:800;color:#92400E;">🔒 Set by your teacher — contact them to change</div>';
+  h += '<table style="width:100%;border-collapse:collapse;"><thead><tr>';
+  h += '<th style="text-align:left;font-size:12px;font-weight:800;color:#64748B;padding:4px 0 8px;">Subject</th>';
+  h += '<th style="text-align:center;font-size:12px;font-weight:800;color:#64748B;padding:4px 6px 8px;">Cards / Day</th>';
+  h += '<th style="text-align:center;font-size:12px;font-weight:800;color:#64748B;padding:4px 0 8px;">Frequency</th>';
+  h += '</tr></thead><tbody>';
+  subjs.forEach(function(row) {
+    var key = row[0], label = row[1], cpd = row[2], freq = row[3];
+    var dis = locked ? ' disabled' : '';
+    var op  = locked ? 'opacity:.55;' : '';
+    h += '<tr style="border-top:1px solid #F1F5F9;">';
+    h += '<td style="padding:8px 0;font-size:13px;font-weight:700;color:#374151;">' + label + '</td>';
+    h += '<td style="padding:8px 4px;text-align:center;"><select id="sched-' + key + '-cpd" class="select"' + dis + ' style="font-size:13px;padding:6px 8px;' + op + '">';
+    [5,10,15,20,30].forEach(function(n) { h += '<option value="' + n + '"' + (n===+cpd?' selected':'') + '>' + n + '</option>'; });
+    h += '</select></td>';
+    h += '<td style="padding:8px 0 8px 4px;text-align:center;"><select id="sched-' + key + '-freq" class="select"' + dis + ' style="font-size:13px;padding:6px 8px;' + op + '">';
+    FREQS.forEach(function(f) { h += '<option value="' + f[0] + '"' + (f[0]===freq?' selected':'') + '>' + f[1] + '</option>'; });
+    h += '</select></td></tr>';
+  });
+  h += '</tbody></table>';
+  if (!locked) h += '<button class="btn btn-primary btn-full" style="margin-top:14px;" onclick="saveSchedule()">Save Schedule</button>';
+  h += '</div>';
+  return h;
+}
+
+async function saveSchedule() {
+  const user = STATE.user;
+  const fields = {};
+  ['bio','chem','phys'].forEach(function(k) {
+    var cpd  = document.getElementById('sched-' + k + '-cpd')?.value;
+    var freq = document.getElementById('sched-' + k + '-freq')?.value;
+    if (cpd)  fields[k + '_cards_per_day'] = +cpd;
+    if (freq) fields[k + '_frequency'] = freq;
+  });
+  Object.assign(STATE.user, fields);
+  LS.set('demo_user', STATE.user);
+  if (user?.token && user?.id) {
+    try {
+      const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+        method: 'PATCH',
+        headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(fields)
+      });
+      showToast(res.ok ? 'Schedule saved! ✅' : 'Saved locally — add schedule columns to Supabase profiles');
+    } catch(e) { showToast('Saved locally ✅'); }
+  } else {
+    showToast('Schedule saved! ✅');
+  }
+}
+
+function buildStudentScheduleHTML(s) {
+  var stuId  = s.user_id.replace(/-/g, '');
+  var locked = s.schedule_locked;
+  var FREQS  = [['daily','Daily'],['every_2_days','2 days'],['every_3_days','3 days'],['weekly','Weekly']];
+  var h = '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #F1F5F9;">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+  h += '<div style="font-size:11px;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:0.05em;">Study Schedule</div>';
+  h += '<button onclick="event.stopPropagation();toggleScheduleLock(\'' + s.user_id + '\',\'' + stuId + '\',' + locked + ')" id="schlk-' + stuId + '" style="padding:3px 9px;border-radius:6px;border:none;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;background:' + (locked ? '#FEE2E2' : '#F0FDF4') + ';color:' + (locked ? '#991B1B' : '#15803D') + ';">' + (locked ? '🔒 Locked' : '🔓 Unlocked') + '</button>';
+  h += '</div>';
+  [['bio','🌿','Bio'],['chem','⚗️','Chem'],['phys','⚡','Phys']].forEach(function(row) {
+    var k = row[0], em = row[1], label = row[2];
+    var cpd  = s[k + '_cpd']  || 10;
+    var freq = s[k + '_freq'] || 'daily';
+    h += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">';
+    h += '<span style="font-size:12px;font-weight:700;color:#374151;min-width:46px;">' + em + ' ' + label + '</span>';
+    h += '<select id="ts-' + stuId + '-' + k + '-cpd" onclick="event.stopPropagation()" style="flex:1;padding:3px 5px;border:1px solid #E2E8F0;border-radius:6px;font-size:11px;font-family:inherit;">';
+    [5,10,15,20,30].forEach(function(n) { h += '<option value="' + n + '"' + (n===+cpd?' selected':'') + '>' + n + '/d</option>'; });
+    h += '</select>';
+    h += '<select id="ts-' + stuId + '-' + k + '-freq" onclick="event.stopPropagation()" style="flex:1;padding:3px 5px;border:1px solid #E2E8F0;border-radius:6px;font-size:11px;font-family:inherit;">';
+    FREQS.forEach(function(f) { h += '<option value="' + f[0] + '"' + (f[0]===freq?' selected':'') + '>' + f[1] + '</option>'; });
+    h += '</select></div>';
+  });
+  h += '<button onclick="event.stopPropagation();saveStudentSchedule(\'' + s.user_id + '\')" style="width:100%;margin-top:6px;padding:6px 0;border-radius:7px;border:none;background:#4F46E5;color:white;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">💾 Save Schedule</button>';
+  h += '</div>';
+  return h;
+}
+
+async function saveStudentSchedule(userId) {
+  const token = STATE.user?.token;
+  const stuId = userId.replace(/-/g, '');
+  const fields = {
+    bio_cards_per_day:  +(document.getElementById('ts-'+stuId+'-bio-cpd')?.value  || 10),
+    chem_cards_per_day: +(document.getElementById('ts-'+stuId+'-chem-cpd')?.value || 10),
+    phys_cards_per_day: +(document.getElementById('ts-'+stuId+'-phys-cpd')?.value || 10),
+    bio_frequency:  document.getElementById('ts-'+stuId+'-bio-freq')?.value  || 'daily',
+    chem_frequency: document.getElementById('ts-'+stuId+'-chem-freq')?.value || 'daily',
+    phys_frequency: document.getElementById('ts-'+stuId+'-phys-freq')?.value || 'daily',
+  };
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + encodeURIComponent(userId), {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(fields)
+    });
+    const student = (STATE.teacherStudents || []).find(function(s) { return s.user_id === userId; });
+    if (student) { student.bio_cpd = fields.bio_cards_per_day; student.chem_cpd = fields.chem_cards_per_day; student.phys_cpd = fields.phys_cards_per_day; student.bio_freq = fields.bio_frequency; student.chem_freq = fields.chem_frequency; student.phys_freq = fields.phys_frequency; }
+    showToast(res.ok ? '✅ Schedule saved' : 'Saved locally — add schedule columns to Supabase profiles');
+  } catch(e) { showToast('Could not save schedule'); }
+}
+
+async function toggleScheduleLock(userId, stuId, currentlyLocked) {
+  const token = STATE.user?.token;
+  const newLocked = !currentlyLocked;
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + encodeURIComponent(userId), {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ schedule_locked: newLocked })
+    });
+    if (res.ok) {
+      const student = (STATE.teacherStudents || []).find(function(s) { return s.user_id === userId; });
+      if (student) student.schedule_locked = newLocked;
+      const btn = document.getElementById('schlk-' + stuId);
+      if (btn) {
+        btn.textContent = newLocked ? '🔒 Locked' : '🔓 Unlocked';
+        btn.style.background = newLocked ? '#FEE2E2' : '#F0FDF4';
+        btn.style.color = newLocked ? '#991B1B' : '#15803D';
+        btn.onclick = function(e) { e.stopPropagation(); toggleScheduleLock(userId, stuId, newLocked); };
+      }
+      showToast(newLocked ? '🔒 Schedule locked' : '🔓 Schedule unlocked');
+    } else { showToast('Could not update — check schedule_locked column in Supabase'); }
+  } catch(e) { showToast('Error updating lock'); }
+}
+
+function buildClassScheduleSection() {
+  var FREQS = [['daily','Daily'],['every_2_days','Every 2 days'],['every_3_days','Every 3 days'],['weekly','Once a week']];
+  var h = '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;">';
+  h += '<label style="font-size:0.75rem;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Class Study Schedule</label>';
+  h += '<p style="font-size:0.85rem;color:#64748b;margin:0 0 14px;">Apply a study schedule to every student in this class at once.</p>';
+  h += '<table style="width:100%;border-collapse:collapse;margin-bottom:12px;"><thead><tr>';
+  h += '<th style="text-align:left;font-size:11px;font-weight:800;color:#64748B;padding:4px 0 8px;">Subject</th>';
+  h += '<th style="text-align:center;font-size:11px;font-weight:800;color:#64748B;padding:4px 6px 8px;">Cards / Day</th>';
+  h += '<th style="text-align:center;font-size:11px;font-weight:800;color:#64748B;padding:4px 0 8px;">Frequency</th>';
+  h += '</tr></thead><tbody>';
+  [['bio','🌿 Biology'],['chem','⚗️ Chemistry'],['phys','⚡ Physics']].forEach(function(row) {
+    var key = row[0], label = row[1];
+    h += '<tr style="border-top:1px solid #F1F5F9;"><td style="padding:8px 0;font-size:13px;font-weight:700;color:#374151;">' + label + '</td>';
+    h += '<td style="padding:8px 4px;text-align:center;"><select id="cs-' + key + '-cpd" style="padding:5px 8px;border:1px solid #E2E8F0;border-radius:6px;font-size:13px;font-family:inherit;">';
+    [5,10,15,20,30].forEach(function(n) { h += '<option value="' + n + '"' + (n===10?' selected':'') + '>' + n + '</option>'; });
+    h += '</select></td>';
+    h += '<td style="padding:8px 0 8px 4px;text-align:center;"><select id="cs-' + key + '-freq" style="padding:5px 8px;border:1px solid #E2E8F0;border-radius:6px;font-size:13px;font-family:inherit;">';
+    FREQS.forEach(function(f) { h += '<option value="' + f[0] + '">' + f[1] + '</option>'; });
+    h += '</select></td></tr>';
+  });
+  h += '</tbody></table>';
+  h += '<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px;">';
+  h += '<input type="checkbox" id="class-sched-lock" style="width:16px;height:16px;cursor:pointer;"> Lock — students cannot change their schedule</label>';
+  h += '<button onclick="saveClassSchedule()" style="width:100%;padding:10px 0;border-radius:8px;border:none;background:#4F46E5;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Apply to All Students in Class</button>';
+  h += '</div>';
+  return h;
+}
+
+async function saveClassSchedule() {
+  const token = STATE.user?.token;
+  const selectedClass = STATE.teacherSelectedClass;
+  if (!selectedClass || selectedClass === 'all') { showToast('Select a specific class first'); return; }
+  const cls = (STATE.teacherClasses || []).find(function(c) { return c.id === selectedClass; });
+  if (!cls?.code) { showToast('Could not find class code'); return; }
+  const fields = {
+    bio_cards_per_day:  +(document.getElementById('cs-bio-cpd')?.value  || 10),
+    chem_cards_per_day: +(document.getElementById('cs-chem-cpd')?.value || 10),
+    phys_cards_per_day: +(document.getElementById('cs-phys-cpd')?.value || 10),
+    bio_frequency:  document.getElementById('cs-bio-freq')?.value  || 'daily',
+    chem_frequency: document.getElementById('cs-chem-freq')?.value || 'daily',
+    phys_frequency: document.getElementById('cs-phys-freq')?.value || 'daily',
+  };
+  const lock = document.getElementById('class-sched-lock')?.checked;
+  if (lock) fields.schedule_locked = true;
+  try {
+    const res = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?class_code=eq.' + encodeURIComponent(cls.code) + '&role=eq.student',
+      { method: 'PATCH', headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify(fields) }
+    );
+    showToast(res.ok ? '✅ Schedule applied to all students' + (lock ? ' and locked' : '') : 'Could not save — add schedule columns to Supabase profiles');
+  } catch(e) { showToast('Could not apply schedule'); }
+}
+
 function doLogout() {
   if (STATE.user && STATE.user.token) {
     fetch(CONFIG.SUPABASE_URL + '/auth/v1/logout', {
@@ -7242,7 +7442,7 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
       : 'class_code=in.(' + classCodes.map(c => encodeURIComponent(c)).join(',') + ')';
 
     const pRes = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?' + codeParam + '&role=eq.student&select=user_id,display_name,tier,streak,xp,locked_topics',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?' + codeParam + '&role=eq.student&select=user_id,display_name,tier,streak,xp,locked_topics,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked',
       { headers }
     );
     const profiles = pRes.ok ? await pRes.json() : [];
@@ -7281,7 +7481,14 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
         cards,
         accuracy,
         topics,
-        lockedTopics: Array.isArray(p.locked_topics) ? p.locked_topics : []
+        lockedTopics: Array.isArray(p.locked_topics) ? p.locked_topics : [],
+        bio_cpd:  p.bio_cards_per_day  || 10,
+        chem_cpd: p.chem_cards_per_day || 10,
+        phys_cpd: p.phys_cards_per_day || 10,
+        bio_freq:  p.bio_frequency  || 'daily',
+        chem_freq: p.chem_frequency || 'daily',
+        phys_freq: p.phys_frequency || 'daily',
+        schedule_locked: p.schedule_locked || false,
       };
     });
   } catch(e) {
@@ -7443,6 +7650,7 @@ async function showTeacherDashboard(selectedClass) {
                 </div>`;
               }).join('')}
             </div>` : ''}
+            ${buildStudentScheduleHTML(s)}
           </div>
         </div>`;
       }).join('')}
@@ -7761,6 +7969,7 @@ function buildSettingsHTML(code, aiAttr, currentName) {
     + '<p style="margin:4px 0 0;font-size:0.78rem;color:#64748b;">Students cannot self-rate if this is on</p></div>'
     + buildAIToggle(aiAttr)
     + '</div></div>'
+    + buildClassScheduleSection()
     + '<div style="background:#fff5f5;border:1px solid #fecaca;border-radius:12px;padding:20px;">'
     + '<label style="font-size:0.75rem;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Danger Zone</label>'
     + '<p style="font-size:0.85rem;color:#64748b;margin:0 0 12px;">Deleting a class cannot be undone.</p>'
