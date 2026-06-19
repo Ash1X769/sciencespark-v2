@@ -8872,11 +8872,13 @@ async function showParentPortal() {
     }
   } catch(e) {}
 
+  const parentFirstName = (user.display_name || '').split(' ')[0] || 'there';
+
   const html = `<div style="min-height:100vh;background:#F8FAFC;">
     <div style="background:linear-gradient(135deg,#4F46E5,#7C3AED);padding:28px 24px 20px;color:white;position:relative;">
       <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;opacity:0.8;margin-bottom:4px;">PARENT PORTAL</div>
-      <div style="font-size:22px;font-weight:900;">${child.name}'s Progress</div>
-      <div style="font-size:13px;opacity:0.8;font-weight:600;margin-top:4px;">Read-only view</div>
+      <div style="font-size:24px;font-weight:900;">Welcome back, ${parentFirstName} 👋</div>
+      <div style="font-size:13px;opacity:0.85;font-weight:600;margin-top:4px;">Viewing ${child.name}'s progress</div>
       <div style="position:absolute;top:20px;right:20px;display:flex;gap:8px;align-items:center;">
         <button onclick="showAbout()" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">ℹ️ About</button>
         <button onclick="doLogout()" style="background:rgba(255,255,255,0.2);color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
@@ -8905,15 +8907,14 @@ async function showParentPortal() {
         <div style="text-align:center;padding:40px 20px;color:#7B5E45;"><div style="font-size:32px;margin-bottom:12px;">📰</div><div style="font-size:15px;font-weight:700;">Loading insights...</div></div>
       </div>
       <div id="pcontent-insights" style="display:none;">${buildParentInsightHTML(child, childHistory, user.display_name?.split(' ')[0] || 'there', insightTip)}</div>
-      <div id="pcontent-profile" style="display:none;padding:0 20px;">${buildParentProfileTabHTML(user, allChildren)}</div>
+      <div id="pcontent-profile" style="display:none;padding:0 20px;">${buildParentProfileTabHTML(user, allChildren, linkedStudentId)}</div>
     </div>
   </div>`;
 
   render(html);
 
   // Fire notification check after render so badge dot is in the DOM
-  const parentName = user.display_name?.split(' ')[0] || 'there';
-  checkAndFireParentNotification(child, STATE._parentLastInsightAt, parentName, insightTip);
+  checkAndFireParentNotification(child, STATE._parentLastInsightAt, parentFirstName, insightTip);
 }
 
 // ── Shared helper: call link RPC, return {userId} or {error:'not_found'|'limit'|'network'} ──
@@ -9006,7 +9007,7 @@ async function sendPing(childUserId, childName) {
 }
 
 // ── Parent portal: Profile tab content ────────────────────────────────────────
-function buildParentProfileTabHTML(user, children) {
+function buildParentProfileTabHTML(user, children, activeChildId) {
   const cardStyle = 'background:white;border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid #E2E8F0;box-shadow:0 1px 6px rgba(0,0,0,.06);';
   const labelStyle = 'font-size:11px;font-weight:800;color:#64748B;letter-spacing:.08em;margin-bottom:12px;';
   let h = '<div style="padding-top:16px;">';
@@ -9027,6 +9028,7 @@ function buildParentProfileTabHTML(user, children) {
   } else {
     children.forEach(function(child, i) {
       if (i > 0) h += '<div style="border-top:1px solid #F1F5F9;margin:14px 0;"></div>';
+      const isCurrent = child.id === activeChildId;
       h += '<div style="display:flex;align-items:flex-start;gap:12px;">';
       h += '<div style="flex:1;min-width:0;">';
       h += '<div style="font-size:15px;font-weight:800;color:#0F172A;">' + (child.name || 'Student') + '</div>';
@@ -9042,7 +9044,12 @@ function buildParentProfileTabHTML(user, children) {
           + '</div>';
       }
       h += '</div>';
-      h += '<button onclick="viewChildProgress(\'' + child.id + '\')" style="padding:8px 14px;border-radius:8px;border:none;background:#4F46E5;color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;flex-shrink:0;">View →</button>';
+      // Button: greyed "Currently Viewing ✓" if active, else "View Profile →"
+      if (isCurrent) {
+        h += '<div style="padding:8px 12px;border-radius:8px;background:#F1F5F9;font-size:11px;font-weight:800;color:#94A3B8;flex-shrink:0;white-space:nowrap;">Viewing ✓</div>';
+      } else {
+        h += '<button onclick="viewChildProgress(\'' + child.id + '\')" style="padding:8px 14px;border-radius:8px;border:none;background:#4F46E5;color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;flex-shrink:0;white-space:nowrap;">View Profile →</button>';
+      }
       h += '</div>';
     });
   }
