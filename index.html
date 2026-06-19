@@ -8910,28 +8910,44 @@ async function showParentPortal() {
   checkAndFireParentNotification(child, STATE._parentLastInsightAt, parentName, insightTip);
 }
 
+// ── Shared helper: call link RPC, return {userId} or {error:'not_found'|'limit'|'network'} ──
+async function callLinkParentRPC(code) {
+  const token = STATE.user?.token;
+  if (!token) return { error: 'network' };
+  const headers = { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/rpc/link_parent_to_student',
+      { method: 'POST', headers, body: JSON.stringify({ p_code: code }) });
+    if (!res.ok) {
+      const err = await res.json().catch(function() { return {}; });
+      const msg = (err.message || err.hint || '').toUpperCase();
+      return msg.includes('PARENT_LIMIT_REACHED') ? { error: 'limit' } : { error: 'network' };
+    }
+    const userId = await res.json().catch(function() { return null; });
+    return userId ? { userId } : { error: 'not_found' };
+  } catch(e) {
+    return { error: 'network' };
+  }
+}
+
+function handleLinkError(error) {
+  if (error === 'limit')     showToast('This code has already been used. Please contact your child to check their parent code.');
+  else if (error === 'not_found') showToast('Code not found — check with your child');
+  else                       showToast('Could not link — check your connection');
+}
+
 async function linkParentAccount() {
   const code = (document.getElementById('parent-link-input')?.value || '').trim().toUpperCase();
   if (!code) { showToast('Enter your child\'s parent code'); return; }
-  const token = STATE.user?.token;
-  const headers = { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
   showToast('Linking...');
-  try {
-    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/rpc/link_parent_to_student', {
-      method: 'POST', headers, body: JSON.stringify({ p_code: code })
-    });
-    const linkedId = res.ok ? await res.json().catch(() => null) : null;
-    if (linkedId) {
-      // linkedId is the student's user_id; RPC updated the DB — just refresh portal
-      STATE.user.linked_student_id = linkedId;
-      STATE.parentActiveChildId = linkedId;
-      showToast('Account linked! ✅');
-      showParentPortal();
-    } else {
-      showToast('Code not found — check with your child');
-    }
-  } catch(e) {
-    showToast('Could not link — check connection');
+  const result = await callLinkParentRPC(code);
+  if (result.userId) {
+    STATE.user.linked_student_id = result.userId;
+    STATE.parentActiveChildId = result.userId;
+    showToast('Account linked! ✅');
+    showParentPortal();
+  } else {
+    handleLinkError(result.error);
   }
 }
 
@@ -9039,24 +9055,14 @@ function viewChildProgress(childId) {
 async function addLinkedChild() {
   const code = (document.getElementById('add-child-code')?.value || '').trim().toUpperCase();
   if (!code) { showToast('Enter a parent code'); return; }
-  const token = STATE.user?.token;
-  if (!token) { showToast('Not logged in'); return; }
-  const headers = { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
   showToast('Linking child...');
-  try {
-    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/rpc/link_parent_to_student',
-      { method: 'POST', headers, body: JSON.stringify({ p_code: code }) });
-    const linkedId = res.ok ? await res.json().catch(function() { return null; }) : null;
-    if (linkedId) {
-      // RPC updated linked_student_id + linked_student_ids on the server; just refresh portal
-      STATE.parentActiveChildId = linkedId;
-      showToast('Child linked! ✅');
-      showParentPortal();
-    } else {
-      showToast('Code not found — check with your child');
-    }
-  } catch(e) {
-    showToast('Could not link — check your connection');
+  const result = await callLinkParentRPC(code);
+  if (result.userId) {
+    STATE.parentActiveChildId = result.userId;
+    showToast('Child linked! ✅');
+    showParentPortal();
+  } else {
+    handleLinkError(result.error);
   }
 }
 
