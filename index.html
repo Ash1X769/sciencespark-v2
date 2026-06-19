@@ -1785,6 +1785,32 @@ textarea.input { resize: vertical; min-height: 100px; }
   to   { transform:translateY(0);    opacity:1; }
 }
 
+/* ── Long Term Progress Tracker ─────────────────────────────────────────────── */
+.pt-wrap { padding-bottom: 100px; }
+.pt-legend { padding: 10px 16px; font-size: 12px; font-weight: 700; color: #64748B; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pt-pip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+.pt-entry { }
+.pt-row { display: flex; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; user-select: none; transition: background .1s; border-bottom: 1px solid #E2E8F0; }
+.pt-row:active { opacity: .8; }
+.pt-chevron { font-size: 10px; color: #94A3B8; flex-shrink: 0; transition: transform .18s; display: inline-block; }
+.pt-entry.pt-open > .pt-row .pt-chevron { transform: rotate(90deg); }
+.pt-entry > .pt-children { display: none; }
+.pt-entry.pt-open > .pt-children { display: block; }
+/* Level 1 — Subject */
+.pt-subject-row { background: #EFF6FF; font-size: 15px; font-weight: 800; color: #1E3A5F; border-top: 2px solid #BFDBFE; }
+/* Level 2 — Topic */
+.pt-topic-row { background: #F8FAFC; font-size: 14px; font-weight: 700; color: #334155; padding-left: 32px !important; }
+/* Level 3 — Card */
+.pt-card-item { font-size: 13px; font-weight: 600; line-height: 1.45; padding: 8px 16px 8px 48px; border-bottom: 1px solid #F1F5F9; color: #1E293B; background: #FFFFFF; }
+.pt-card-item.pt-mem  { background: #64D870; color: #14532D; }
+.pt-card-item.pt-mas  { background: #007D0C; color: #FFFFFF; }
+/* Stat badges */
+.pt-counts { margin-left: auto; display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.pt-badge { font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
+.pt-badge-m { background: #DCFCE7; color: #15803D; }
+.pt-badge-s { background: #14532D; color: #FFFFFF; }
+.pt-badge-t { font-size: 11px; font-weight: 600; color: #94A3B8; }
+
 </style>
 </head>
 <body>
@@ -6908,6 +6934,13 @@ ${renderNavBar('profile')}
       <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>
     </div>
 
+    <!-- Progress Tracker -->
+    <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border:1.5px solid #86EFAC;">
+      <div style="font-size:15px;font-weight:800;margin-bottom:6px;color:#14532D;">📈 Long Term Progress Tracker</div>
+      <div style="font-size:13px;color:#166534;font-weight:600;margin-bottom:12px;">See every card colour-coded by how well you know it — across all topics</div>
+      <button onclick="showProgressTracker()" class="btn btn-primary btn-full" style="background:linear-gradient(135deg,#16A34A,#15803D);">Open Progress Tracker →</button>
+    </div>
+
     <!-- Badges -->
     <div class="card" style="margin-bottom:16px;">
       <div style="font-size:15px;font-weight:800;margin-bottom:16px;">🏅 Badges</div>
@@ -6928,6 +6961,149 @@ ${renderNavBar('profile')}
   render(html);
 }
 
+
+// ── Long Term Progress Tracker ────────────────────────────────────────────────
+function ptToggle(id) {
+  document.getElementById(id)?.classList.toggle('pt-open');
+}
+
+async function showProgressTracker() {
+  STATE.screen = 'progress-tracker';
+
+  // Show loading immediately
+  render(`
+    ${renderNavBar('profile')}
+    <div class="screen" id="screen-progress-tracker">
+      <div class="top-bar">
+        <button class="btn btn-ghost btn-sm" onclick="showProfile()">← Back</button>
+        <div class="top-bar-title">Long Term Progress Tracker</div>
+        <div></div>
+      </div>
+      <div style="text-align:center;padding:60px 20px;color:#64748B;">
+        <div style="font-size:36px;margin-bottom:12px;">⏳</div>
+        <div style="font-size:15px;font-weight:700;">Loading your progress…</div>
+      </div>
+    </div>
+  `);
+
+  const user = STATE.user;
+
+  // ── Fetch easy_count from Supabase, fall back to localStorage ──
+  let progressMap = {}; // card_id → easy_count (integer)
+
+  if (user?.id && user?.token) {
+    try {
+      const rows = await SB.select('card_progress', 'user_id=eq.' + user.id, user.token);
+      if (Array.isArray(rows) && rows.length > 0) {
+        rows.forEach(r => { progressMap[r.card_id] = typeof r.easy_count === 'number' ? r.easy_count : 0; });
+      }
+    } catch(e) { /* fall through to localStorage */ }
+  }
+  if (Object.keys(progressMap).length === 0) {
+    const local = LS.get('card_progress') || {};
+    Object.entries(local).forEach(([id, p]) => { progressMap[id] = p.easyCount || 0; });
+  }
+
+  // ── Cards for this user's tier ──
+  const allCards = getCardsForUser(user);
+
+  // ── Build hierarchy: subject → topic → cards ──
+  const SUBJ_ORDER  = ['Biology','Chemistry','Physics'];
+  const SUBJ_EMOJI  = { Biology:'🌿', Chemistry:'⚗️', Physics:'⚡' };
+
+  const hier = {};
+  SUBJ_ORDER.forEach(s => { hier[s] = { topics: {}, mem: 0, mas: 0, total: 0 }; });
+
+  allCards.forEach(card => {
+    const s = card.subject;
+    if (!hier[s]) return;
+    const t = card.topic;
+    if (!hier[s].topics[t]) {
+      hier[s].topics[t] = { name: card.topic_name || t, cards: [], mem: 0, mas: 0 };
+    }
+    const ec  = progressMap[card.id] || 0;
+    const mem = ec >= 1;
+    const mas = ec >= 3;
+    const q   = (card.q || '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1').trim();
+    hier[s].topics[t].cards.push({ q, mem, mas });
+    if (mem) { hier[s].topics[t].mem++; hier[s].mem++; }
+    if (mas) { hier[s].topics[t].mas++; hier[s].mas++; }
+    hier[s].total++;
+  });
+
+  const topicSort = (a, b) => {
+    const n = k => { const m = k.match(/(\d+)$/); return m ? +m[1] : 0; };
+    return n(a) - n(b);
+  };
+
+  // ── Render ──
+  let h = `
+    ${renderNavBar('profile')}
+    <div class="screen" id="screen-progress-tracker">
+      <div class="top-bar">
+        <button class="btn btn-ghost btn-sm" onclick="showProfile()">← Back</button>
+        <div class="top-bar-title">Long Term Progress Tracker</div>
+        <div></div>
+      </div>
+      <div class="pt-wrap">
+        <div class="pt-legend">
+          <span>Tap to expand</span>
+          <span class="pt-pip" style="background:#64D870;color:#14532D;">✓ Memorised (easy ≥1)</span>
+          <span class="pt-pip" style="background:#007D0C;color:#fff;">★ Mastered (easy ≥3)</span>
+          <span class="pt-pip" style="background:#F1F5F9;color:#475569;">○ Not yet studied</span>
+        </div>
+  `;
+
+  SUBJ_ORDER.forEach((subj, si) => {
+    const sd = hier[subj];
+    if (!sd || sd.total === 0) return;
+    const eid = 'pt-s' + si;
+    h += `
+      <div class="pt-entry" id="${eid}">
+        <div class="pt-row pt-subject-row" onclick="ptToggle('${eid}')">
+          <span class="pt-chevron">▶</span>
+          <span>${SUBJ_EMOJI[subj]} ${subj}</span>
+          <div class="pt-counts">
+            <span class="pt-badge pt-badge-m">✓ ${sd.mem} Memorised</span>
+            <span class="pt-badge pt-badge-s">★ ${sd.mas} Mastered</span>
+            <span class="pt-badge-t">${sd.total}</span>
+          </div>
+        </div>
+        <div class="pt-children">
+    `;
+
+    Object.keys(sd.topics).sort(topicSort).forEach((topicCode, ti) => {
+      const td = sd.topics[topicCode];
+      const teid = 'pt-s' + si + 't' + ti;
+      h += `
+        <div class="pt-entry" id="${teid}">
+          <div class="pt-row pt-topic-row" onclick="ptToggle('${teid}')">
+            <span class="pt-chevron">▶</span>
+            <span>${topicCode} — ${td.name}</span>
+            <div class="pt-counts">
+              <span class="pt-badge pt-badge-m">✓ ${td.mem}</span>
+              <span class="pt-badge pt-badge-s">★ ${td.mas}</span>
+              <span class="pt-badge-t">/ ${td.cards.length}</span>
+            </div>
+          </div>
+          <div class="pt-children">
+      `;
+
+      td.cards.forEach(c => {
+        const cls = c.mas ? 'pt-mas' : c.mem ? 'pt-mem' : '';
+        h += `<div class="pt-card-item ${cls}">${c.q}</div>`;
+      });
+
+      h += `</div></div>`; // close topic children + topic entry
+    });
+
+    h += `</div></div>`; // close subject children + subject entry
+  });
+
+  h += `</div></div>`; // close pt-wrap + screen
+
+  render(h);
+}
 
 async function joinClass() {
   const code = (document.getElementById('join-class-input')?.value || '').trim().toUpperCase();
