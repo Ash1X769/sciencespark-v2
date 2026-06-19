@@ -1810,6 +1810,12 @@ textarea.input { resize: vertical; min-height: 100px; }
 .pt-badge-m { background: #DCFCE7; color: #15803D; }
 .pt-badge-s { background: #14532D; color: #FFFFFF; }
 .pt-badge-t { font-size: 11px; font-weight: 600; color: #94A3B8; }
+/* ── Exam board selector ───────────────────────────────────────────────────── */
+.board-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.board-opt { padding: 10px 12px; border-radius: 10px; border: 1.5px solid #E2E8F0; background: white; font-size: 13px; font-weight: 800; cursor: pointer; text-align: center; color: #0F172A; transition: border-color .15s, background .15s; }
+.board-opt.active { border-color: #4F46E5; background: #EEF2FF; color: #4F46E5; }
+.board-opt.coming { opacity: 0.42; cursor: not-allowed; pointer-events: none; color: #64748B; }
+.coming-soon-tag { display: block; font-size: 10px; font-weight: 700; color: #94A3B8; margin-top: 2px; letter-spacing: 0.03em; }
 /* ── Parent Insight + Feed ─────────────────────────────────────────────────── */
 .parent-insight-bg { background: #F5F0E8; min-height: 100vh; }
 .insight-tip-card { background: #FDF6EC; border: 1.5px solid #E8D5B0; border-radius: 20px; padding: 24px 20px; }
@@ -4552,12 +4558,13 @@ function showAuth() {
         </div>
         <div class="form-group">
           <label class="label">Exam Board</label>
-          <select id="su-board" class="select">
-            <option value="AQA" selected>AQA</option>
-            <option value="iGCSE">iGCSE (Coming Soon)</option>
-            <option value="OCR">OCR (Coming Soon)</option>
-            <option value="Edexcel">Edexcel (Coming Soon)</option>
-          </select>
+          <input type="hidden" id="su-board" value="AQA">
+          <div class="board-grid">
+            <div class="board-opt active" data-bgrp="su-board" data-bval="AQA" onclick="selectBoard('su-board','AQA')">AQA</div>
+            <div class="board-opt coming" data-bgrp="su-board" data-bval="iGCSE">iGCSE<span class="coming-soon-tag">Coming soon</span></div>
+            <div class="board-opt coming" data-bgrp="su-board" data-bval="OCR">OCR<span class="coming-soon-tag">Coming soon</span></div>
+            <div class="board-opt coming" data-bgrp="su-board" data-bval="Edexcel">Edexcel<span class="coming-soon-tag">Coming soon</span></div>
+          </div>
         </div>
         <div class="form-group">
           <label class="label">Exam Tier</label>
@@ -6963,12 +6970,13 @@ ${renderNavBar('profile')}
       </div>
       <div class="form-group">
         <label class="label">Exam Board</label>
-        <select id="edit-board" class="select">
-          <option value="AQA" ${user.exam_board==='AQA'?'selected':''}>AQA</option>
-          <option value="iGCSE" ${user.exam_board==='iGCSE'?'selected':''}>iGCSE</option>
-          <option value="OCR" ${user.exam_board==='OCR'?'selected':''}>OCR</option>
-          <option value="Edexcel" ${user.exam_board==='Edexcel'?'selected':''}>Edexcel</option>
-        </select>
+        <input type="hidden" id="edit-board" value="AQA">
+        <div class="board-grid">
+          <div class="board-opt active" data-bgrp="edit-board" data-bval="AQA" onclick="selectBoard('edit-board','AQA')">AQA</div>
+          <div class="board-opt coming" data-bgrp="edit-board" data-bval="iGCSE">iGCSE<span class="coming-soon-tag">Coming soon</span></div>
+          <div class="board-opt coming" data-bgrp="edit-board" data-bval="OCR">OCR<span class="coming-soon-tag">Coming soon</span></div>
+          <div class="board-opt coming" data-bgrp="edit-board" data-bval="Edexcel">Edexcel<span class="coming-soon-tag">Coming soon</span></div>
+        </div>
       </div>
       <div class="form-group">
         <label class="label">Exam Tier</label>
@@ -7403,6 +7411,14 @@ async function saveClassSchedule() {
     );
     showToast(res.ok ? '✅ Schedule applied to all students' + (lock ? ' and locked' : '') : 'Could not save — add schedule columns to Supabase profiles');
   } catch(e) { showToast('Could not apply schedule'); }
+}
+
+function selectBoard(inputId, value) {
+  var inp = document.getElementById(inputId);
+  if (inp) inp.value = value;
+  document.querySelectorAll('[data-bgrp="' + inputId + '"]').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.bval === value);
+  });
 }
 
 function showAbout() {
