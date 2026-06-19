@@ -5407,6 +5407,8 @@ function renderNavBar(active) {
         <div class="profile-dropdown" id="profile-dropdown">
           <button class="pd-item" onclick="closeProfileDropdown();showProfile()">👤 My Profile</button>
           <div class="pd-sep"></div>
+          <button class="pd-item" onclick="closeProfileDropdown();showAbout()">ℹ️ About ScienceSpark</button>
+          <div class="pd-sep"></div>
           <button class="pd-item" onclick="closeProfileDropdown();doLogout()">🚪 Sign Out</button>
         </div>
       </div>
@@ -7403,6 +7405,55 @@ async function saveClassSchedule() {
   } catch(e) { showToast('Could not apply schedule'); }
 }
 
+function showAbout() {
+  const prevScreen = STATE.screen || 'home';
+  const backFn = prevScreen === 'parent' ? 'showParentPortal()' : (prevScreen === 'teacher' ? 'showTeacherDashboard()' : 'showProfile()');
+  const html = `
+<div style="min-height:100vh;background:#F8FAFC;">
+  <div style="background:linear-gradient(135deg,#4F46E5,#7C3AED);padding:28px 24px 22px;color:white;position:relative;">
+    <button onclick="${backFn}" style="background:rgba(255,255,255,0.2);color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;position:absolute;top:20px;left:20px;">← Back</button>
+    <div style="text-align:center;padding-top:8px;">
+      <div style="font-size:36px;margin-bottom:10px;">⚡</div>
+      <div style="font-size:22px;font-weight:900;letter-spacing:-0.3px;">ScienceSpark</div>
+      <div style="font-size:13px;opacity:0.8;font-weight:600;margin-top:4px;">by Step Ahead Science</div>
+    </div>
+  </div>
+
+  <div style="padding:28px 24px;max-width:540px;margin:0 auto;">
+
+    <div style="background:white;border-radius:16px;padding:24px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
+      <div style="font-size:13px;color:#0F172A;font-weight:600;line-height:1.7;">
+        ScienceSpark uses cognitive science — spaced repetition and active recall — to help students genuinely master GCSE science.
+      </div>
+    </div>
+
+    <div style="background:white;border-radius:16px;padding:24px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
+      <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:14px;">LEGAL</div>
+      <div style="font-size:13px;color:#0F172A;font-weight:600;margin-bottom:12px;">© 2025 Step Ahead Science Ltd. All rights reserved.</div>
+      <div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:10px;">All content and methodology copyright protected.</div>
+      <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;">
+        <a href="mailto:hello@stepaheadscience.co.uk?subject=Privacy%20Policy" style="font-size:13px;font-weight:700;color:#4F46E5;text-decoration:none;">Privacy Policy</a>
+        <span style="color:#E2E8F0;">|</span>
+        <a href="mailto:hello@stepaheadscience.co.uk?subject=Terms%20of%20Use" style="font-size:13px;font-weight:700;color:#4F46E5;text-decoration:none;">Terms of Use</a>
+      </div>
+    </div>
+
+    <div style="background:white;border-radius:16px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
+      <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:14px;">CONTACT</div>
+      <a href="mailto:hello@stepaheadscience.co.uk" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+        <div style="width:36px;height:36px;background:#EEF2FF;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">✉️</div>
+        <div>
+          <div style="font-size:13px;font-weight:800;color:#0F172A;">Email us</div>
+          <div style="font-size:12px;color:#4F46E5;font-weight:700;">hello@stepaheadscience.co.uk</div>
+        </div>
+      </a>
+    </div>
+
+  </div>
+</div>`;
+  render(html);
+}
+
 function doLogout() {
   if (STATE.user && STATE.user.token) {
     fetch(CONFIG.SUPABASE_URL + '/auth/v1/logout', {
@@ -8769,7 +8820,10 @@ async function showParentPortal() {
       <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;opacity:0.8;margin-bottom:4px;">PARENT PORTAL</div>
       <div style="font-size:22px;font-weight:900;">${child.name}'s Progress</div>
       <div style="font-size:13px;opacity:0.8;font-weight:600;margin-top:4px;">Read-only view</div>
-      <button onclick="doLogout()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
+      <div style="position:absolute;top:20px;right:20px;display:flex;gap:8px;align-items:center;">
+        <button onclick="showAbout()" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">ℹ️ About</button>
+        <button onclick="doLogout()" style="background:rgba(255,255,255,0.2);color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
+      </div>
     </div>
 
     ${studyBannerHTML}
