@@ -4981,6 +4981,7 @@ function urlBase64ToUint8Array(base64String) {
 function showStudyHistory() {
   STATE.screen = 'history'; saveScreen('history');
   const history = LS.get('card_history') || [];
+  const progress = LS.get('card_progress') || {};
 
   const gradeColor = { again:'#DC2626', hard:'#D97706', good:'#16A34A', easy:'#4F46E5', 0:'#DC2626', 1:'#D97706', 2:'#16A34A', 3:'#4F46E5' };
   const gradeLabel = { again:'Again', hard:'Hard', good:'Good', easy:'Easy', 0:'Again', 1:'Hard', 2:'Good', 3:'Easy' };
@@ -5032,10 +5033,20 @@ function showStudyHistory() {
         const em = gradeEmoji[grade] || '📚';
         const date = h.date ? new Date(h.date).toLocaleDateString('en-GB', {day:'numeric',month:'short'}) : '';
         const subjectEmoji = h.subject === 'Biology' ? '🌿' : h.subject === 'Chemistry' ? '⚗️' : '⚡';
+        const qText = (h.question || 'Card').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*]+)\*/g,'$1');
+        const prog = progress[h.cardId];
+        let dueStr = '';
+        if (prog?.nextReview) {
+          const due = new Date(prog.nextReview);
+          dueStr = due <= new Date()
+            ? 'Due now'
+            : 'Next due: ' + due.toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+        }
         return `<div style="background:white;border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
           <div style="flex:1;min-width:0;margin-right:12px;">
-            <div style="font-size:14px;font-weight:800;color:#0F172A;margin-bottom:4px;">${h.question || 'Card'}</div>
+            <div style="font-size:14px;font-weight:800;color:#0F172A;margin-bottom:4px;">${qText}</div>
             <div style="font-size:12px;color:#64748B;font-weight:600;">${subjectEmoji} ${h.subject || ''} &nbsp;·&nbsp; ${h.topic || ''} &nbsp;·&nbsp; Last seen ${date}</div>
+            ${dueStr ? `<div style="font-size:11px;font-weight:700;color:#4F46E5;margin-top:3px;">📅 ${dueStr}</div>` : ''}
           </div>
           <div style="text-align:right;flex-shrink:0;">
             <div style="font-size:13px;font-weight:900;color:${col};">${em} ${lbl}</div>
@@ -6795,12 +6806,22 @@ ${renderNavBar('history')}
           const gradeMap = { 0: 'again', 1: 'hard', 2: 'good', 3: 'easy' };
           const grade = gradeMap[h.grade] || 'good';
           const date = new Date(h.date).toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+          const q = (h.question || '—').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*]+)\*/g,'$1');
+          const prog = progress[h.cardId];
+          let dueLine = '';
+          if (prog?.nextReview) {
+            const due = new Date(prog.nextReview);
+            dueLine = due <= new Date()
+              ? 'Due now'
+              : 'Next due: ' + due.toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+          }
           return `
             <div class="history-item">
               <div class="history-grade history-grade-${grade}">${grade.substring(0,1).toUpperCase()}</div>
               <div style="flex:1;min-width:0;">
-                <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.question || '—'}</div>
+                <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${q}</div>
                 <div style="font-size:11px;color:var(--text-secondary);font-weight:600;margin-top:2px;">${h.subject || ''} · ${h.topic || ''} · ${date}</div>
+                ${dueLine ? `<div style="font-size:11px;font-weight:700;color:#4F46E5;margin-top:2px;">📅 ${dueLine}</div>` : ''}
               </div>
             </div>`;
         }).join('')}
