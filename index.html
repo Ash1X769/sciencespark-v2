@@ -8605,7 +8605,7 @@ async function showParentPortal() {
 
   if (linkedStudentId) {
     try {
-      const cRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?id=eq.' + linkedStudentId + '&select=user_id,display_name,streak,xp,level,tier,year_group,exam_board,parent_code', { headers });
+      const cRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + linkedStudentId + '&select=user_id,display_name,streak,xp,level,tier,year_group,exam_board,parent_code', { headers });
       const cProfiles = cRes.ok ? await cRes.json() : [];
       if (cProfiles[0]) {
         const cp = cProfiles[0];
@@ -8836,15 +8836,15 @@ async function showParentPortal() {
     try {
       const idsParam = STATE.parentAllLinkedIds.slice(0, 10).join(',');
       const acRes = await fetch(
-        CONFIG.SUPABASE_URL + '/rest/v1/profiles?id=in.(' + encodeURIComponent(idsParam) + ')&select=id,display_name,parent_code',
+        CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=in.(' + encodeURIComponent(idsParam) + ')&select=user_id,display_name,parent_code',
         { headers }
       );
       if (acRes.ok) {
         const acRows = await acRes.json();
-        // Preserve primary-first ordering
-        allChildren = STATE.parentAllLinkedIds.map(function(id) {
-          const r = acRows.find(function(x) { return x.id === id; });
-          return r ? { id: r.id, name: r.display_name || 'Student', parentCode: r.parent_code || '' } : null;
+        // Preserve primary-first ordering; ids are user_ids
+        allChildren = STATE.parentAllLinkedIds.map(function(uid) {
+          const r = acRows.find(function(x) { return x.user_id === uid; });
+          return r ? { id: r.user_id, name: r.display_name || 'Student', parentCode: r.parent_code || '' } : null;
         }).filter(Boolean);
       }
     } catch(e) {}
@@ -8922,9 +8922,10 @@ async function linkParentAccount() {
     });
     const linkedId = res.ok ? await res.json().catch(() => null) : null;
     if (linkedId) {
+      // linkedId is the student's user_id; RPC updated the DB — just refresh portal
       STATE.user.linked_student_id = linkedId;
-      STATE.user.linked_parent_code = code;
-      showToast('Account linked!');
+      STATE.parentActiveChildId = linkedId;
+      showToast('Account linked! ✅');
       showParentPortal();
     } else {
       showToast('Code not found — check with your child');
@@ -9047,15 +9048,7 @@ async function addLinkedChild() {
       { method: 'POST', headers, body: JSON.stringify({ p_code: code }) });
     const linkedId = res.ok ? await res.json().catch(function() { return null; }) : null;
     if (linkedId) {
-      const all = STATE.parentAllLinkedIds || [];
-      const newAll = all.includes(linkedId) ? all : [...all, linkedId];
-      STATE.parentAllLinkedIds = newAll;
-      try {
-        await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + STATE.user.id, {
-          method: 'PATCH', headers,
-          body: JSON.stringify({ linked_student_id: newAll[0], linked_student_ids: newAll })
-        });
-      } catch(e2) {}
+      // RPC updated linked_student_id + linked_student_ids on the server; just refresh portal
       STATE.parentActiveChildId = linkedId;
       showToast('Child linked! ✅');
       showParentPortal();
