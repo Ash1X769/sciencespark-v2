@@ -8850,9 +8850,11 @@ async function showParentPortal() {
   let allChildren = [];
   if (STATE.parentAllLinkedIds && STATE.parentAllLinkedIds.length > 0) {
     try {
+      // UUIDs contain only hex+hyphens — safe to put directly in URL without encoding
+      // encodeURIComponent would turn commas into %2C, breaking PostgREST in.() syntax
       const idsParam = STATE.parentAllLinkedIds.slice(0, 10).join(',');
       const acRes = await fetch(
-        CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=in.(' + encodeURIComponent(idsParam) + ')&select=user_id,display_name,parent_code',
+        CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=in.(' + idsParam + ')&select=user_id,display_name,parent_code',
         { headers }
       );
       if (acRes.ok) {
