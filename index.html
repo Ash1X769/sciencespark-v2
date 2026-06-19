@@ -8569,25 +8569,25 @@ async function showParentPortal() {
     </div>
   </div>`);
 
-  // ── 1. Get parent's linked children from their profile ──
-  let linkedStudentId = user.linked_student_id || null;
+  // ── 1. Get parent's linked children — linked_student_ids array is source of truth ──
+  let linkedStudentId = null;
   try {
-    const ppUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=linked_student_id,linked_student_ids,linked_parent_code,parent_last_insight_at';
+    const ppUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=linked_student_ids,linked_student_id,linked_parent_code,parent_last_insight_at';
     console.log('[ParentPortal] fetching parent profile:', ppUrl);
     const ppRes = await fetch(ppUrl, { headers });
     const pp = ppRes.ok ? await ppRes.json() : [];
     console.log('[ParentPortal] parent profile response:', JSON.stringify(pp));
-    const primaryId = pp[0]?.linked_student_id || null;
-    const extraIds  = Array.isArray(pp[0]?.linked_student_ids) ? pp[0].linked_student_ids : [];
-    console.log('[ParentPortal] primaryId:', primaryId, 'extraIds:', extraIds);
-    // Build deduplicated list: all known child user_ids
-    const allIds = [];
-    if (primaryId) allIds.push(primaryId);
-    extraIds.forEach(function(id) { if (!allIds.includes(id)) allIds.push(id); });
-    STATE.parentAllLinkedIds = allIds;
-    // Use whichever child the parent last chose, fall back to first
-    linkedStudentId = STATE.parentActiveChildId || allIds[0] || null;
-    console.log('[ParentPortal] linkedStudentId resolved to:', linkedStudentId);
+
+    // Prefer linked_student_ids array; fall back to linked_student_id (legacy single value)
+    const idsArray = (Array.isArray(pp[0]?.linked_student_ids) && pp[0].linked_student_ids.length > 0)
+      ? pp[0].linked_student_ids
+      : (pp[0]?.linked_student_id ? [pp[0].linked_student_id] : []);
+
+    STATE.parentAllLinkedIds = idsArray;
+    // First item in array is primary child; respect parent's last explicit choice
+    linkedStudentId = STATE.parentActiveChildId || idsArray[0] || null;
+    console.log('[ParentPortal] allLinkedIds:', idsArray, '→ active child:', linkedStudentId);
+
     if (!user.linked_parent_code && pp[0]?.linked_parent_code) user.linked_parent_code = pp[0].linked_parent_code;
     STATE._parentLastInsightAt = pp[0]?.parent_last_insight_at || null;
   } catch(e) { console.error('[ParentPortal] parent profile fetch error:', e); }
@@ -8854,15 +8854,17 @@ async function showParentPortal() {
       // encodeURIComponent would turn commas into %2C, breaking PostgREST in.() syntax
       const idsParam = STATE.parentAllLinkedIds.slice(0, 10).join(',');
       const acRes = await fetch(
-        CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=in.(' + idsParam + ')&select=user_id,display_name,parent_code',
+        CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=in.(' + idsParam + ')&select=user_id,display_name,parent_code,year_group,primary_subject',
         { headers }
       );
+      console.log('[ParentPortal] allChildren fetch status:', acRes.status, 'ids:', idsParam);
       if (acRes.ok) {
         const acRows = await acRes.json();
-        // Preserve primary-first ordering; ids are user_ids
+        console.log('[ParentPortal] allChildren rows:', JSON.stringify(acRows));
+        // Preserve array ordering (first = primary)
         allChildren = STATE.parentAllLinkedIds.map(function(uid) {
           const r = acRows.find(function(x) { return x.user_id === uid; });
-          return r ? { id: r.user_id, name: r.display_name || 'Student', parentCode: r.parent_code || '' } : null;
+          return r ? { id: r.user_id, name: r.display_name || 'Student', parentCode: r.parent_code || '', yearGroup: r.year_group || '', subject: r.primary_subject || '' } : null;
         }).filter(Boolean);
       }
     } catch(e) {}
@@ -9042,10 +9044,16 @@ function buildParentProfileTabHTML(user, children) {
       h += '<div style="display:flex;align-items:flex-start;gap:12px;">';
       h += '<div style="flex:1;min-width:0;">';
       h += '<div style="font-size:15px;font-weight:800;color:#0F172A;">' + (child.name || 'Student') + '</div>';
+      // Year group + subject meta line
+      const meta = [child.yearGroup ? 'Year ' + child.yearGroup : '', child.subject || ''].filter(Boolean).join(' · ');
+      if (meta) h += '<div style="font-size:12px;color:#64748B;font-weight:600;margin-top:2px;">' + meta + '</div>';
+      // Parent code with copy button
       if (child.parentCode) {
-        h += '<div style="font-size:12px;color:#64748B;font-weight:600;margin-top:4px;">Parent code: <span style="font-weight:900;color:#4F46E5;letter-spacing:1.5px;">' + child.parentCode + '</span>'
+        h += '<div style="font-size:12px;color:#64748B;font-weight:600;margin-top:5px;">'
+          + 'Parent code: <span style="font-weight:900;color:#4F46E5;letter-spacing:1.5px;">' + child.parentCode + '</span>'
           + '<button onclick="navigator.clipboard.writeText(\'' + child.parentCode + '\').then(function(){showToast(\'Code copied! ✅\')})" '
-          + 'style="margin-left:8px;padding:2px 8px;border-radius:6px;border:1.5px solid #C7D2FE;background:white;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;color:#4F46E5;">Copy</button></div>';
+          + 'style="margin-left:8px;padding:2px 8px;border-radius:6px;border:1.5px solid #C7D2FE;background:white;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;color:#4F46E5;">Copy</button>'
+          + '</div>';
       }
       h += '</div>';
       h += '<button onclick="viewChildProgress(\'' + child.id + '\')" style="padding:8px 14px;border-radius:8px;border:none;background:#4F46E5;color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;flex-shrink:0;">View →</button>';
