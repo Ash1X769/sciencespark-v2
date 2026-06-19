@@ -8592,20 +8592,6 @@ async function showParentPortal() {
     STATE._parentLastInsightAt = pp[0]?.parent_last_insight_at || null;
   } catch(e) { console.error('[ParentPortal] parent profile fetch error:', e); }
 
-  // ── 2. If not linked, try auto-link via RPC using stored linked_parent_code ──
-  if (!linkedStudentId && user.linked_parent_code) {
-    try {
-      const linkRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/rpc/link_parent_to_student', {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p_code: user.linked_parent_code })
-      });
-      if (linkRes.ok) linkedStudentId = await linkRes.json().catch(() => null);
-      console.log('[ParentPortal] auto-link RPC result:', linkedStudentId);
-    } catch(e) {}
-  }
-  if (linkedStudentId) STATE.user.linked_student_id = linkedStudentId;
-
   // ── 3. Fetch child profile + history ──
   let child = { name: 'Your Child', streak: 0, xp: 0, level: 1, tier: '', year_group: null, exam_board: 'AQA', user_id: null };
   let childHistory = [];
