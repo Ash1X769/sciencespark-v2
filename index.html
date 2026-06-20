@@ -9556,7 +9556,9 @@ function buildNotifToggleRow(label, description, enabled, onclickAttr) {
       ? '<div style="flex-shrink:0;width:40px;height:22px;border-radius:11px;background:#22C55E;position:relative;margin-top:2px;">'
         + '<div style="position:absolute;right:3px;top:3px;width:16px;height:16px;border-radius:50%;background:white;"></div>'
         + '</div>'
-      : '<div style="flex-shrink:0;width:40px;height:22px;border-radius:11px;background:#E2E8F0;position:relative;margin-top:2px;' + (clickable ? '' : 'opacity:0.5;') + '"></div>')
+      : '<div style="flex-shrink:0;width:40px;height:22px;border-radius:11px;background:#E2E8F0;position:relative;margin-top:2px;' + (clickable ? '' : 'opacity:0.5;') + '">'
+        + '<div style="position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:white;' + (clickable ? '' : 'opacity:0.7;') + '"></div>'
+        + '</div>')
     + '</div>';
 }
 
