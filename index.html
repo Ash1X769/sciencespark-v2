@@ -4997,10 +4997,13 @@ async function registerPushSubscription() {
     if (!token || !sub) return false;
     const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + STATE.user.id, {
       method: 'PATCH',
-      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
       body: JSON.stringify({ push_subscription: sub.toJSON() })
     });
-    return res.ok;
+    if (!res.ok) return false;
+    const rows = await res.json();
+    // return=representation gives back the updated rows — empty array means 0 rows matched (write silently failed)
+    return Array.isArray(rows) && rows.length > 0;
   } catch(e) { console.warn('Push registration failed:', e); return false; }
 }
 
@@ -9587,13 +9590,20 @@ async function enableParentNotifications() {
   }
   const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
   const cName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
+  const sec = document.getElementById('parent-notif-section');
   if (perm !== 'granted') {
-    await refreshNotifSection('parent', 'parent-notif-section', cName); return;
+    if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName, false);
+    return;
   }
   const saved = await registerPushSubscription();
-  await refreshNotifSection('parent', 'parent-notif-section', cName);
-  if (saved) showToast('Notifications enabled! 🔔');
-  else showToast('Could not enable notifications — please try again');
+  if (saved) {
+    STATE._parentHasPushSub = true;
+    if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName, true);
+    showToast('Notifications enabled! 🔔');
+  } else {
+    if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName, false);
+    showToast('Could not save — please try again');
+  }
 }
 
 async function disableParentNotifications() {
@@ -9612,8 +9622,9 @@ async function disableParentNotifications() {
     const sub = await reg.pushManager.getSubscription();
     if (sub) await sub.unsubscribe();
   } catch(_) {}
-  // Always re-render from Supabase ground truth regardless of whether PATCH succeeded
-  await refreshNotifSection('parent', 'parent-notif-section', cName);
+  STATE._parentHasPushSub = false;
+  const sec = document.getElementById('parent-notif-section');
+  if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName, false);
   showToast('Notifications turned off');
 }
 
@@ -9625,13 +9636,19 @@ async function enableStudentNotifications() {
     showToast('Notifications are blocked — please enable them in your browser or device settings'); return;
   }
   const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+  const sec = document.getElementById('student-notif-section');
   if (perm !== 'granted') {
-    await refreshNotifSection('student', 'student-notif-section', null); return;
+    if (sec) sec.innerHTML = buildNotifSectionHTML('student', null, false);
+    return;
   }
   const saved = await registerPushSubscription();
-  await refreshNotifSection('student', 'student-notif-section', null);
-  if (saved) showToast('Notifications enabled! 🔔');
-  else showToast('Could not enable notifications — please try again');
+  if (saved) {
+    if (sec) sec.innerHTML = buildNotifSectionHTML('student', null, true);
+    showToast('Notifications enabled! 🔔');
+  } else {
+    if (sec) sec.innerHTML = buildNotifSectionHTML('student', null, false);
+    showToast('Could not save — please try again');
+  }
 }
 
 async function disableStudentNotifications() {
@@ -9649,7 +9666,8 @@ async function disableStudentNotifications() {
     const sub = await reg.pushManager.getSubscription();
     if (sub) await sub.unsubscribe();
   } catch(_) {}
-  await refreshNotifSection('student', 'student-notif-section', null);
+  const sec = document.getElementById('student-notif-section');
+  if (sec) sec.innerHTML = buildNotifSectionHTML('student', null, false);
   showToast('Notifications turned off');
 }
 
