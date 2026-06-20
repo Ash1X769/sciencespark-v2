@@ -8355,7 +8355,7 @@ function buildParentInsightHTML(child, childHistory, parentName, tip) {
     + '</div>'
 
     // Share button
-    + '<button onclick="var t=' + JSON.stringify(shareText) + ';navigator.share?navigator.share({text:t}).catch(function(){}):navigator.clipboard.writeText(t).then(function(){showToast(\'Copied to clipboard! ✅\');})" '
+    + '<button onclick="var t=\'' + String(shareText).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + '\';navigator.share?navigator.share({text:t}).catch(function(){}):navigator.clipboard.writeText(t).then(function(){showToast(\'Copied to clipboard! ✅\');})" '
     + 'style="width:100%;margin-top:16px;margin-bottom:28px;padding:14px;border-radius:12px;border:none;background:#7C3AED;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">📤 Share with a friend</button>'
     + '</div></div>';
 }
@@ -9522,10 +9522,11 @@ function buildNotifSectionHTML(context, childName, hasPushSub, dailyTipsOn, stud
       if (isParent) {
         const dOn = dailyTipsOn !== undefined ? !!dailyTipsOn : true;
         const sOn = studyAlertsOn !== undefined ? !!studyAlertsOn : true;
+        const safeCName = String(cName).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         h += buildNotifToggleRow('Daily learning tips', 'A personalised insight about how ' + cName + ' learns best, every 3 days', dOn,
-          "toggleNotifPref('parent','notif_daily_tips'," + dOn + ",'parent-notif-section'," + JSON.stringify(cName) + ')');
+          "toggleNotifPref('parent','notif_daily_tips'," + dOn + ",'parent-notif-section','" + safeCName + "')");
         h += buildNotifToggleRow('Study alerts for ' + cName, 'An evening nudge if ' + cName + ' hasn\'t studied yet', sOn,
-          "toggleNotifPref('parent','notif_study_alerts'," + sOn + ",'parent-notif-section'," + JSON.stringify(cName) + ')');
+          "toggleNotifPref('parent','notif_study_alerts'," + sOn + ",'parent-notif-section','" + safeCName + "')");
       } else {
         h += buildNotifToggleRow('Study reminders', 'Daily prompt to review your flashcards', true);
         h += buildNotifToggleRow('Streak alerts', 'A warning before you lose your study streak', false);
