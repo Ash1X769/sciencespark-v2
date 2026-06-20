@@ -8708,28 +8708,38 @@ async function showParentPortal() {
   }
 
   // ── 7. Build full portal HTML ──
+  STATE._parentChildProfile = child;
+  STATE._parentChildHistory = childHistory;
 
   // Study status banner (shown across all tabs)
   const safeChildName = child.name.replace(/'/g, '&#39;');
   const safeChildUserId = child.user_id || '';
   const studyBannerHTML = studiedToday
-    ? `<div style="background:#F0FDF4;border-bottom:2px solid #22C55E;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
+    ? `<div id="parent-study-banner" style="background:#F0FDF4;border-bottom:2px solid #22C55E;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
         <div><div style="font-size:14px;font-weight:800;color:#16A34A;">✅ ${child.name} has studied today</div>
         <div style="font-size:12px;color:#166534;font-weight:600;">${cardsToday} card${cardsToday !== 1 ? 's' : ''} done</div></div>
         <div style="font-size:28px;">🎉</div>
       </div>`
+    : (STATE.parentPingSentThisSession || STATE.parentBannerDismissed)
+    ? ''
     : isAfter5pm
-    ? `<div style="background:#FFF7ED;border-bottom:2px solid #F97316;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    ? `<div id="parent-study-banner" style="background:#FFF7ED;border-bottom:2px solid #F97316;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
         <div>
           <div style="font-size:14px;font-weight:800;color:#C2410C;">📚 ${child.name} hasn't done flashcards today</div>
           <div style="font-size:12px;color:#9A3412;font-weight:600;">Send a quick reminder</div>
         </div>
-        <button onclick="showPingComposer('${safeChildUserId}','${safeChildName}')" style="background:#F97316;color:white;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 8px rgba(249,115,22,0.35);flex-shrink:0;">📨 PING</button>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <button onclick="showPingComposer('${safeChildUserId}','${safeChildName}')" style="background:#F97316;color:white;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 8px rgba(249,115,22,0.35);">📨 PING</button>
+          <button onclick="dismissParentBanner()" style="background:rgba(0,0,0,0.08);color:#9A3412;border:none;border-radius:8px;width:32px;height:32px;font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+        </div>
       </div>`
-    : `<div style="background:#EFF6FF;border-bottom:2px solid #93C5FD;padding:14px 20px;display:flex;align-items:center;gap:12px;">
-        <div style="font-size:22px;">⏰</div>
-        <div><div style="font-size:14px;font-weight:800;color:#1D4ED8;">No study session yet today</div>
-        <div style="font-size:12px;color:#1E40AF;font-weight:600;">PING button appears after 5pm if they haven't studied</div></div>
+    : `<div id="parent-study-banner" style="background:#EFF6FF;border-bottom:2px solid #93C5FD;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="font-size:22px;">⏰</div>
+          <div><div style="font-size:14px;font-weight:800;color:#1D4ED8;">No study session yet today</div>
+          <div style="font-size:12px;color:#1E40AF;font-weight:600;">PING button appears after 5pm if they haven't studied</div></div>
+        </div>
+        <button onclick="dismissParentBanner()" style="background:rgba(0,0,0,0.06);color:#1E40AF;border:none;border-radius:8px;width:32px;height:32px;font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;">✕</button>
       </div>`;
 
   const pingHistoryHTML = recentPings.length === 0 ? '' : `
@@ -8887,6 +8897,7 @@ async function showParentPortal() {
     <div style="display:flex;background:white;border-bottom:1px solid #E2E8F0;padding:8px 12px;gap:2px;overflow-x:auto;align-items:center;">
       <button id="ptab-progress" onclick="parentTab('progress')" class="nav-tab active">📊 Progress</button>
       <button id="ptab-history"  onclick="parentTab('history')"  class="nav-tab">📖 History</button>
+      <button id="ptab-tracker"  onclick="parentTab('tracker')"  class="nav-tab">📈 Tracker</button>
       <button id="ptab-feed"     onclick="parentTab('feed')"     class="nav-tab">📰 Feed</button>
       <button id="ptab-insights" onclick="parentTab('insights')" class="nav-tab">✨ Insights<span class="insight-badge" id="insight-badge-dot" style="display:none;"></span></button>
       <button id="ptab-profile"  onclick="parentTab('profile')"  class="nav-tab">👤 Profile</button>
@@ -8900,6 +8911,7 @@ async function showParentPortal() {
       </div>
       <div id="pcontent-progress" style="padding:0 20px;">${progressHTML}</div>
       <div id="pcontent-history" style="display:none;padding:0 20px;">${historyHTML}</div>
+      <div id="pcontent-tracker" style="display:none;"></div>
       <div id="pcontent-feed" style="display:none;padding:0 20px;">
         <div style="text-align:center;padding:40px 20px;color:#7B5E45;"><div style="font-size:32px;margin-bottom:12px;">📰</div><div style="font-size:15px;font-weight:700;">Loading insights...</div></div>
       </div>
@@ -8979,10 +8991,19 @@ function showPingComposer(childUserId, childName) {
   `);
 }
 
+function dismissParentBanner() {
+  STATE.parentBannerDismissed = true;
+  const el = document.getElementById('parent-study-banner');
+  if (el) el.remove();
+}
+
 async function sendPing(childUserId, childName) {
   const message = (document.getElementById('ping-message')?.value || '').trim() || 'Time to do your ScienceSpark cards! 🧠';
   const deadline = document.getElementById('ping-deadline')?.value || '';
   closeModal();
+  STATE.parentPingSentThisSession = true;
+  const bannerEl = document.getElementById('parent-study-banner');
+  if (bannerEl) bannerEl.remove();
   showToast('Sending ping...');
   const token = STATE.user?.token;
   try {
@@ -8993,14 +9014,105 @@ async function sendPing(childUserId, childName) {
     });
     if (res.ok) {
       showToast('Ping sent to ' + childName + '! 📨');
-      setTimeout(() => showParentPortal(), 2000);
     } else {
       showToast('Ping sent! (email may need domain setup)');
-      setTimeout(() => showParentPortal(), 2000);
     }
   } catch(e) {
     showToast('Could not send ping — check your connection');
   }
+}
+
+function loadParentTrackerContent() {
+  const el = document.getElementById('pcontent-tracker');
+  if (!el) return;
+  if (el.dataset.loaded) return; // don't reload on repeat clicks
+
+  const child   = STATE._parentChildProfile;
+  const history = STATE._parentChildHistory || [];
+
+  if (!child) {
+    el.innerHTML = '<div style="padding:32px 20px;text-align:center;color:#94A3B8;font-weight:700;">No child data available.</div>';
+    return;
+  }
+
+  // Show loading immediately
+  el.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#64748B;"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div style="font-size:15px;font-weight:700;">Building progress tracker…</div></div>';
+
+  // Build per-card stats from study_history (grade 3 = easy)
+  const cardStats = {};
+  history.forEach(function(h) {
+    if (!h.card_id) return;
+    if (!cardStats[h.card_id]) cardStats[h.card_id] = { attempts: 0, good: 0 };
+    cardStats[h.card_id].attempts++;
+    if (h.grade >= 3) cardStats[h.card_id].good++;
+  });
+
+  const allCards = getCardsForUser(child);
+  if (allCards.length === 0) {
+    el.innerHTML = '<div style="padding:32px 20px;text-align:center;color:#94A3B8;font-weight:700;">No cards available for ' + (child.name || 'this child') + '\'s tier/settings.</div>';
+    return;
+  }
+
+  const SUBJ_ORDER = ['Biology','Chemistry','Physics'];
+  const SUBJ_EMOJI = { Biology:'🌿', Chemistry:'⚗️', Physics:'⚡' };
+  const hier = {};
+  SUBJ_ORDER.forEach(function(s) { hier[s] = { topics: {}, mem: 0, mas: 0, total: 0 }; });
+
+  allCards.forEach(function(card) {
+    const s = card.subject;
+    if (!hier[s]) return;
+    const t = card.topic;
+    if (!hier[s].topics[t]) hier[s].topics[t] = { name: card.topic_name || t, cards: [], mem: 0, mas: 0 };
+    const st  = cardStats[card.id] || { attempts: 0, good: 0 };
+    const mem = st.good >= 1;
+    const mas = st.good >= 3;
+    const q   = (card.q || '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1').trim();
+    hier[s].topics[t].cards.push({ q, mem, mas });
+    if (mem) { hier[s].topics[t].mem++; hier[s].mem++; }
+    if (mas) { hier[s].topics[t].mas++; hier[s].mas++; }
+    hier[s].total++;
+  });
+
+  const topicSort = function(a, b) { const n = function(k) { const m = k.match(/(\d+)$/); return m ? +m[1] : 0; }; return n(a) - n(b); };
+
+  let h = '<div class="pt-wrap">';
+  h += '<div class="pt-legend"><span style="font-weight:700;color:#475569;">Tap subject to expand</span>';
+  h += '<span class="pt-pip" style="background:#64D870;color:#14532D;">✓ Memorised (1+ correct)</span>';
+  h += '<span class="pt-pip" style="background:#007D0C;color:#fff;">★ Mastered (3+ correct)</span>';
+  h += '<span class="pt-pip" style="background:#F1F5F9;color:#475569;">○ Not yet studied</span></div>';
+
+  SUBJ_ORDER.forEach(function(subj, si) {
+    const sd = hier[subj];
+    if (!sd || sd.total === 0) return;
+    const eid = 'ppt-s' + si;
+    h += '<div class="pt-entry" id="' + eid + '">';
+    h += '<div class="pt-row pt-subject-row" onclick="ptToggle(\'' + eid + '\')">';
+    h += '<span class="pt-chevron">▶</span><span>' + SUBJ_EMOJI[subj] + ' ' + subj + '</span>';
+    h += '<div class="pt-counts"><span class="pt-badge pt-badge-m">✓ ' + sd.mem + ' Memorised</span>';
+    h += '<span class="pt-badge pt-badge-s">★ ' + sd.mas + ' Mastered</span>';
+    h += '<span class="pt-badge-t">' + sd.total + '</span></div></div>';
+    h += '<div class="pt-children">';
+    Object.keys(sd.topics).sort(topicSort).forEach(function(topicCode, ti) {
+      const td = sd.topics[topicCode];
+      const teid = 'ppt-s' + si + 't' + ti;
+      h += '<div class="pt-entry" id="' + teid + '">';
+      h += '<div class="pt-row pt-topic-row" onclick="ptToggle(\'' + teid + '\')">';
+      h += '<span class="pt-chevron">▶</span><span>' + topicCode + ' — ' + td.name + '</span>';
+      h += '<div class="pt-counts"><span class="pt-badge pt-badge-m">✓ ' + td.mem + '</span>';
+      h += '<span class="pt-badge pt-badge-s">★ ' + td.mas + '</span>';
+      h += '<span class="pt-badge-t">/ ' + td.cards.length + '</span></div></div>';
+      h += '<div class="pt-children">';
+      td.cards.forEach(function(c) {
+        h += '<div class="pt-card-item ' + (c.mas ? 'pt-mas' : c.mem ? 'pt-mem' : '') + '">' + c.q + '</div>';
+      });
+      h += '</div></div>';
+    });
+    h += '</div></div>';
+  });
+
+  h += '</div>';
+  el.innerHTML = h;
+  el.dataset.loaded = '1';
 }
 
 // ── Parent portal: Profile tab content ────────────────────────────────────────
@@ -9083,13 +9195,14 @@ async function addLinkedChild() {
 }
 
 function parentTab(tab) {
-  ['progress','history','feed','insights','profile'].forEach(function(t) {
+  ['progress','history','tracker','feed','insights','profile'].forEach(function(t) {
     const btn     = document.getElementById('ptab-' + t);
     const content = document.getElementById('pcontent-' + t);
     if (btn) btn.classList.toggle('active', t === tab);
     if (content) content.style.display = t === tab ? 'block' : 'none';
   });
   if (tab === 'feed') loadParentFeedContent(null, false);
+  if (tab === 'tracker') loadParentTrackerContent();
   if (tab === 'insights') {
     STATE.parentHasNewInsight = false;
     const dot = document.getElementById('insight-badge-dot');
