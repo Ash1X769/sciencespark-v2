@@ -9473,7 +9473,7 @@ function viewChildProgress(childId) {
 }
 
 // ── Notifications section (shared by parent + student profiles) ───────────────
-function buildNotifSectionHTML(context, childName, hasPushSub) {
+function buildNotifSectionHTML(context, childName, hasPushSub, dailyTipsOn, studyAlertsOn) {
   const permission = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
   // When hasPushSub is not passed, use STATE (parent) or Notification.permission as proxy (student).
   // refreshNotifSection() always passes the real DB-fetched value.
@@ -9520,8 +9520,12 @@ function buildNotifSectionHTML(context, childName, hasPushSub) {
       h += '<div style="border-top:1px solid #F1F5F9;padding-top:16px;margin-top:16px;">'
         + '<div style="font-size:12px;font-weight:800;color:#64748B;margin-bottom:12px;">WHAT YOU\'LL RECEIVE</div>';
       if (isParent) {
-        h += buildNotifToggleRow('Daily learning tips', 'A personalised insight about how ' + cName + ' learns best, every 3 days', true);
-        h += buildNotifToggleRow('Study alerts for ' + cName, 'An evening nudge if ' + cName + ' hasn\'t studied yet', false);
+        const dOn = dailyTipsOn !== undefined ? !!dailyTipsOn : true;
+        const sOn = studyAlertsOn !== undefined ? !!studyAlertsOn : true;
+        h += buildNotifToggleRow('Daily learning tips', 'A personalised insight about how ' + cName + ' learns best, every 3 days', dOn,
+          "toggleNotifPref('parent','notif_daily_tips'," + dOn + ",'parent-notif-section'," + JSON.stringify(cName) + ')');
+        h += buildNotifToggleRow('Study alerts for ' + cName, 'An evening nudge if ' + cName + ' hasn\'t studied yet', sOn,
+          "toggleNotifPref('parent','notif_study_alerts'," + sOn + ",'parent-notif-section'," + JSON.stringify(cName) + ')');
       } else {
         h += buildNotifToggleRow('Study reminders', 'Daily prompt to review your flashcards', true);
         h += buildNotifToggleRow('Streak alerts', 'A warning before you lose your study streak', false);
@@ -9534,12 +9538,13 @@ function buildNotifSectionHTML(context, childName, hasPushSub) {
   return h;
 }
 
-function buildNotifToggleRow(label, description, enabled) {
-  return '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;">'
+function buildNotifToggleRow(label, description, enabled, onclickAttr) {
+  const clickable = !!onclickAttr;
+  return '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;' + (clickable ? 'cursor:pointer;' : '') + '"' + (clickable ? ' onclick="' + onclickAttr + '"' : '') + '>'
     + '<div style="flex:1;min-width:0;">'
     + '<div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">'
     + '<div style="font-size:13px;font-weight:800;color:' + (enabled ? '#0F172A' : '#94A3B8') + ';">' + label + '</div>'
-    + (!enabled ? '<span style="font-size:10px;font-weight:800;color:#94A3B8;background:#F1F5F9;padding:2px 7px;border-radius:10px;">COMING SOON</span>' : '')
+    + (!enabled && !clickable ? '<span style="font-size:10px;font-weight:800;color:#94A3B8;background:#F1F5F9;padding:2px 7px;border-radius:10px;">COMING SOON</span>' : '')
     + '</div>'
     + '<div style="font-size:12px;color:#94A3B8;font-weight:600;line-height:1.4;">' + description + '</div>'
     + '</div>'
@@ -9547,11 +9552,11 @@ function buildNotifToggleRow(label, description, enabled) {
       ? '<div style="flex-shrink:0;width:40px;height:22px;border-radius:11px;background:#22C55E;position:relative;margin-top:2px;">'
         + '<div style="position:absolute;right:3px;top:3px;width:16px;height:16px;border-radius:50%;background:white;"></div>'
         + '</div>'
-      : '<div style="flex-shrink:0;width:40px;height:22px;border-radius:11px;background:#E2E8F0;position:relative;margin-top:2px;opacity:0.5;"></div>')
+      : '<div style="flex-shrink:0;width:40px;height:22px;border-radius:11px;background:#E2E8F0;position:relative;margin-top:2px;' + (clickable ? '' : 'opacity:0.5;') + '"></div>')
     + '</div>';
 }
 
-// Single source of truth: fetches push_subscription from Supabase and re-renders the section.
+// Single source of truth: fetches push_subscription + pref columns from Supabase and re-renders.
 // Called on every profile-tab open AND after every enable/disable action.
 async function refreshNotifSection(context, sectionId, childName) {
   const sec = document.getElementById(sectionId);
@@ -9564,21 +9569,41 @@ async function refreshNotifSection(context, sectionId, childName) {
   }
 
   const user = STATE.user;
-  let hasPushSub = false;
+  let hasPushSub = false, dailyTipsOn = true, studyAlertsOn = true;
   if (user?.token && user?.id) {
     try {
       const res = await fetch(
-        CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=push_subscription',
+        CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=push_subscription,notif_daily_tips,notif_study_alerts',
         { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
       );
       if (res.ok) {
         const rows = await res.json();
-        hasPushSub = !!(rows[0]?.push_subscription);
+        hasPushSub     = !!(rows[0]?.push_subscription);
+        dailyTipsOn    = rows[0]?.notif_daily_tips !== false;
+        studyAlertsOn  = rows[0]?.notif_study_alerts !== false;
       }
     } catch(_) {}
   }
 
-  sec.innerHTML = buildNotifSectionHTML(context, childName, hasPushSub);
+  sec.innerHTML = buildNotifSectionHTML(context, childName, hasPushSub, dailyTipsOn, studyAlertsOn);
+}
+
+async function toggleNotifPref(context, prefKey, currentValue, sectionId, childName) {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  const newValue = !currentValue;
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+      body: JSON.stringify({ [prefKey]: newValue })
+    });
+    if (!res.ok) { showToast('Could not save — please try again'); return; }
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) { showToast('Could not save — please try again'); return; }
+    showToast(newValue ? 'Turned on' : 'Turned off');
+  } catch(e) { showToast('Could not save — please try again'); return; }
+  await refreshNotifSection(context, sectionId, childName);
 }
 
 async function enableParentNotifications() {
