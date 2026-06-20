@@ -7034,6 +7034,8 @@ ${renderNavBar('profile')}
 </div>`;
 
   render(html);
+  // Fetch live push_subscription status from Supabase and update section (fixes post-login state)
+  refreshNotifSection('student', 'student-notif-section', null);
 }
 
 
@@ -9468,9 +9470,12 @@ function viewChildProgress(childId) {
 }
 
 // ── Notifications section (shared by parent + student profiles) ───────────────
-function buildNotifSectionHTML(context, childName) {
+// hasPushSub is an explicit boolean from a Supabase fetch; null = use permission as fast proxy
+function buildNotifSectionHTML(context, childName, hasPushSub) {
   const permission = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
-  const isOn = permission === 'granted' && (context === 'parent' ? !!STATE._parentHasPushSub : true);
+  // When hasPushSub is null/undefined we fall back to Notification.permission as a quick initial guess.
+  // refreshNotifSection() will always overwrite with the real DB value.
+  const isOn = permission === 'granted' && (hasPushSub === null || hasPushSub === undefined ? true : !!hasPushSub);
   const isParent = context === 'parent';
   const cardStyle = isParent
     ? 'background:white;border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid #E2E8F0;box-shadow:0 1px 6px rgba(0,0,0,.06);'
@@ -9546,31 +9551,56 @@ function buildNotifToggleRow(label, description, enabled) {
     + '</div>';
 }
 
-async function enableParentNotifications() {
-  if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
-    showToast('Notifications not supported in this browser');
+// Single source of truth: fetches push_subscription from Supabase and re-renders the section.
+// Called on every profile-tab open AND after every enable/disable action.
+async function refreshNotifSection(context, sectionId, childName) {
+  const sec = document.getElementById(sectionId);
+  if (!sec) return;
+
+  const permission = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
+  if (permission === 'unsupported' || permission === 'denied') {
+    sec.innerHTML = buildNotifSectionHTML(context, childName, false);
     return;
   }
+
+  const user = STATE.user;
+  let hasPushSub = false;
+  if (user?.token && user?.id) {
+    try {
+      const res = await fetch(
+        CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=push_subscription',
+        { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+      );
+      if (res.ok) {
+        const rows = await res.json();
+        hasPushSub = !!(rows[0]?.push_subscription);
+      }
+    } catch(_) {}
+  }
+
+  sec.innerHTML = buildNotifSectionHTML(context, childName, hasPushSub);
+}
+
+async function enableParentNotifications() {
+  if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+    showToast('Notifications not supported in this browser'); return;
+  }
   if (Notification.permission === 'denied') {
-    showToast('Notifications are blocked — please enable them in your browser or device settings');
-    return;
+    showToast('Notifications are blocked — please enable them in your browser or device settings'); return;
   }
   const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
   const cName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
   if (perm !== 'granted') {
-    const sec = document.getElementById('parent-notif-section');
-    if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName);
-    return;
+    await refreshNotifSection('parent', 'parent-notif-section', cName); return;
   }
   await registerPushSubscription();
-  STATE._parentHasPushSub = true;
-  const sec = document.getElementById('parent-notif-section');
-  if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName);
+  await refreshNotifSection('parent', 'parent-notif-section', cName);
   showToast('Notifications enabled! 🔔');
 }
 
 async function disableParentNotifications() {
   const user = STATE.user;
+  const cName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
   if (!user?.token || !user?.id) return;
   try {
     await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
@@ -9578,39 +9608,30 @@ async function disableParentNotifications() {
       headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body: JSON.stringify({ push_subscription: null })
     });
-    try {
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
-      if (sub) await sub.unsubscribe();
-    } catch(_) {}
-    STATE._parentHasPushSub = false;
-    const cName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
-    const sec = document.getElementById('parent-notif-section');
-    if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName);
-    showToast('Notifications turned off');
-  } catch(e) {
-    showToast('Could not update — try again');
-  }
+  } catch(_) {}
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) await sub.unsubscribe();
+  } catch(_) {}
+  // Always re-render from Supabase ground truth regardless of whether PATCH succeeded
+  await refreshNotifSection('parent', 'parent-notif-section', cName);
+  showToast('Notifications turned off');
 }
 
 async function enableStudentNotifications() {
   if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
-    showToast('Notifications not supported in this browser');
-    return;
+    showToast('Notifications not supported in this browser'); return;
   }
   if (Notification.permission === 'denied') {
-    showToast('Notifications are blocked — please enable them in your browser or device settings');
-    return;
+    showToast('Notifications are blocked — please enable them in your browser or device settings'); return;
   }
   const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
   if (perm !== 'granted') {
-    const sec = document.getElementById('student-notif-section');
-    if (sec) sec.innerHTML = buildNotifSectionHTML('student', null);
-    return;
+    await refreshNotifSection('student', 'student-notif-section', null); return;
   }
   await registerPushSubscription();
-  const sec = document.getElementById('student-notif-section');
-  if (sec) sec.innerHTML = buildNotifSectionHTML('student', null);
+  await refreshNotifSection('student', 'student-notif-section', null);
   showToast('Notifications enabled! 🔔');
 }
 
@@ -9623,17 +9644,14 @@ async function disableStudentNotifications() {
       headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body: JSON.stringify({ push_subscription: null })
     });
-    try {
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
-      if (sub) await sub.unsubscribe();
-    } catch(_) {}
-    const sec = document.getElementById('student-notif-section');
-    if (sec) sec.innerHTML = buildNotifSectionHTML('student', null);
-    showToast('Notifications turned off');
-  } catch(e) {
-    showToast('Could not update — try again');
-  }
+  } catch(_) {}
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) await sub.unsubscribe();
+  } catch(_) {}
+  await refreshNotifSection('student', 'student-notif-section', null);
+  showToast('Notifications turned off');
 }
 
 async function addLinkedChild() {
@@ -9663,6 +9681,10 @@ function parentTab(tab) {
     STATE.parentHasNewInsight = false;
     const dot = document.getElementById('insight-badge-dot');
     if (dot) dot.style.display = 'none';
+  }
+  if (tab === 'profile') {
+    const cName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
+    refreshNotifSection('parent', 'parent-notif-section', cName);
   }
 }
 
