@@ -9497,36 +9497,34 @@ function buildNotifSectionHTML(context, childName, hasPushSub) {
       + '<div style="font-size:13px;color:#64748B;font-weight:600;line-height:1.55;">Your browser is blocking notifications for this site. Open your browser or device <strong>Settings → Notifications</strong> and allow them for this site, then come back here.</div>'
       + '</div></div>';
 
-  } else if (isOn) {
-    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
-      + '<div style="display:flex;align-items:center;gap:10px;">'
-      + '<div style="font-size:20px;">🔔</div>'
-      + '<div><div style="font-size:14px;font-weight:800;color:#0F172A;">Notifications on</div>'
-      + '<div style="font-size:12px;font-weight:700;color:#16A34A;">Active on this device ✓</div>'
-      + '</div></div>'
-      + '<button onclick="' + disableFn + '" style="padding:8px 14px;border-radius:10px;border:1.5px solid #E2E8F0;background:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;color:#64748B;">Turn off</button>'
-      + '</div>';
-    h += '<div style="border-top:1px solid #F1F5F9;padding-top:16px;">'
-      + '<div style="font-size:12px;font-weight:800;color:#64748B;margin-bottom:12px;">WHAT YOU\'LL RECEIVE</div>';
-    if (isParent) {
-      h += buildNotifToggleRow('Daily learning tips', 'A personalised insight about how ' + cName + ' learns best, every 3 days', true);
-      h += buildNotifToggleRow('Study alerts for ' + cName, 'An evening nudge if ' + cName + ' hasn\'t studied yet', false);
-    } else {
-      h += buildNotifToggleRow('Study reminders', 'Daily prompt to review your flashcards', true);
-      h += buildNotifToggleRow('Streak alerts', 'A warning before you lose your study streak', false);
-    }
-    h += '</div>';
-
   } else {
-    h += '<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;">'
-      + '<div style="font-size:20px;flex-shrink:0;">🔕</div>'
-      + '<div><div style="font-size:14px;font-weight:800;color:#0F172A;margin-bottom:4px;">Notifications off</div>'
-      + '<div style="font-size:13px;color:#64748B;font-weight:600;line-height:1.5;">'
-      + (isParent
-          ? 'Enable to get daily learning tips and stay informed about ' + cName + '\'s revision.'
-          : 'Enable to get daily study reminders and streak alerts.')
-      + '</div></div></div>'
-      + '<button onclick="' + enableFn + '" style="width:100%;padding:13px;border-radius:12px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">🔔 Enable Notifications</button>';
+    // Toggle row — tapping switches on/off
+    const toggleFn = isOn ? disableFn : enableFn;
+    const trackColor = isOn ? '#22C55E' : '#CBD5E1';
+    const knobPos    = isOn ? 'right:3px' : 'left:3px';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">'
+      + '<div>'
+      + '<div style="font-size:14px;font-weight:800;color:#0F172A;margin-bottom:3px;">Push notifications</div>'
+      + '<div style="font-size:12px;font-weight:600;color:' + (isOn ? '#16A34A' : '#94A3B8') + ';">'
+      + (isOn ? 'On — active on this device' : 'Off') + '</div>'
+      + '</div>'
+      + '<div onclick="' + toggleFn + '" style="flex-shrink:0;width:46px;height:26px;border-radius:13px;background:' + trackColor + ';position:relative;cursor:pointer;transition:background .2s;">'
+      + '<div style="position:absolute;' + knobPos + ';top:3px;width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.2);"></div>'
+      + '</div>'
+      + '</div>';
+
+    if (isOn) {
+      h += '<div style="border-top:1px solid #F1F5F9;padding-top:16px;margin-top:16px;">'
+        + '<div style="font-size:12px;font-weight:800;color:#64748B;margin-bottom:12px;">WHAT YOU\'LL RECEIVE</div>';
+      if (isParent) {
+        h += buildNotifToggleRow('Daily learning tips', 'A personalised insight about how ' + cName + ' learns best, every 3 days', true);
+        h += buildNotifToggleRow('Study alerts for ' + cName, 'An evening nudge if ' + cName + ' hasn\'t studied yet', false);
+      } else {
+        h += buildNotifToggleRow('Study reminders', 'Daily prompt to review your flashcards', true);
+        h += buildNotifToggleRow('Streak alerts', 'A warning before you lose your study streak', false);
+      }
+      h += '</div>';
+    }
   }
 
   h += '</div>';
