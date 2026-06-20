@@ -9176,8 +9176,102 @@ function buildParentProfileTabHTML(user, children, activeChildId) {
      + 'style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:18px;text-align:center;letter-spacing:3px;font-weight:800;font-family:inherit;box-sizing:border-box;margin-bottom:10px;outline:none;" />';
   h += '<button onclick="addLinkedChild()" style="width:100%;padding:12px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">Link Child →</button>';
   h += '</div>';
+
+  // ── Collapsible Account Details ──
+  h += '<div style="' + cardStyle + '">';
+  h += '<div onclick="toggleParentAccountDetails()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;">';
+  h += '<div style="' + labelStyle + 'margin-bottom:0;">ACCOUNT DETAILS</div>';
+  h += '<span id="parent-acct-chevron" style="font-size:13px;color:#94A3B8;transition:transform .18s;display:inline-block;">▼</span>';
+  h += '</div>';
+  h += '<div id="parent-acct-body" style="display:none;">';
+
+  // Change display name
+  h += '<div style="margin-top:16px;">';
+  h += '<div style="font-size:12px;font-weight:800;color:#64748B;margin-bottom:8px;">DISPLAY NAME</div>';
+  h += '<input id="parent-edit-name" type="text" value="' + (user.display_name || '').replace(/"/g, '&quot;') + '" '
+     + 'placeholder="Your name" '
+     + 'style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:14px;font-weight:600;font-family:inherit;box-sizing:border-box;outline:none;margin-bottom:8px;" />';
+  h += '<button onclick="saveParentDisplayName()" style="width:100%;padding:11px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">Save Name</button>';
+  h += '</div>';
+
+  // Divider
+  h += '<div style="border-top:1px solid #F1F5F9;margin:18px 0;"></div>';
+
+  // Change password
+  h += '<div>';
+  h += '<div style="font-size:12px;font-weight:800;color:#64748B;margin-bottom:8px;">CHANGE PASSWORD</div>';
+  h += '<input id="parent-new-password" type="password" placeholder="New password" '
+     + 'style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:14px;font-weight:600;font-family:inherit;box-sizing:border-box;outline:none;margin-bottom:8px;" />';
+  h += '<input id="parent-confirm-password" type="password" placeholder="Confirm new password" '
+     + 'style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:14px;font-weight:600;font-family:inherit;box-sizing:border-box;outline:none;margin-bottom:8px;" />';
+  h += '<button onclick="saveParentPassword()" style="width:100%;padding:11px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">Update Password</button>';
+  h += '</div>';
+
+  h += '</div>'; // end parent-acct-body
+  h += '</div>'; // end collapsible card
+
   h += '</div>';
   return h;
+}
+
+function toggleParentAccountDetails() {
+  const body = document.getElementById('parent-acct-body');
+  const chev = document.getElementById('parent-acct-chevron');
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+async function saveParentDisplayName() {
+  const name = (document.getElementById('parent-edit-name')?.value || '').trim();
+  if (!name) { showToast('Please enter a name'); return; }
+  const user = STATE.user;
+  if (!user?.token || !user?.id) { showToast('Not logged in'); return; }
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ display_name: name })
+    });
+    if (res.ok || res.status === 204) {
+      STATE.user.display_name = name;
+      showToast('Name saved! ✅');
+    } else {
+      showToast('Could not save — try again');
+    }
+  } catch(e) {
+    showToast('Could not save — check connection');
+  }
+}
+
+async function saveParentPassword() {
+  const pw  = (document.getElementById('parent-new-password')?.value  || '').trim();
+  const pw2 = (document.getElementById('parent-confirm-password')?.value || '').trim();
+  if (!pw) { showToast('Enter a new password'); return; }
+  if (pw.length < 6) { showToast('Password must be at least 6 characters'); return; }
+  if (pw !== pw2) { showToast('Passwords don\'t match'); return; }
+  const token = STATE.user?.token;
+  if (!token) { showToast('Not logged in'); return; }
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/auth/v1/user', {
+      method: 'PUT',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    if (res.ok) {
+      showToast('Password updated! ✅');
+      const p1 = document.getElementById('parent-new-password');
+      const p2 = document.getElementById('parent-confirm-password');
+      if (p1) p1.value = '';
+      if (p2) p2.value = '';
+    } else {
+      const err = await res.json().catch(function() { return {}; });
+      showToast(err.message || 'Could not update password — try again');
+    }
+  } catch(e) {
+    showToast('Could not update — check connection');
+  }
 }
 
 function viewChildProgress(childId) {
