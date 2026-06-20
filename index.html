@@ -7013,6 +7013,9 @@ ${renderNavBar('profile')}
       <button onclick="showProgressTracker()" class="btn btn-primary btn-full" style="background:linear-gradient(135deg,#16A34A,#15803D);">Open Progress Tracker →</button>
     </div>
 
+    <!-- Notifications -->
+    <div id="student-notif-section">${buildNotifSectionHTML('student', null)}</div>
+
     <!-- Badges -->
     <div class="card" style="margin-bottom:16px;">
       <div style="font-size:15px;font-weight:800;margin-bottom:16px;">🏅 Badges</div>
@@ -8755,7 +8758,7 @@ async function showParentPortal() {
   // ── 1. Get parent's linked children — linked_student_ids array is source of truth ──
   let linkedStudentId = null;
   try {
-    const ppUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=linked_student_ids,linked_student_id,parent_last_insight_at';
+    const ppUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=linked_student_ids,linked_student_id,parent_last_insight_at,push_subscription';
     const ppRes = await fetch(ppUrl, { headers });
     const pp = ppRes.ok ? await ppRes.json() : [];
     console.log('[ParentPortal] parent profile:', JSON.stringify(pp), 'status:', ppRes.status);
@@ -8770,6 +8773,7 @@ async function showParentPortal() {
     console.log('[ParentPortal] idsArray:', idsArray, '→ linkedStudentId:', linkedStudentId);
 
     STATE._parentLastInsightAt = pp[0]?.parent_last_insight_at || null;
+    STATE._parentHasPushSub   = !!(pp[0]?.push_subscription);
   } catch(e) { console.error('[ParentPortal] parent profile fetch error:', e); }
 
   // ── 3. Fetch child profile + history ──
@@ -9357,6 +9361,10 @@ function buildParentProfileTabHTML(user, children, activeChildId) {
   h += '<button onclick="addLinkedChild()" style="width:100%;padding:12px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">Link Child →</button>';
   h += '</div>';
 
+  // ── Notifications section ──
+  const notifChildName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
+  h += '<div id="parent-notif-section">' + buildNotifSectionHTML('parent', notifChildName) + '</div>';
+
   // ── Collapsible Account Details ──
   h += '<div style="' + cardStyle + '">';
   h += '<div onclick="toggleParentAccountDetails()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;">';
@@ -9457,6 +9465,175 @@ async function saveParentPassword() {
 function viewChildProgress(childId) {
   STATE.parentActiveChildId = childId;
   showParentPortal();
+}
+
+// ── Notifications section (shared by parent + student profiles) ───────────────
+function buildNotifSectionHTML(context, childName) {
+  const permission = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
+  const isOn = permission === 'granted' && (context === 'parent' ? !!STATE._parentHasPushSub : true);
+  const isParent = context === 'parent';
+  const cardStyle = isParent
+    ? 'background:white;border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid #E2E8F0;box-shadow:0 1px 6px rgba(0,0,0,.06);'
+    : 'background:white;border-radius:16px;padding:20px;margin-bottom:16px;border:1px solid #E2E8F0;';
+  const labelStyle = 'font-size:11px;font-weight:800;color:#64748B;letter-spacing:.08em;margin-bottom:12px;';
+  const cName = childName || 'your child';
+  const enableFn  = isParent ? 'enableParentNotifications()'  : 'enableStudentNotifications()';
+  const disableFn = isParent ? 'disableParentNotifications()' : 'disableStudentNotifications()';
+
+  let h = '<div style="' + cardStyle + '">';
+  h += '<div style="' + labelStyle + '">NOTIFICATIONS</div>';
+
+  if (permission === 'unsupported') {
+    h += '<div style="font-size:13px;color:#64748B;font-weight:600;line-height:1.5;">Push notifications aren\'t supported in this browser. Try adding the app to your home screen for full notification support.</div>';
+
+  } else if (permission === 'denied') {
+    h += '<div style="display:flex;gap:12px;align-items:flex-start;">'
+      + '<div style="font-size:22px;flex-shrink:0;">🔕</div>'
+      + '<div><div style="font-size:14px;font-weight:800;color:#EF4444;margin-bottom:5px;">Notifications blocked</div>'
+      + '<div style="font-size:13px;color:#64748B;font-weight:600;line-height:1.55;">Your browser is blocking notifications for this site. Open your browser or device <strong>Settings → Notifications</strong> and allow them for this site, then come back here.</div>'
+      + '</div></div>';
+
+  } else if (isOn) {
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
+      + '<div style="display:flex;align-items:center;gap:10px;">'
+      + '<div style="font-size:20px;">🔔</div>'
+      + '<div><div style="font-size:14px;font-weight:800;color:#0F172A;">Notifications on</div>'
+      + '<div style="font-size:12px;font-weight:700;color:#16A34A;">Active on this device ✓</div>'
+      + '</div></div>'
+      + '<button onclick="' + disableFn + '" style="padding:8px 14px;border-radius:10px;border:1.5px solid #E2E8F0;background:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;color:#64748B;">Turn off</button>'
+      + '</div>';
+    h += '<div style="border-top:1px solid #F1F5F9;padding-top:16px;">'
+      + '<div style="font-size:12px;font-weight:800;color:#64748B;margin-bottom:12px;">WHAT YOU\'LL RECEIVE</div>';
+    if (isParent) {
+      h += buildNotifToggleRow('Daily learning tips', 'A personalised insight about how ' + cName + ' learns best, every 3 days', true);
+      h += buildNotifToggleRow('Study alerts for ' + cName, 'An evening nudge if ' + cName + ' hasn\'t studied yet', false);
+    } else {
+      h += buildNotifToggleRow('Study reminders', 'Daily prompt to review your flashcards', true);
+      h += buildNotifToggleRow('Streak alerts', 'A warning before you lose your study streak', false);
+    }
+    h += '</div>';
+
+  } else {
+    h += '<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;">'
+      + '<div style="font-size:20px;flex-shrink:0;">🔕</div>'
+      + '<div><div style="font-size:14px;font-weight:800;color:#0F172A;margin-bottom:4px;">Notifications off</div>'
+      + '<div style="font-size:13px;color:#64748B;font-weight:600;line-height:1.5;">'
+      + (isParent
+          ? 'Enable to get daily learning tips and stay informed about ' + cName + '\'s revision.'
+          : 'Enable to get daily study reminders and streak alerts.')
+      + '</div></div></div>'
+      + '<button onclick="' + enableFn + '" style="width:100%;padding:13px;border-radius:12px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">🔔 Enable Notifications</button>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function buildNotifToggleRow(label, description, enabled) {
+  return '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;">'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">'
+    + '<div style="font-size:13px;font-weight:800;color:' + (enabled ? '#0F172A' : '#94A3B8') + ';">' + label + '</div>'
+    + (!enabled ? '<span style="font-size:10px;font-weight:800;color:#94A3B8;background:#F1F5F9;padding:2px 7px;border-radius:10px;">COMING SOON</span>' : '')
+    + '</div>'
+    + '<div style="font-size:12px;color:#94A3B8;font-weight:600;line-height:1.4;">' + description + '</div>'
+    + '</div>'
+    + (enabled
+      ? '<div style="flex-shrink:0;width:40px;height:22px;border-radius:11px;background:#22C55E;position:relative;margin-top:2px;">'
+        + '<div style="position:absolute;right:3px;top:3px;width:16px;height:16px;border-radius:50%;background:white;"></div>'
+        + '</div>'
+      : '<div style="flex-shrink:0;width:40px;height:22px;border-radius:11px;background:#E2E8F0;position:relative;margin-top:2px;opacity:0.5;"></div>')
+    + '</div>';
+}
+
+async function enableParentNotifications() {
+  if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+    showToast('Notifications not supported in this browser');
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    showToast('Notifications are blocked — please enable them in your browser or device settings');
+    return;
+  }
+  const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+  const cName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
+  if (perm !== 'granted') {
+    const sec = document.getElementById('parent-notif-section');
+    if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName);
+    return;
+  }
+  await registerPushSubscription();
+  STATE._parentHasPushSub = true;
+  const sec = document.getElementById('parent-notif-section');
+  if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName);
+  showToast('Notifications enabled! 🔔');
+}
+
+async function disableParentNotifications() {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ push_subscription: null })
+    });
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+    } catch(_) {}
+    STATE._parentHasPushSub = false;
+    const cName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
+    const sec = document.getElementById('parent-notif-section');
+    if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName);
+    showToast('Notifications turned off');
+  } catch(e) {
+    showToast('Could not update — try again');
+  }
+}
+
+async function enableStudentNotifications() {
+  if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+    showToast('Notifications not supported in this browser');
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    showToast('Notifications are blocked — please enable them in your browser or device settings');
+    return;
+  }
+  const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+  if (perm !== 'granted') {
+    const sec = document.getElementById('student-notif-section');
+    if (sec) sec.innerHTML = buildNotifSectionHTML('student', null);
+    return;
+  }
+  await registerPushSubscription();
+  const sec = document.getElementById('student-notif-section');
+  if (sec) sec.innerHTML = buildNotifSectionHTML('student', null);
+  showToast('Notifications enabled! 🔔');
+}
+
+async function disableStudentNotifications() {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ push_subscription: null })
+    });
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+    } catch(_) {}
+    const sec = document.getElementById('student-notif-section');
+    if (sec) sec.innerHTML = buildNotifSectionHTML('student', null);
+    showToast('Notifications turned off');
+  } catch(e) {
+    showToast('Could not update — try again');
+  }
 }
 
 async function addLinkedChild() {
