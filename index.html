@@ -9878,6 +9878,14 @@ async function init() {
   showAuth();
 }
 
+// Register service worker early so navigator.serviceWorker.ready resolves for push notifications
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sciencespark-v2/sw.js')
+      .catch(e => console.warn('SW registration failed:', e));
+  });
+}
+
 // Start app
 init();
 // Widget div is after this script tag, so sync DOM isn't available yet.
