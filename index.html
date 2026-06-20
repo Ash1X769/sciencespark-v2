@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ScienceSpark — GCSE Science Revision</title>
-<link rel="manifest" href="/sciencespark-v2/manifest.json">
+<link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#16A34A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ScienceSpark">
-<link rel="apple-touch-icon" href="/sciencespark-v2/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
@@ -8282,11 +8282,11 @@ async function checkAndFireParentNotification(child, parentLastInsightAt, parent
     const usedTip = tip || getInsightTip(PARENT_TIPS);
     // Use notification_headline from Supabase if available, else personalise from child data
     const notifTitle = (usedTip.notification_headline || buildParentNotificationText(child)).slice(0, 120);
-    const notifUrl = window.location.origin + '/sciencespark-v2/?screen=parent-insight';
+    const notifUrl = window.location.origin + '/?screen=parent-insight';
     await reg.showNotification(notifTitle, {
       body: '✨ ' + (usedTip.headline || ''),
-      icon: '/sciencespark-v2/icon-192.png',
-      badge: '/sciencespark-v2/icon-192.png',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       vibrate: [200, 100, 200],
       data: { url: notifUrl, screen: 'parent-insight' }
     });
@@ -9881,7 +9881,7 @@ async function init() {
 // Register service worker early so navigator.serviceWorker.ready resolves for push notifications
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sciencespark-v2/sw.js')
+    navigator.serviceWorker.register('/sw.js')
       .catch(e => console.warn('SW registration failed:', e));
   });
 }
