@@ -4985,23 +4985,23 @@ async function doRequestPushPermission() {
 }
 
 async function registerPushSubscription() {
-  if (!('serviceWorker' in navigator)) return;
+  if (!('serviceWorker' in navigator)) return false;
   try {
-    const reg = await navigator.serviceWorker.register('/sciencespark-v2/sw.js');
-    await navigator.serviceWorker.ready;
+    const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
       const keyBytes = urlBase64ToUint8Array(CONFIG.VAPID_PUBLIC_KEY);
       sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes });
     }
     const token = STATE.user?.token;
-    if (!token || !sub) return;
-    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + STATE.user.id, {
+    if (!token || !sub) return false;
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + STATE.user.id, {
       method: 'PATCH',
       headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body: JSON.stringify({ push_subscription: sub.toJSON() })
     });
-  } catch(e) { console.warn('Push registration failed:', e); }
+    return res.ok;
+  } catch(e) { console.warn('Push registration failed:', e); return false; }
 }
 
 function urlBase64ToUint8Array(base64String) {
@@ -9590,9 +9590,10 @@ async function enableParentNotifications() {
   if (perm !== 'granted') {
     await refreshNotifSection('parent', 'parent-notif-section', cName); return;
   }
-  await registerPushSubscription();
+  const saved = await registerPushSubscription();
   await refreshNotifSection('parent', 'parent-notif-section', cName);
-  showToast('Notifications enabled! 🔔');
+  if (saved) showToast('Notifications enabled! 🔔');
+  else showToast('Could not enable notifications — please try again');
 }
 
 async function disableParentNotifications() {
@@ -9627,9 +9628,10 @@ async function enableStudentNotifications() {
   if (perm !== 'granted') {
     await refreshNotifSection('student', 'student-notif-section', null); return;
   }
-  await registerPushSubscription();
+  const saved = await registerPushSubscription();
   await refreshNotifSection('student', 'student-notif-section', null);
-  showToast('Notifications enabled! 🔔');
+  if (saved) showToast('Notifications enabled! 🔔');
+  else showToast('Could not enable notifications — please try again');
 }
 
 async function disableStudentNotifications() {
