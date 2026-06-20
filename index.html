@@ -5416,6 +5416,7 @@ function renderNavBar(active) {
       ${tabs.map(t => `<button class="nav-tab${active === t.id ? ' active' : ''}" onclick="${t.fn}">${t.label}</button>`).join('')}
     </div>
     <div class="nav-right">
+      <button onclick="openAppSearch('student')" style="background:none;border:none;font-size:18px;cursor:pointer;padding:6px;">🔍</button>
       ${streak > 0 ? `<div class="streak-pill"><span class="fire">🔥</span><span>${streak}</span></div>` : ''}
       <div class="profile-wrap">
         <button class="profile-btn" onclick="toggleProfileDropdown(event)">👤</button>
@@ -7784,6 +7785,7 @@ async function showTeacherDashboard(selectedClass) {
       <div style="font-size:13px;font-weight:700;opacity:0.9;margin-bottom:3px;">${user.display_name || 'Teacher'}</div>
       <div style="font-size:26px;font-weight:900;line-height:1.15;">${selectedName}</div>
       ${selectedCode ? `<div style="margin-top:7px;display:inline-block;background:rgba(255,255,255,0.2);border-radius:8px;padding:4px 12px;font-size:12px;font-weight:800;letter-spacing:1.5px;">${selectedCode}</div>` : ''}
+      <button onclick="openAppSearch('teacher')" style="position:absolute;top:18px;right:90px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🔍 Search</button>
       <button onclick="doLogout()" style="position:absolute;top:18px;right:16px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Log out</button>
     </div>
 
@@ -9080,6 +9082,7 @@ async function showParentPortal() {
         <div style="font-size:24px;font-weight:900;">Welcome back, ${parentFirstName} 👋</div>
         <div style="font-size:13px;opacity:0.85;font-weight:600;margin-top:4px;">Viewing ${child.name}'s progress</div>
         <div style="position:absolute;top:20px;right:20px;display:flex;gap:8px;align-items:center;">
+          <button onclick="openAppSearch('parent')" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🔍 Search</button>
           <button onclick="showAbout()" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">ℹ️ About</button>
           <button onclick="doLogout()" style="background:rgba(255,255,255,0.2);color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
         </div>
@@ -9797,6 +9800,104 @@ function toggleParentAI(el) {
   const thumb = el.querySelector('.toggle-thumb');
   track?.classList.toggle('on');
   thumb?.classList.toggle('on');
+}
+
+// ============================================================
+// IN-APP SEARCH
+// ============================================================
+const APP_SEARCH_INDEX = [
+  { portal:'student', label:"Start today's session", keywords:'study flashcards practice revise quick session learning session', explain:"Jump into your daily flashcards or a Full Learning Session from your home screen.", action: () => showHome() },
+  { portal:'student', label:'AI Tutor', keywords:'ask question help tutor chat explain', explain:'Ask any science question, anytime — separate from your study sessions.', action: () => showAIChatTab() },
+  { portal:'student', label:'Study history', keywords:'past cards history review previous answers', explain:"See every card you've studied, when, and how you scored.", action: () => showStudyHistory() },
+  { portal:'student', label:'Change password', keywords:'password account security login', explain:'Update your password from your Profile screen.', action: () => showProfile() },
+  { portal:'student', label:'Parent code', keywords:'link parent invite parent code family', explain:'Find and share your parent code so a parent can follow your progress.', action: () => showProfile() },
+  { portal:'student', label:'Change exam tier or board', keywords:'foundation higher triple exam board AQA edexcel ocr igcse', explain:'Update your tier or exam board from your Profile screen.', action: () => showProfile() },
+  { portal:'student', label:'Streak, XP and level', keywords:'streak xp level badges gamification points', explain:'Check your streak, XP and level from your home screen.', action: () => showHome() },
+  { portal:'student', label:'AI marking mode', keywords:'ai marking self rate toggle mode', explain:'Choose between AI-marked answers or self-rating when you start a session.', action: () => showHome() },
+  { portal:'student', label:'Notifications', keywords:'push notifications reminders streak alerts', explain:'Manage your notification preferences from your Profile screen.', action: () => showProfile() },
+  { portal:'student', label:'About ScienceSpark', keywords:'about info version help', explain:'Learn more about ScienceSpark.', action: () => showAbout() },
+  { portal:'student', label:'Sign out', keywords:'log out logout signout exit', explain:'Sign out of your account.', action: () => doLogout() },
+
+  { portal:'parent', label:'Add a child', keywords:'link child parent code add student connect', explain:"Link your account to your child's using their parent code.", action: () => { showParentPortal().then(() => parentTab('profile')); } },
+  { portal:'parent', label:'Notification settings', keywords:'push notifications alerts daily tips study alerts toggle', explain:'Turn push notifications on or off, and choose which types you receive.', action: () => { showParentPortal().then(() => parentTab('profile')); } },
+  { portal:'parent', label:"Your child's progress", keywords:'progress streak xp topics mastery strengths', explain:"See your child's streak, XP, topic mastery and areas to focus on.", action: () => { showParentPortal().then(() => parentTab('progress')); } },
+  { portal:'parent', label:'Study history', keywords:'history cards reviewed past answers', explain:'See the last 80 cards your child has reviewed.', action: () => { showParentPortal().then(() => parentTab('history')); } },
+  { portal:'parent', label:'Topic tracker', keywords:'tracker topics mastered progress bars', explain:"See your child's mastery tracked topic by topic.", action: () => { showParentPortal().then(() => parentTab('tracker')); } },
+  { portal:'parent', label:'Insights', keywords:'insights personalised learning tips updates', explain:'See personalised insights about how your child learns best.', action: () => { showParentPortal().then(() => parentTab('insights')); } },
+  { portal:'parent', label:'Email the teacher', keywords:'contact teacher email message', explain:"Message your child's teacher directly from the portal.", action: () => { showParentPortal().then(() => parentTab('profile')); } },
+  { portal:'parent', label:'Study tips', keywords:'tips advice support home revision science-backed', explain:'Science-backed tips for supporting revision at home.', action: () => { showParentPortal().then(() => parentTab('feed')); } },
+  { portal:'parent', label:'AI marking mode for your child', keywords:'ai mode self rate marking toggle', explain:'Turn AI-marked answers on or off for your child, if not locked by their teacher.', action: () => { showParentPortal().then(() => parentTab('profile')); } },
+  { portal:'parent', label:'Change password', keywords:'password account security login', explain:'Update your password from your Profile tab.', action: () => { showParentPortal().then(() => parentTab('profile')); } },
+  { portal:'parent', label:'About ScienceSpark', keywords:'about info version help', explain:'Learn more about ScienceSpark.', action: () => showAbout() },
+  { portal:'parent', label:'Sign out', keywords:'log out logout signout exit', explain:'Sign out of your account.', action: () => doLogout() },
+
+  { portal:'teacher', label:'Class code / invite students', keywords:'class code invite join students share', explain:'Copy your class code or invite message to share with students.', action: () => { showTeacherDashboard().then(() => teacherTab('settings')); } },
+  { portal:'teacher', label:'View students', keywords:'students list roster class', explain:'See every student in your class and their stats.', action: () => { showTeacherDashboard().then(() => teacherTab('students')); } },
+  { portal:'teacher', label:'Class overview', keywords:'overview stats average dashboard summary', explain:'See your class averages and overall stats.', action: () => { showTeacherDashboard().then(() => teacherTab('overview')); } },
+  { portal:'teacher', label:'Class progress grid (RAG)', keywords:'rag red amber green topics class progress grid', explain:"See your class's topic-by-topic progress at a glance.", action: () => { showTeacherDashboard().then(() => teacherTab('rag')); } },
+  { portal:'teacher', label:'AI marking mode for class', keywords:'ai mode lock self rate marking toggle class', explain:'Turn AI marking on or off for individual students or your whole class, and lock it.', action: () => { showTeacherDashboard().then(() => teacherTab('settings')); } },
+  { portal:'teacher', label:"A specific student's settings", keywords:'reset password change tier student settings individual', explain:"Open any student from your Students list to reset their password, change their tier, view their history, or see their linked parents.", action: () => { showTeacherDashboard().then(() => teacherTab('students')); } },
+  { portal:'teacher', label:'Sign out', keywords:'log out logout signout exit', explain:'Sign out of your account.', action: () => doLogout() },
+];
+
+function openAppSearch(portal) {
+  showModal(
+    '<div style="padding:20px;">'
+    + '<div style="font-size:16px;font-weight:800;color:#0F172A;margin-bottom:4px;">Search</div>'
+    + '<div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:16px;">Find any feature or setting</div>'
+    + '<input id="app-search-input" type="text" placeholder="e.g. notifications, password, progress…"'
+    + ' oninput="renderAppSearchResults(\'' + portal + '\', this.value)"'
+    + ' style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1.5px solid #E2E8F0;font-size:14px;font-family:inherit;outline:none;">'
+    + '<div id="app-search-results" style="margin-top:12px;">'
+    + '<div style="font-size:13px;color:#94A3B8;font-weight:600;text-align:center;padding:12px;">Start typing to search…</div>'
+    + '</div></div>'
+  );
+  setTimeout(() => { const el = document.getElementById('app-search-input'); if (el) el.focus(); }, 100);
+}
+
+function renderAppSearchResults(portal, query) {
+  const container = document.getElementById('app-search-results');
+  if (!container) return;
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    container.innerHTML = '<div style="font-size:13px;color:#94A3B8;font-weight:600;text-align:center;padding:12px;">Start typing to search…</div>';
+    return;
+  }
+  const results = APP_SEARCH_INDEX.filter(function(item) {
+    return item.portal === portal && (item.label + ' ' + item.keywords).toLowerCase().includes(q);
+  });
+  if (results.length === 0) {
+    container.innerHTML = '<div style="font-size:13px;color:#94A3B8;font-weight:600;text-align:center;padding:12px;">No results — try different words</div>';
+    return;
+  }
+  container.innerHTML = results.map(function(item) {
+    const idx = APP_SEARCH_INDEX.indexOf(item);
+    return '<div id="search-result-' + idx + '" onclick="expandAppSearchResult(' + idx + ')"'
+      + ' style="padding:12px 14px;border-radius:12px;border:1.5px solid #E2E8F0;margin-bottom:8px;cursor:pointer;background:white;">'
+      + '<div style="font-size:14px;font-weight:800;color:#0F172A;">' + item.label + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function expandAppSearchResult(idx) {
+  const item = APP_SEARCH_INDEX[idx];
+  if (!item) return;
+  const el = document.getElementById('search-result-' + idx);
+  if (!el) return;
+  el.onclick = null;
+  el.style.cursor = 'default';
+  el.style.borderColor = '#4F46E5';
+  el.innerHTML = '<div style="font-size:14px;font-weight:800;color:#0F172A;margin-bottom:6px;">' + item.label + '</div>'
+    + '<div style="font-size:13px;color:#64748B;font-weight:600;line-height:1.5;margin-bottom:12px;">' + item.explain + '</div>'
+    + '<button onclick="event.stopPropagation();runAppSearchAction(' + idx + ')"'
+    + ' style="width:100%;padding:11px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">Take me there →</button>';
+}
+
+function runAppSearchAction(idx) {
+  const item = APP_SEARCH_INDEX[idx];
+  if (!item) return;
+  closeModal();
+  item.action();
 }
 
 // ============================================================
