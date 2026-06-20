@@ -6,17 +6,17 @@
   "background_color": "#ffffff",
   "display": "standalone",
   "orientation": "portrait",
-  "start_url": "/sciencespark-v2/",
-  "scope": "/sciencespark-v2/",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
-      "src": "/sciencespark-v2/icon-192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/sciencespark-v2/icon-512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

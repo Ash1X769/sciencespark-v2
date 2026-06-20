@@ -1,10 +1,10 @@
-const CACHE_NAME = 'sciencespark-v2';
+const CACHE_NAME = 'sciencespark-v2-3';
 const PRECACHE = [
-  '/sciencespark-v2/',
-  '/sciencespark-v2/index.html',
-  '/sciencespark-v2/manifest.json',
-  '/sciencespark-v2/icon-192.png',
-  '/sciencespark-v2/icon-512.png',
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
 ];
 
 self.addEventListener('install', event => {
@@ -45,18 +45,19 @@ self.addEventListener('fetch', event => {
 self.addEventListener('push', event => {
   let data = { title: 'ScienceSpark', body: 'Time to study! 📚' };
   try { data = JSON.parse(event.data?.text() || '{}'); } catch(_) {}
+  const targetUrl = data.url || (self.location.origin + '/');
   event.waitUntil(
     self.registration.showNotification(data.title || 'ScienceSpark', {
       body: data.body || '',
-      icon: data.icon || '/sciencespark-v2/icon-192.png',
-      badge: '/sciencespark-v2/icon-192.png',
+      icon: data.icon || '/icon-192.png',
+      badge: '/icon-192.png',
       vibrate: [200, 100, 200],
-      data: { url: self.location.origin + '/sciencespark-v2/' }
+      data: { url: targetUrl, screen: data.screen || null }
     })
   );
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  event.waitUntil(clients.openWindow(event.notification.data?.url || '/sciencespark-v2/'));
+  event.waitUntil(clients.openWindow(event.notification.data?.url || '/'));
 });
