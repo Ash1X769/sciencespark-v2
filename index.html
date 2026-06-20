@@ -1834,6 +1834,15 @@ textarea.input { resize: vertical; min-height: 100px; }
 .feed-btn:hover { background: rgba(0,0,0,0.05); }
 .feed-btn.saved { border-color: #7C3AED; color: #7C3AED; }
 .insight-badge { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #EF4444; margin-left: 5px; vertical-align: middle; position: relative; top: -1px; }
+/* ── Parent Hub category grid ── */
+.hub-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px 0 24px; }
+@media (min-width: 560px) { .hub-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 860px) { .hub-grid { grid-template-columns: repeat(4, 1fr); } }
+.hub-tile { border-radius: 18px; padding: 28px 12px 22px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; cursor: pointer; min-height: 140px; gap: 10px; text-align: center; box-shadow: 0 6px 24px rgba(0,0,0,0.18); transition: transform .15s, box-shadow .15s; user-select: none; -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden; }
+.hub-tile:active { transform: scale(0.95); box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
+.hub-tile-icon { font-size: 44px; line-height: 1; flex-shrink: 0; }
+.hub-tile-name { font-size: 13px; font-weight: 900; color: white; line-height: 1.25; letter-spacing: -0.2px; text-shadow: 0 1px 4px rgba(0,0,0,0.35); }
+.hub-tile-shine { position: absolute; top: 0; left: 0; right: 0; height: 50%; background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 100%); border-radius: 18px 18px 0 0; pointer-events: none; }
 /* ── Student Revision Spark ────────────────────────────────────────────────── */
 .spark-screen { min-height: 100vh; background: #F0FDF4; padding-bottom: 100px; }
 .spark-hdr { background: linear-gradient(135deg,#16A34A,#15803D); padding: 22px 20px 18px; color: white; display: flex; align-items: center; gap: 12px; }
@@ -8402,36 +8411,54 @@ async function toggleBookmark(tipId, btn) {
 }
 
 // ── Parent feed: renders hardcoded immediately, then upgrades from Supabase ───
-async function loadParentFeedContent(_, showSavedOnly) {
+const PARENT_HUB_CATEGORIES = [
+  { id: 'latest',          label: 'Latest Tips',           icon: '⚡', gradient: 'linear-gradient(135deg,#6366F1,#4F46E5)' },
+  { id: 'saved',           label: 'Saved Articles',        icon: '🔖', gradient: 'linear-gradient(135deg,#F97316,#EA580C)' },
+  { id: 'cognitive',       label: 'Cognitive Science',     icon: '🧠', gradient: 'linear-gradient(135deg,#0EA5E9,#0369A1)' },
+  { id: 'exam',            label: 'Exam Support',          icon: '📝', gradient: 'linear-gradient(135deg,#22C55E,#15803D)' },
+  { id: 'parents-evening', label: 'Parents Evening Tips',  icon: '🎓', gradient: 'linear-gradient(135deg,#A855F7,#7C3AED)' },
+];
+
+function parentHubFilter(cat, tip, savedSet) {
+  const text = ((tip.headline || '') + ' ' + (tip.body || '')).toLowerCase();
+  if (cat === 'latest')          return true;
+  if (cat === 'saved')           return savedSet && savedSet.has(tip.id);
+  if (cat === 'cognitive')       return /memory|brain|recall|spacing|interleav|retriev|sleep|cognitive|testing effect|consolidat|myelin/.test(text);
+  if (cat === 'exam')            return /exam|revision|gcse|mark.scheme|examiner|streaks|habit|algorithm|flashcard|practis|practiz/.test(text);
+  if (cat === 'parents-evening') return /ask|question|listen|explain|tonight|parent|evening|identity|prot/.test(text);
+  return true;
+}
+
+function buildParentHubHTML() {
+  let h = '<div style="padding:8px 0 4px;">';
+  h += '<div style="font-size:22px;font-weight:900;color:#0F172A;margin-bottom:4px;">Parent Hub 📚</div>';
+  h += '<div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:0;">Science-backed insights for parents</div>';
+  h += '</div>';
+  h += '<div class="hub-grid">';
+  PARENT_HUB_CATEGORIES.forEach(function(cat) {
+    h += '<div class="hub-tile" style="background:' + cat.gradient + ';" onclick="openParentHubCategory(\'' + cat.id + '\')">';
+    h += '<div class="hub-tile-shine"></div>';
+    h += '<div class="hub-tile-icon">' + cat.icon + '</div>';
+    h += '<div class="hub-tile-name">' + cat.label + '</div>';
+    h += '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+async function loadParentFeedContent() {
   const el = document.getElementById('pcontent-feed');
   if (!el) return;
   if (!STATE.parentSavedTips) STATE.parentSavedTips = new Set();
 
-  function renderFeed(tips) {
-    const savedSet = STATE.parentSavedTips;
-    const display  = showSavedOnly ? tips.filter(function(t) { return savedSet.has(t.id); }) : tips;
-    const toggleBar = '<div style="display:flex;gap:8px;margin-bottom:16px;">'
-      + '<button onclick="loadParentFeedContent(null,false)" style="flex:1;padding:9px;border-radius:8px;border:none;'
-      + (!showSavedOnly ? 'background:#7C3AED;color:white;' : 'background:#F5F0E8;color:#5D4037;border:1.5px solid #C4A882;')
-      + 'font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">All Insights</button>'
-      + '<button onclick="loadParentFeedContent(null,true)" style="flex:1;padding:9px;border-radius:8px;border:none;'
-      + (showSavedOnly ? 'background:#7C3AED;color:white;' : 'background:#F5F0E8;color:#5D4037;border:1.5px solid #C4A882;')
-      + 'font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">🔖 Saved</button></div>';
-    if (display.length === 0) {
-      el.innerHTML = toggleBar + '<div style="text-align:center;padding:40px 20px;color:#7B5E45;"><div style="font-size:36px;margin-bottom:12px;">🔖</div><div style="font-size:15px;font-weight:700;">No saved insights yet</div><div style="font-size:13px;margin-top:6px;">Tap 🔖 on any card to save it here.</div></div>';
-      return;
-    }
-    el.innerHTML = toggleBar + display.map(function(t) { return buildFeedCard(t, savedSet.has(t.id), 'feed-hdr-purple'); }).join('');
-  }
+  // Show hub immediately
+  el.innerHTML = buildParentHubHTML();
 
-  // Render hardcoded tips immediately — no blank / loading state
-  renderFeed(PARENT_TIPS);
-
+  // Background: fetch bookmarks + tips and cache them
   const token = STATE.user?.token;
   const userId = STATE.user?.id;
   if (!token || !userId) return;
 
-  // Background: fetch bookmarks then Supabase tips, re-render with real data
   try {
     const bRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/tip_bookmarks?user_id=eq.' + userId + '&select=tip_id',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token } });
@@ -8447,12 +8474,42 @@ async function loadParentFeedContent(_, showSavedOnly) {
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token } });
     if (res.ok) {
       const rows = await res.json();
-      if (rows && rows.length > 0) { renderFeed(rows); return; }
+      if (rows && rows.length > 0) STATE.parentTipsCache = rows;
     }
   } catch(e) {}
 
-  // Supabase empty / unavailable — re-render hardcoded with up-to-date bookmarks
-  renderFeed(PARENT_TIPS);
+  if (!STATE.parentTipsCache || STATE.parentTipsCache.length === 0) {
+    STATE.parentTipsCache = PARENT_TIPS;
+  }
+}
+
+function openParentHubCategory(cat) {
+  const el = document.getElementById('pcontent-feed');
+  if (!el) return;
+  const catMeta  = PARENT_HUB_CATEGORIES.find(function(c) { return c.id === cat; }) || { label: cat, icon: '📚', gradient: 'linear-gradient(135deg,#6366F1,#4F46E5)' };
+  const allTips  = STATE.parentTipsCache || PARENT_TIPS;
+  const savedSet = STATE.parentSavedTips || new Set();
+  const filtered = allTips.filter(function(t) { return parentHubFilter(cat, t, savedSet); });
+
+  // Back button + header
+  let h = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">';
+  h += '<button onclick="loadParentFeedContent()" style="background:#F1F5F9;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:#0F172A;">← Hub</button>';
+  h += '<div style="background:' + catMeta.gradient + ';border-radius:10px;padding:8px 16px;display:flex;align-items:center;gap:8px;">';
+  h += '<span style="font-size:18px;">' + catMeta.icon + '</span>';
+  h += '<span style="font-size:14px;font-weight:900;color:white;">' + catMeta.label + '</span>';
+  h += '</div></div>';
+
+  if (filtered.length === 0) {
+    h += '<div style="text-align:center;padding:40px 20px;color:#94A3B8;">';
+    h += '<div style="font-size:36px;margin-bottom:12px;">' + catMeta.icon + '</div>';
+    h += '<div style="font-size:15px;font-weight:700;">';
+    h += cat === 'saved' ? 'No saved articles yet — tap 🔖 on any card to save it' : 'No articles in this category yet — check back soon';
+    h += '</div></div>';
+  } else {
+    h += filtered.map(function(t) { return buildFeedCard(t, savedSet.has(t.id), 'feed-hdr-purple'); }).join('');
+  }
+
+  el.innerHTML = h;
 }
 
 async function loadStudentFeedContent(showSavedOnly) {
@@ -9300,7 +9357,7 @@ function parentTab(tab) {
     if (btn) btn.classList.toggle('active', t === tab);
     if (content) content.style.display = t === tab ? 'block' : 'none';
   });
-  if (tab === 'feed') loadParentFeedContent(null, false);
+  if (tab === 'feed') loadParentFeedContent();
   if (tab === 'tracker') loadParentTrackerContent();
   if (tab === 'insights') {
     STATE.parentHasNewInsight = false;
