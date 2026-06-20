@@ -9470,12 +9470,11 @@ function viewChildProgress(childId) {
 }
 
 // ── Notifications section (shared by parent + student profiles) ───────────────
-// hasPushSub is an explicit boolean from a Supabase fetch; null = use permission as fast proxy
 function buildNotifSectionHTML(context, childName, hasPushSub) {
   const permission = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
-  // When hasPushSub is null/undefined we fall back to Notification.permission as a quick initial guess.
-  // refreshNotifSection() will always overwrite with the real DB value.
-  const isOn = permission === 'granted' && (hasPushSub === null || hasPushSub === undefined ? true : !!hasPushSub);
+  // When hasPushSub is not passed, use STATE (parent) or Notification.permission as proxy (student).
+  // refreshNotifSection() always passes the real DB-fetched value.
+  const isOn = permission === 'granted' && (hasPushSub !== undefined ? !!hasPushSub : (context === 'parent' ? !!STATE._parentHasPushSub : true));
   const isParent = context === 'parent';
   const cardStyle = isParent
     ? 'background:white;border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid #E2E8F0;box-shadow:0 1px 6px rgba(0,0,0,.06);'
