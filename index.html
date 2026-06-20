@@ -5424,32 +5424,6 @@ function renderNavBar(active) {
   </nav>`;
 }
 
-function renderParentNavBar(activeTab, child, user) {
-  const initial = (user.display_name || 'P').charAt(0).toUpperCase();
-  return `<nav class="nav">
-    <div class="logo">⚡<span class="logo-text">ScienceSpark</span></div>
-    <div class="nav-tabs">
-      <button class="nav-tab${activeTab === 'progress' ? ' active' : ''}" id="pnav-progress" onclick="parentTab('progress')">Progress</button>
-      <button class="nav-tab${activeTab === 'history'  ? ' active' : ''}" id="pnav-history"  onclick="parentTab('history')">History</button>
-    </div>
-    <div class="nav-right">
-      <div class="profile-wrap">
-        <button class="profile-btn" onclick="toggleParentDropdown(event)" style="font-weight:900;font-size:15px;">${initial}</button>
-        <div class="profile-dropdown" id="parent-profile-dropdown">
-          <button class="pd-item" onclick="closeParentDropdown();parentTab('profile')">👤 My Profile</button>
-          <div class="pd-sep"></div>
-          <button class="pd-item" onclick="closeParentDropdown();parentTab('insights')">✨ Insights<span class="insight-badge" id="insight-badge-dot" style="display:none;margin-left:6px;vertical-align:middle;"></span></button>
-          <button class="pd-item" onclick="closeParentDropdown();parentTab('feed')">📰 Science of Learning Feed</button>
-          <div class="pd-sep"></div>
-          <button class="pd-item" onclick="closeParentDropdown();showAbout()">ℹ️ About ScienceSpark</button>
-          <div class="pd-sep"></div>
-          <button class="pd-item" onclick="closeParentDropdown();doLogout()">🚪 Sign Out</button>
-        </div>
-      </div>
-    </div>
-  </nav>`;
-}
-
 // ============================================================
 // FLASHCARD MODE
 // ============================================================
@@ -5641,29 +5615,8 @@ function closeProfileDropdown() {
   if (dd) dd.classList.remove('open');
 }
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.profile-wrap')) { closeProfileDropdown(); closeParentDropdown(); }
+  if (!e.target.closest('.profile-wrap')) closeProfileDropdown();
 });
-
-function toggleParentDropdown(event) {
-  event.stopPropagation();
-  const dd = document.getElementById('parent-profile-dropdown');
-  if (dd) dd.classList.toggle('open');
-}
-function closeParentDropdown() {
-  const dd = document.getElementById('parent-profile-dropdown');
-  if (dd) dd.classList.remove('open');
-}
-function showSwitchChildModal() {
-  const children = STATE._parentAllChildren || [];
-  if (children.length < 2) { showToast('No other children linked'); return; }
-  const activeId = STATE.parentActiveChildId || (STATE.parentAllLinkedIds && STATE.parentAllLinkedIds[0]);
-  const items = children.map(function(c) {
-    const isCurrent = c.id === activeId;
-    return '<button onclick="' + (isCurrent ? '' : 'closeModal();viewChildProgress(\'' + c.id + '\')') + '" style="display:block;width:100%;text-align:left;padding:12px 16px;margin-bottom:6px;border-radius:12px;border:2px solid ' + (isCurrent ? '#7C3AED' : '#E2E8F0') + ';background:' + (isCurrent ? '#F5F3FF' : 'white') + ';font-size:14px;font-weight:800;color:' + (isCurrent ? '#7C3AED' : '#0F172A') + ';cursor:' + (isCurrent ? 'default' : 'pointer') + ';font-family:inherit;">' +
-      c.name + (isCurrent ? ' <span style="font-size:12px;opacity:0.7;">— Viewing ✓</span>' : '') + '</button>';
-  }).join('');
-  showModal('<div class="modal-handle"></div><div class="modal-title" style="margin-bottom:16px;">Switch Child</div>' + items);
-}
 
 async function submitFlashcardAI() {
   const card = STATE.cardQueue[STATE.currentCardIndex];
@@ -8760,22 +8713,20 @@ async function showParentPortal() {
   const safeChildName = child.name.replace(/'/g, '&#39;');
   const safeChildUserId = child.user_id || '';
   const studyBannerHTML = studiedToday
-    ? `<div id="parent-study-banner" style="background:#F0FDF4;border-bottom:2px solid #22C55E;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
+    ? `<div style="background:#F0FDF4;border-bottom:2px solid #22C55E;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
         <div><div style="font-size:14px;font-weight:800;color:#16A34A;">✅ ${child.name} has studied today</div>
         <div style="font-size:12px;color:#166534;font-weight:600;">${cardsToday} card${cardsToday !== 1 ? 's' : ''} done</div></div>
         <div style="font-size:28px;">🎉</div>
       </div>`
-    : STATE.parentPingSentThisSession
-    ? ''
     : isAfter5pm
-    ? `<div id="parent-study-banner" style="background:#FFF7ED;border-bottom:2px solid #F97316;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    ? `<div style="background:#FFF7ED;border-bottom:2px solid #F97316;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
         <div>
           <div style="font-size:14px;font-weight:800;color:#C2410C;">📚 ${child.name} hasn't done flashcards today</div>
           <div style="font-size:12px;color:#9A3412;font-weight:600;">Send a quick reminder</div>
         </div>
         <button onclick="showPingComposer('${safeChildUserId}','${safeChildName}')" style="background:#F97316;color:white;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 8px rgba(249,115,22,0.35);flex-shrink:0;">📨 PING</button>
       </div>`
-    : `<div id="parent-study-banner" style="background:#EFF6FF;border-bottom:2px solid #93C5FD;padding:14px 20px;display:flex;align-items:center;gap:12px;">
+    : `<div style="background:#EFF6FF;border-bottom:2px solid #93C5FD;padding:14px 20px;display:flex;align-items:center;gap:12px;">
         <div style="font-size:22px;">⏰</div>
         <div><div style="font-size:14px;font-weight:800;color:#1D4ED8;">No study session yet today</div>
         <div style="font-size:12px;color:#1E40AF;font-weight:600;">PING button appears after 5pm if they haven't studied</div></div>
@@ -8918,27 +8869,30 @@ async function showParentPortal() {
     }
   } catch(e) {}
 
-  STATE._parentAllChildren = allChildren;
   const parentFirstName = (user.display_name || '').split(' ')[0] || 'there';
 
   const html = `<div style="min-height:100vh;background:#F8FAFC;">
-    ${renderParentNavBar('progress', child, user)}
-
-    <div style="background:linear-gradient(135deg,#4F46E5,#7C3AED);padding:20px 20px 18px;color:white;">
-      <div style="max-width:860px;margin:0 auto;">
-        <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;opacity:0.75;margin-bottom:4px;">NOW VIEWING</div>
-        <div style="font-size:22px;font-weight:900;">${child.name}'s Progress</div>
-        <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;">
-          <span style="font-size:12px;font-weight:700;opacity:0.9;">🔥 ${child.streak}-day streak</span>
-          <span style="font-size:12px;font-weight:700;opacity:0.9;">⚡ ${child.xp} XP</span>
-          <span style="font-size:12px;font-weight:700;opacity:0.9;">📚 Level ${child.level}</span>
-        </div>
+    <div style="background:linear-gradient(135deg,#4F46E5,#7C3AED);padding:28px 24px 20px;color:white;position:relative;">
+      <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;opacity:0.8;margin-bottom:4px;">PARENT PORTAL</div>
+      <div style="font-size:24px;font-weight:900;">Welcome back, ${parentFirstName} 👋</div>
+      <div style="font-size:13px;opacity:0.85;font-weight:600;margin-top:4px;">Viewing ${child.name}'s progress</div>
+      <div style="position:absolute;top:20px;right:20px;display:flex;gap:8px;align-items:center;">
+        <button onclick="showAbout()" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">ℹ️ About</button>
+        <button onclick="doLogout()" style="background:rgba(255,255,255,0.2);color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Log Out</button>
       </div>
     </div>
 
     ${studyBannerHTML}
 
-    <div style="max-width:860px;margin:0 auto;padding-bottom:80px;">
+    <div style="display:flex;background:white;border-bottom:1px solid #E2E8F0;padding:8px 12px;gap:2px;overflow-x:auto;align-items:center;">
+      <button id="ptab-progress" onclick="parentTab('progress')" class="nav-tab active">📊 Progress</button>
+      <button id="ptab-history"  onclick="parentTab('history')"  class="nav-tab">📖 History</button>
+      <button id="ptab-feed"     onclick="parentTab('feed')"     class="nav-tab">📰 Feed</button>
+      <button id="ptab-insights" onclick="parentTab('insights')" class="nav-tab">✨ Insights<span class="insight-badge" id="insight-badge-dot" style="display:none;"></span></button>
+      <button id="ptab-profile"  onclick="parentTab('profile')"  class="nav-tab">👤 Profile</button>
+    </div>
+
+    <div style="max-width:860px;margin:0 auto;padding-bottom:60px;">
       <div style="padding:16px 20px 0;">
         <div style="background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:12px;padding:12px 14px;margin-bottom:16px;">
           <div style="font-size:13px;font-weight:800;color:#15803D;line-height:1.6;">🎉 Free during beta! All features are unlocked for you as a beta tester. When we launch properly, Premium will be £12.99/month — beta testers get a special founding member discount.</div>
@@ -8946,10 +8900,10 @@ async function showParentPortal() {
       </div>
       <div id="pcontent-progress" style="padding:0 20px;">${progressHTML}</div>
       <div id="pcontent-history" style="display:none;padding:0 20px;">${historyHTML}</div>
-      <div id="pcontent-insights" style="display:none;">${buildParentInsightHTML(child, childHistory, user.display_name?.split(' ')[0] || 'there', insightTip)}</div>
       <div id="pcontent-feed" style="display:none;padding:0 20px;">
         <div style="text-align:center;padding:40px 20px;color:#7B5E45;"><div style="font-size:32px;margin-bottom:12px;">📰</div><div style="font-size:15px;font-weight:700;">Loading insights...</div></div>
       </div>
+      <div id="pcontent-insights" style="display:none;">${buildParentInsightHTML(child, childHistory, user.display_name?.split(' ')[0] || 'there', insightTip)}</div>
       <div id="pcontent-profile" style="display:none;padding:0 20px;">${buildParentProfileTabHTML(user, allChildren, linkedStudentId)}</div>
     </div>
   </div>`;
@@ -9029,9 +8983,6 @@ async function sendPing(childUserId, childName) {
   const message = (document.getElementById('ping-message')?.value || '').trim() || 'Time to do your ScienceSpark cards! 🧠';
   const deadline = document.getElementById('ping-deadline')?.value || '';
   closeModal();
-  STATE.parentPingSentThisSession = true;
-  const bannerEl = document.getElementById('parent-study-banner');
-  if (bannerEl) bannerEl.remove();
   showToast('Sending ping...');
   const token = STATE.user?.token;
   try {
@@ -9132,8 +9083,8 @@ async function addLinkedChild() {
 }
 
 function parentTab(tab) {
-  ['progress','history','insights','feed','profile'].forEach(function(t) {
-    const btn     = document.getElementById('pnav-' + t);
+  ['progress','history','feed','insights','profile'].forEach(function(t) {
+    const btn     = document.getElementById('ptab-' + t);
     const content = document.getElementById('pcontent-' + t);
     if (btn) btn.classList.toggle('active', t === tab);
     if (content) content.style.display = t === tab ? 'block' : 'none';
