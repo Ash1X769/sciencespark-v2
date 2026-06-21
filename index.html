@@ -5075,18 +5075,22 @@ function showStudyHistory() {
         const subjectEmoji = h.subject === 'Biology' ? '🌿' : h.subject === 'Chemistry' ? '⚗️' : '⚡';
         const qText = (h.question || 'Card').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
         const prog = progress[h.cardId];
-        let dueStr = '';
+        let nextDuePill = '';
         if (prog?.nextReview) {
           const due = new Date(prog.nextReview);
-          dueStr = due <= new Date()
-            ? 'Due now'
-            : 'Next due: ' + due.toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+          const dueLabel = due <= new Date()
+            ? 'DUE NOW'
+            : 'NEXT ' + due.toLocaleDateString('en-GB', {day:'numeric',month:'short'}).toUpperCase();
+          nextDuePill = `<div style="font-size:11px;background:#FEF2F2;color:#991B1B;font-weight:600;border-radius:8px;padding:4px 9px;">${dueLabel}</div>`;
         }
         return `<div style="background:white;border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
           <div style="flex:1;min-width:0;margin-right:12px;">
             <div style="font-size:14px;font-weight:500;color:#0F172A;margin-bottom:4px;">${qText}</div>
-            <div style="font-size:12px;color:#64748B;font-weight:600;">${subjectEmoji} ${h.subject || ''} &nbsp;·&nbsp; ${h.topic || ''} &nbsp;·&nbsp; Last seen ${date}</div>
-            ${dueStr ? `<div style="font-size:11px;font-weight:700;color:#4F46E5;margin-top:3px;">📅 ${dueStr}</div>` : ''}
+            <div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:8px;">${subjectEmoji} ${h.subject || ''} &nbsp;·&nbsp; ${h.topic || ''}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${date ? `<div style="font-size:11px;background:#F1F5F9;color:#64748B;font-weight:600;border-radius:8px;padding:4px 9px;">SEEN ${date.toUpperCase()}</div>` : ''}
+              ${nextDuePill}
+            </div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
             <div style="font-size:13px;font-weight:900;color:${col};">${em} ${lbl}</div>
@@ -8812,7 +8816,7 @@ async function showParentPortal() {
 
     if (child.user_id) {
       try {
-        const hRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=eq.' + child.user_id + '&select=card_id,question,subject,topic_name,grade,created_at&order=created_at.desc', { headers });
+        const hRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=eq.' + child.user_id + '&select=card_id,question,subject,topic_name,grade,created_at,next_due&order=created_at.desc', { headers });
         childHistory = hRes.ok ? await hRes.json() : [];
         console.log('[ParentPortal] study history rows:', childHistory.length);
       } catch(e) {}
@@ -8865,7 +8869,7 @@ async function showParentPortal() {
   childHistory.forEach(h => {
     const key = h.card_id;
     if (!byCard[key]) {
-      byCard[key] = { question: h.question, subject: h.subject, topic: h.topic_name, grade: h.grade, date: h.created_at, attempts: 1 };
+      byCard[key] = { question: h.question, subject: h.subject, topic: h.topic_name, grade: h.grade, date: h.created_at, next_due: h.next_due, attempts: 1 };
     } else { byCard[key].attempts++; }
   });
   const historyCards = Object.values(byCard);
@@ -9002,12 +9006,17 @@ async function showParentPortal() {
         const lbl = gradeLabel[h.grade] ?? '';
         const em  = gradeEmoji[h.grade] ?? '📚';
         const date = h.date ? new Date(h.date).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
+        const nextDueStr = h.next_due ? new Date(h.next_due).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
         const sEmoji = h.subject === 'Biology' ? '🌿' : h.subject === 'Chemistry' ? '⚗️' : h.subject === 'Physics' ? '⚡' : '📚';
         const qText = h.question || h.topic || 'Flashcard';
         return `<div style="background:white;border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid #F0F4F8;">
           <div style="flex:1;min-width:0;margin-right:12px;">
             <div style="font-size:14px;font-weight:800;color:#0F172A;margin-bottom:4px;">${qText}</div>
-            <div style="font-size:12px;color:#64748B;font-weight:600;">${sEmoji} ${h.subject || ''} &nbsp;·&nbsp; ${h.topic || ''} &nbsp;·&nbsp; Last seen ${date}</div>
+            <div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:8px;">${sEmoji} ${h.subject || ''} &nbsp;·&nbsp; ${h.topic || ''}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${date ? `<div style="font-size:11px;background:#F1F5F9;color:#64748B;font-weight:600;border-radius:8px;padding:4px 9px;">SEEN ${date.toUpperCase()}</div>` : ''}
+              ${nextDueStr ? `<div style="font-size:11px;background:#FEF2F2;color:#991B1B;font-weight:600;border-radius:8px;padding:4px 9px;">NEXT ${nextDueStr.toUpperCase()}</div>` : ''}
+            </div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
             <div style="font-size:13px;font-weight:900;color:${col};">${em} ${lbl}</div>
