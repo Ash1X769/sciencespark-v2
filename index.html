@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ScienceSpark — GCSE Science Revision</title>
-<link rel="manifest" href="/sciencespark-v2/manifest.json">
+<link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#16A34A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ScienceSpark">
-<link rel="apple-touch-icon" href="/sciencespark-v2/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
@@ -4844,6 +4844,7 @@ function afterLogin(startScreen) {
   loadUserPaidStatus();
   // Students always land on Home — never restore to a sub-screen on load
   if (startScreen === 'teacher') { showTeacherDashboard(); return; }
+  if (startScreen === 'parent-insight') { showParentTipScreen(); return; }
   if (startScreen === 'parent') { showParentPortal(); setTimeout(requestPushPermission, 1500); return; }
   if (STATE.role === 'student') { showHome(); setTimeout(requestPushPermission, 1500); }
   else if (STATE.role === 'teacher') showTeacherDashboard();
@@ -4984,23 +4985,26 @@ async function doRequestPushPermission() {
 }
 
 async function registerPushSubscription() {
-  if (!('serviceWorker' in navigator)) return;
+  if (!('serviceWorker' in navigator)) return false;
   try {
-    const reg = await navigator.serviceWorker.register('/sciencespark-v2/sw.js');
-    await navigator.serviceWorker.ready;
+    const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
       const keyBytes = urlBase64ToUint8Array(CONFIG.VAPID_PUBLIC_KEY);
       sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes });
     }
     const token = STATE.user?.token;
-    if (!token || !sub) return;
-    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + STATE.user.id, {
+    if (!token || !sub) return false;
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + STATE.user.id, {
       method: 'PATCH',
-      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
       body: JSON.stringify({ push_subscription: sub.toJSON() })
     });
-  } catch(e) { console.warn('Push registration failed:', e); }
+    if (!res.ok) return false;
+    const rows = await res.json();
+    // return=representation gives back the updated rows — empty array means 0 rows matched (write silently failed)
+    return Array.isArray(rows) && rows.length > 0;
+  } catch(e) { console.warn('Push registration failed:', e); return false; }
 }
 
 function urlBase64ToUint8Array(base64String) {
@@ -7012,6 +7016,9 @@ ${renderNavBar('profile')}
       <button onclick="showProgressTracker()" class="btn btn-primary btn-full" style="background:linear-gradient(135deg,#16A34A,#15803D);">Open Progress Tracker →</button>
     </div>
 
+    <!-- Notifications -->
+    <div id="student-notif-section">${buildNotifSectionHTML('student', null)}</div>
+
     <!-- Badges -->
     <div class="card" style="margin-bottom:16px;">
       <div style="font-size:15px;font-weight:800;margin-bottom:16px;">🏅 Badges</div>
@@ -7030,6 +7037,8 @@ ${renderNavBar('profile')}
 </div>`;
 
   render(html);
+  // Fetch live push_subscription status from Supabase and update section (fixes post-login state)
+  refreshNotifSection('student', 'student-notif-section', null);
 }
 
 
@@ -8273,11 +8282,11 @@ async function checkAndFireParentNotification(child, parentLastInsightAt, parent
     const usedTip = tip || getInsightTip(PARENT_TIPS);
     // Use notification_headline from Supabase if available, else personalise from child data
     const notifTitle = (usedTip.notification_headline || buildParentNotificationText(child)).slice(0, 120);
-    const notifUrl = window.location.origin + '/sciencespark-v2/?screen=parent-insight';
+    const notifUrl = window.location.origin + '/?screen=parent-insight';
     await reg.showNotification(notifTitle, {
       body: '✨ ' + (usedTip.headline || ''),
-      icon: '/sciencespark-v2/icon-192.png',
-      badge: '/sciencespark-v2/icon-192.png',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       vibrate: [200, 100, 200],
       data: { url: notifUrl, screen: 'parent-insight' }
     });
@@ -8346,9 +8355,188 @@ function buildParentInsightHTML(child, childHistory, parentName, tip) {
     + '</div>'
 
     // Share button
-    + '<button onclick="var t=' + JSON.stringify(shareText) + ';navigator.share?navigator.share({text:t}).catch(function(){}):navigator.clipboard.writeText(t).then(function(){showToast(\'Copied to clipboard! ✅\');})" '
+    + '<button onclick="var t=\'' + String(shareText).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + '\';navigator.share?navigator.share({text:t}).catch(function(){}):navigator.clipboard.writeText(t).then(function(){showToast(\'Copied to clipboard! ✅\');})" '
     + 'style="width:100%;margin-top:16px;margin-bottom:28px;padding:14px;border-radius:12px;border:none;background:#7C3AED;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">📤 Share with a friend</button>'
     + '</div></div>';
+}
+
+// ── Parent tip notification screen ───────────────────────────────────────────
+async function showParentTipScreen() {
+  STATE.screen = 'parent-tip';
+
+  render('<div style="min-height:100vh;background:#F8FAFC;display:flex;align-items:center;justify-content:center;">'
+    + '<div style="text-align:center;color:#64748B;"><div style="font-size:32px;margin-bottom:12px;">✨</div>'
+    + '<div style="font-size:15px;font-weight:700;">Loading your insight...</div></div></div>');
+
+  const user    = STATE.user;
+  const token   = user?.token;
+  const headers = { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + (token || '') };
+
+  let parentLastInsightAt = STATE._parentLastInsightAt || null;
+  let childName = 'your child';
+
+  if (user?.id && token) {
+    try {
+      const ppRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id
+        + '&select=parent_last_insight_at,linked_student_ids,linked_student_id', { headers });
+      const pp = ppRes.ok ? await ppRes.json() : [];
+      if (pp[0]) {
+        parentLastInsightAt = pp[0].parent_last_insight_at || null;
+        const idsArr = (Array.isArray(pp[0].linked_student_ids) && pp[0].linked_student_ids.length > 0)
+          ? pp[0].linked_student_ids
+          : (pp[0].linked_student_id ? [pp[0].linked_student_id] : []);
+        if (idsArr.length > 0) {
+          try {
+            const cRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + idsArr[0]
+              + '&select=display_name', { headers });
+            const cP = cRes.ok ? await cRes.json() : [];
+            if (cP[0]?.display_name) childName = cP[0].display_name.split(' ')[0];
+          } catch(_) {}
+        }
+      }
+    } catch(_) {}
+  }
+
+  // Use cached child name from portal if available
+  if (STATE._parentChildProfile?.name) childName = STATE._parentChildProfile.name.split(' ')[0];
+
+  let tips = [];
+  if (token) {
+    try {
+      const tRes = await fetch(CONFIG.SUPABASE_URL
+        + '/rest/v1/tips?audience=eq.parent&active=eq.true&select=id,headline,body,reflection_questions,notification_headline,created_at&order=created_at.desc&limit=30',
+        { headers });
+      if (tRes.ok) { const rows = await tRes.json(); if (rows?.length) tips = rows; }
+    } catch(_) {}
+  }
+  if (!tips.length && typeof PARENT_TIPS !== 'undefined') tips = PARENT_TIPS;
+  if (!tips.length) {
+    tips = [{ id: 'fallback-1', headline: 'Retrieval practice beats re-reading', body: 'Encouraging your child to try recalling information without looking at notes — even when it feels hard — strengthens memory far more than passive re-reading. The struggle itself is the learning.' }];
+  }
+
+  // Pick first tip created after last seen; fallback to most recent
+  let tip = null;
+  if (parentLastInsightAt) {
+    const lastDate = new Date(parentLastInsightAt);
+    tip = tips.find(function(t) { return t.created_at && new Date(t.created_at) > lastDate; });
+  }
+  if (!tip) tip = tips[0];
+
+  // Fetch bookmarks
+  if (!STATE.parentSavedTips) STATE.parentSavedTips = new Set();
+  if (token && user?.id) {
+    try {
+      const bRes = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/tip_bookmarks?user_id=eq.' + user.id + '&select=tip_id', { headers });
+      if (bRes.ok) {
+        const bRows = await bRes.json();
+        STATE.parentSavedTips = new Set(bRows.map(function(b) { return b.tip_id; }));
+      }
+    } catch(_) {}
+  }
+
+  // Mark as read
+  if (token && user?.id) {
+    fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: Object.assign({}, headers, { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }),
+      body: JSON.stringify({ parent_last_insight_at: new Date().toISOString() })
+    }).catch(function() {});
+  }
+
+  const reflections = (tip.reflection_questions && Array.isArray(tip.reflection_questions) && tip.reflection_questions.length >= 2)
+    ? tip.reflection_questions.slice(0, 3)
+    : [
+        'How does this connect to something you\'ve noticed about ' + childName + '\'s revision habits?',
+        'What\'s one small change you could encourage ' + childName + ' to make this week based on this?',
+        'Have you shared any learning strategies with ' + childName + ' recently — how did they respond?',
+      ];
+
+  render(buildParentTipScreenHTML(tip, childName, reflections, STATE.parentSavedTips.has(tip.id)));
+}
+
+function buildParentTipScreenHTML(tip, childName, reflections, isSaved) {
+  const ACC = '#7F77DD';
+  const tipId = tip.id || '';
+  const qs = reflections.map(function(q) {
+    return '<div style="display:flex;gap:10px;margin-bottom:14px;align-items:flex-start;">'
+      + '<span style="color:' + ACC + ';font-size:14px;font-weight:900;flex-shrink:0;margin-top:2px;">→</span>'
+      + '<div style="font-size:14px;color:#334155;font-weight:600;line-height:1.55;">' + q + '</div>'
+      + '</div>';
+  }).join('');
+
+  return '<div style="min-height:100vh;background:#F8FAFC;">'
+
+    // Top bar
+    + '<div style="padding:20px 20px 0;display:flex;align-items:center;gap:12px;">'
+    + '<button onclick="showParentPortal()" style="background:#F1F5F9;border:none;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:#0F172A;white-space:nowrap;">← Back</button>'
+    + '<div style="display:flex;align-items:center;gap:7px;flex:1;justify-content:center;">'
+    + '<div style="width:8px;height:8px;border-radius:50%;background:' + ACC + ';flex-shrink:0;"></div>'
+    + '<span style="font-size:12px;font-weight:700;color:#64748B;">Today\'s tip for ' + childName + '\'s parent</span>'
+    + '</div>'
+    + '<div style="width:70px;"></div>'
+    + '</div>'
+
+    // Cards
+    + '<div style="padding:20px;max-width:600px;margin:0 auto;">'
+
+    // Main tip card
+    + '<div style="background:white;border:1.5px solid #E2E8F0;border-radius:18px;padding:24px;margin-bottom:14px;">'
+    + '<div style="display:inline-flex;align-items:center;gap:7px;background:#EDE9FE;border-radius:20px;padding:7px 15px;margin-bottom:18px;">'
+    + '<span style="font-size:15px;">✨</span>'
+    + '<span style="font-size:11px;font-weight:800;color:' + ACC + ';letter-spacing:0.1em;">LEARNING INSIGHT</span>'
+    + '</div>'
+    + '<div style="font-size:19px;font-weight:900;color:#0F172A;line-height:1.32;margin-bottom:13px;">' + (tip.headline || '') + '</div>'
+    + '<div style="font-size:15px;color:#64748B;font-weight:600;line-height:1.65;">' + (tip.body || '') + '</div>'
+    + '</div>'
+
+    // Reflect card
+    + '<div style="background:white;border:1.5px solid #E2E8F0;border-radius:18px;padding:24px;margin-bottom:20px;">'
+    + '<div style="font-size:11px;font-weight:800;color:' + ACC + ';letter-spacing:0.12em;margin-bottom:16px;">REFLECT ON THIS</div>'
+    + qs
+    + '</div>'
+
+    // Action buttons
+    + '<div style="display:flex;gap:12px;padding-bottom:48px;">'
+    + '<button id="tip-screen-save-btn" onclick="toggleTipScreenSave(\'' + tipId + '\',this)" '
+    + 'style="flex:1;padding:15px 10px;border-radius:13px;border:1.5px solid ' + ACC + ';background:' + (isSaved ? ACC : 'white') + ';color:' + (isSaved ? 'white' : ACC) + ';font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">'
+    + (isSaved ? '🔖 Saved' : '🔖 Save')
+    + '</button>'
+    + '<button onclick="showParentPortal();setTimeout(function(){parentTab(\'feed\');},300)" '
+    + 'style="flex:1;padding:15px 10px;border-radius:13px;border:none;background:' + ACC + ';color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">'
+    + 'See all tips →'
+    + '</button>'
+    + '</div>'
+
+    + '</div></div>';
+}
+
+function toggleTipScreenSave(tipId, btn) {
+  const ACC = '#7F77DD';
+  if (!STATE.parentSavedTips) STATE.parentSavedTips = new Set();
+  const alreadySaved = STATE.parentSavedTips.has(tipId);
+  const token = STATE.user?.token;
+  const userId = STATE.user?.id;
+  if (alreadySaved) {
+    STATE.parentSavedTips.delete(tipId);
+    if (btn) { btn.innerHTML = '🔖 Save'; btn.style.background = 'white'; btn.style.color = ACC; }
+    if (token && userId && UUID_RE.test(tipId)) {
+      fetch(CONFIG.SUPABASE_URL + '/rest/v1/tip_bookmarks?user_id=eq.' + userId + '&tip_id=eq.' + tipId, {
+        method: 'DELETE', headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
+      }).catch(function() {});
+    }
+    showToast('Removed from saved');
+  } else {
+    STATE.parentSavedTips.add(tipId);
+    if (btn) { btn.innerHTML = '🔖 Saved'; btn.style.background = ACC; btn.style.color = 'white'; }
+    if (token && userId && UUID_RE.test(tipId)) {
+      fetch(CONFIG.SUPABASE_URL + '/rest/v1/tip_bookmarks', {
+        method: 'POST',
+        headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ user_id: userId, tip_id: tipId })
+      }).catch(function() {});
+    }
+    showToast('Saved! 🔖');
+  }
 }
 
 // ── Build one feed card ───────────────────────────────────────────────────────
@@ -8575,7 +8763,7 @@ async function showParentPortal() {
   // ── 1. Get parent's linked children — linked_student_ids array is source of truth ──
   let linkedStudentId = null;
   try {
-    const ppUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=linked_student_ids,linked_student_id,parent_last_insight_at';
+    const ppUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=linked_student_ids,linked_student_id,parent_last_insight_at,push_subscription';
     const ppRes = await fetch(ppUrl, { headers });
     const pp = ppRes.ok ? await ppRes.json() : [];
     console.log('[ParentPortal] parent profile:', JSON.stringify(pp), 'status:', ppRes.status);
@@ -8590,6 +8778,7 @@ async function showParentPortal() {
     console.log('[ParentPortal] idsArray:', idsArray, '→ linkedStudentId:', linkedStudentId);
 
     STATE._parentLastInsightAt = pp[0]?.parent_last_insight_at || null;
+    STATE._parentHasPushSub   = !!(pp[0]?.push_subscription);
   } catch(e) { console.error('[ParentPortal] parent profile fetch error:', e); }
 
   // ── 3. Fetch child profile + history ──
@@ -9177,6 +9366,10 @@ function buildParentProfileTabHTML(user, children, activeChildId) {
   h += '<button onclick="addLinkedChild()" style="width:100%;padding:12px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">Link Child →</button>';
   h += '</div>';
 
+  // ── Notifications section ──
+  const notifChildName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
+  h += '<div id="parent-notif-section">' + buildNotifSectionHTML('parent', notifChildName) + '</div>';
+
   // ── Collapsible Account Details ──
   h += '<div style="' + cardStyle + '">';
   h += '<div onclick="toggleParentAccountDetails()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;">';
@@ -9279,6 +9472,233 @@ function viewChildProgress(childId) {
   showParentPortal();
 }
 
+// ── Notifications section (shared by parent + student profiles) ───────────────
+function buildNotifSectionHTML(context, childName, hasPushSub, dailyTipsOn, studyAlertsOn) {
+  const permission = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
+  // When hasPushSub is not passed, use STATE (parent) or Notification.permission as proxy (student).
+  // refreshNotifSection() always passes the real DB-fetched value.
+  const isOn = permission === 'granted' && (hasPushSub !== undefined ? !!hasPushSub : (context === 'parent' ? !!STATE._parentHasPushSub : true));
+  const isParent = context === 'parent';
+  const cardStyle = isParent
+    ? 'background:white;border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid #E2E8F0;box-shadow:0 1px 6px rgba(0,0,0,.06);'
+    : 'background:white;border-radius:16px;padding:20px;margin-bottom:16px;border:1px solid #E2E8F0;';
+  const labelStyle = 'font-size:11px;font-weight:800;color:#64748B;letter-spacing:.08em;margin-bottom:12px;';
+  const cName = childName || 'your child';
+  const enableFn  = isParent ? 'enableParentNotifications()'  : 'enableStudentNotifications()';
+  const disableFn = isParent ? 'disableParentNotifications()' : 'disableStudentNotifications()';
+
+  let h = '<div style="' + cardStyle + '">';
+  h += '<div style="' + labelStyle + '">NOTIFICATIONS</div>';
+
+  if (permission === 'unsupported') {
+    h += '<div style="font-size:13px;color:#64748B;font-weight:600;line-height:1.5;">Push notifications aren\'t supported in this browser. Try adding the app to your home screen for full notification support.</div>';
+
+  } else if (permission === 'denied') {
+    h += '<div style="display:flex;gap:12px;align-items:flex-start;">'
+      + '<div style="font-size:22px;flex-shrink:0;">🔕</div>'
+      + '<div><div style="font-size:14px;font-weight:800;color:#EF4444;margin-bottom:5px;">Notifications blocked</div>'
+      + '<div style="font-size:13px;color:#64748B;font-weight:600;line-height:1.55;">Your browser is blocking notifications for this site. Open your browser or device <strong>Settings → Notifications</strong> and allow them for this site, then come back here.</div>'
+      + '</div></div>';
+
+  } else {
+    // Toggle row — tapping switches on/off
+    const toggleFn = isOn ? disableFn : enableFn;
+    const trackColor = isOn ? '#22C55E' : '#CBD5E1';
+    const knobPos    = isOn ? 'right:3px' : 'left:3px';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">'
+      + '<div>'
+      + '<div style="font-size:14px;font-weight:800;color:#0F172A;margin-bottom:3px;">Push notifications</div>'
+      + '<div style="font-size:12px;font-weight:600;color:' + (isOn ? '#16A34A' : '#94A3B8') + ';">'
+      + (isOn ? 'On — active on this device' : 'Off') + '</div>'
+      + '</div>'
+      + '<div onclick="' + toggleFn + '" style="flex-shrink:0;width:46px;height:26px;border-radius:13px;background:' + trackColor + ';position:relative;cursor:pointer;transition:background .2s;">'
+      + '<div style="position:absolute;' + knobPos + ';top:3px;width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.2);"></div>'
+      + '</div>'
+      + '</div>';
+
+    if (isOn) {
+      h += '<div style="border-top:1px solid #F1F5F9;padding-top:16px;margin-top:16px;">'
+        + '<div style="font-size:12px;font-weight:800;color:#64748B;margin-bottom:12px;">WHAT YOU\'LL RECEIVE</div>';
+      if (isParent) {
+        const dOn = dailyTipsOn !== undefined ? !!dailyTipsOn : true;
+        const sOn = studyAlertsOn !== undefined ? !!studyAlertsOn : true;
+        const safeCName = String(cName).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        h += buildNotifToggleRow('Daily learning tips', 'A personalised insight about how ' + cName + ' learns best, every 3 days', dOn,
+          "toggleNotifPref('parent','notif_daily_tips'," + dOn + ",'parent-notif-section','" + safeCName + "')");
+        h += buildNotifToggleRow('Study alerts for ' + cName, 'An evening nudge if ' + cName + ' hasn\'t studied yet', sOn,
+          "toggleNotifPref('parent','notif_study_alerts'," + sOn + ",'parent-notif-section','" + safeCName + "')");
+      } else {
+        h += buildNotifToggleRow('Study reminders', 'Daily prompt to review your flashcards', true);
+        h += buildNotifToggleRow('Streak alerts', 'A warning before you lose your study streak', false);
+      }
+      h += '</div>';
+    }
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function buildNotifToggleRow(label, description, enabled, onclickAttr) {
+  const clickable = !!onclickAttr;
+  return '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;' + (clickable ? 'cursor:pointer;' : '') + '"' + (clickable ? ' onclick="' + onclickAttr + '"' : '') + '>'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">'
+    + '<div style="font-size:13px;font-weight:800;color:' + (enabled ? '#0F172A' : '#94A3B8') + ';">' + label + '</div>'
+    + (!enabled && !clickable ? '<span style="font-size:10px;font-weight:800;color:#94A3B8;background:#F1F5F9;padding:2px 7px;border-radius:10px;">COMING SOON</span>' : '')
+    + '</div>'
+    + '<div style="font-size:12px;color:#94A3B8;font-weight:600;line-height:1.4;">' + description + '</div>'
+    + '</div>'
+    + (enabled
+      ? '<div style="flex-shrink:0;width:40px;height:22px;border-radius:11px;background:#22C55E;position:relative;margin-top:2px;">'
+        + '<div style="position:absolute;right:3px;top:3px;width:16px;height:16px;border-radius:50%;background:white;"></div>'
+        + '</div>'
+      : '<div style="flex-shrink:0;width:40px;height:22px;border-radius:11px;background:#E2E8F0;position:relative;margin-top:2px;' + (clickable ? '' : 'opacity:0.5;') + '">'
+        + '<div style="position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:white;' + (clickable ? '' : 'opacity:0.7;') + '"></div>'
+        + '</div>')
+    + '</div>';
+}
+
+// Single source of truth: fetches push_subscription + pref columns from Supabase and re-renders.
+// Called on every profile-tab open AND after every enable/disable action.
+async function refreshNotifSection(context, sectionId, childName) {
+  const sec = document.getElementById(sectionId);
+  if (!sec) return;
+
+  const permission = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
+  if (permission === 'unsupported' || permission === 'denied') {
+    sec.innerHTML = buildNotifSectionHTML(context, childName, false);
+    return;
+  }
+
+  const user = STATE.user;
+  let hasPushSub = false, dailyTipsOn = true, studyAlertsOn = true;
+  if (user?.token && user?.id) {
+    try {
+      const res = await fetch(
+        CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=push_subscription,notif_daily_tips,notif_study_alerts',
+        { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+      );
+      if (res.ok) {
+        const rows = await res.json();
+        hasPushSub     = !!(rows[0]?.push_subscription);
+        dailyTipsOn    = rows[0]?.notif_daily_tips !== false;
+        studyAlertsOn  = rows[0]?.notif_study_alerts !== false;
+      }
+    } catch(_) {}
+  }
+
+  sec.innerHTML = buildNotifSectionHTML(context, childName, hasPushSub, dailyTipsOn, studyAlertsOn);
+}
+
+async function toggleNotifPref(context, prefKey, currentValue, sectionId, childName) {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  const newValue = !currentValue;
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+      body: JSON.stringify({ [prefKey]: newValue })
+    });
+    if (!res.ok) { showToast('Could not save — please try again'); return; }
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) { showToast('Could not save — please try again'); return; }
+    showToast(newValue ? 'Turned on' : 'Turned off');
+  } catch(e) { showToast('Could not save — please try again'); return; }
+  await refreshNotifSection(context, sectionId, childName);
+}
+
+async function enableParentNotifications() {
+  if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+    showToast('Notifications not supported in this browser'); return;
+  }
+  if (Notification.permission === 'denied') {
+    showToast('Notifications are blocked — please enable them in your browser or device settings'); return;
+  }
+  const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+  const cName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
+  const sec = document.getElementById('parent-notif-section');
+  if (perm !== 'granted') {
+    if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName, false);
+    return;
+  }
+  const saved = await registerPushSubscription();
+  if (saved) {
+    STATE._parentHasPushSub = true;
+    if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName, true);
+    showToast('Notifications enabled! 🔔');
+  } else {
+    if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName, false);
+    showToast('Could not save — please try again');
+  }
+}
+
+async function disableParentNotifications() {
+  const user = STATE.user;
+  const cName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
+  if (!user?.token || !user?.id) return;
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ push_subscription: null })
+    });
+  } catch(_) {}
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) await sub.unsubscribe();
+  } catch(_) {}
+  STATE._parentHasPushSub = false;
+  const sec = document.getElementById('parent-notif-section');
+  if (sec) sec.innerHTML = buildNotifSectionHTML('parent', cName, false);
+  showToast('Notifications turned off');
+}
+
+async function enableStudentNotifications() {
+  if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+    showToast('Notifications not supported in this browser'); return;
+  }
+  if (Notification.permission === 'denied') {
+    showToast('Notifications are blocked — please enable them in your browser or device settings'); return;
+  }
+  const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+  const sec = document.getElementById('student-notif-section');
+  if (perm !== 'granted') {
+    if (sec) sec.innerHTML = buildNotifSectionHTML('student', null, false);
+    return;
+  }
+  const saved = await registerPushSubscription();
+  if (saved) {
+    if (sec) sec.innerHTML = buildNotifSectionHTML('student', null, true);
+    showToast('Notifications enabled! 🔔');
+  } else {
+    if (sec) sec.innerHTML = buildNotifSectionHTML('student', null, false);
+    showToast('Could not save — please try again');
+  }
+}
+
+async function disableStudentNotifications() {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ push_subscription: null })
+    });
+  } catch(_) {}
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) await sub.unsubscribe();
+  } catch(_) {}
+  const sec = document.getElementById('student-notif-section');
+  if (sec) sec.innerHTML = buildNotifSectionHTML('student', null, false);
+  showToast('Notifications turned off');
+}
+
 async function addLinkedChild() {
   const code = (document.getElementById('add-child-code')?.value || '').trim().toUpperCase();
   if (!code) { showToast('Enter a parent code'); return; }
@@ -9306,6 +9726,10 @@ function parentTab(tab) {
     STATE.parentHasNewInsight = false;
     const dot = document.getElementById('insight-badge-dot');
     if (dot) dot.style.display = 'none';
+  }
+  if (tab === 'profile') {
+    const cName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
+    refreshNotifSection('parent', 'parent-notif-section', cName);
   }
 }
 
@@ -9422,11 +9846,13 @@ async function init() {
 
   const saved = LS.get('demo_user');
 
+  const _urlScreen = new URLSearchParams(window.location.search).get('screen') || null;
+
   if (saved && saved.id && saved.refresh_token) {
     // Restore session immediately so there's no blank screen
     STATE.user = saved;
     STATE.role = saved.role || 'student';
-    afterLogin();
+    afterLogin(_urlScreen);
     // Validate token in background — redirect to auth silently if expired
     fetch(CONFIG.SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
       method: 'POST',
@@ -9471,13 +9897,21 @@ async function init() {
         };
         STATE.role = STATE.user.role;
         LS.set('demo_user', STATE.user);
-        afterLogin();
+        afterLogin(_urlScreen);
         return;
       }
     }
   } catch(e) {}
 
   showAuth();
+}
+
+// Register service worker early so navigator.serviceWorker.ready resolves for push notifications
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .catch(e => console.warn('SW registration failed:', e));
+  });
 }
 
 // Start app
