@@ -4839,14 +4839,18 @@ function showSignupError(msg) {
   showToast(msg, 5000);
 }
 
-function afterLogin(startScreen) {
+async function afterLogin(startScreen) {
   // Always refresh paid status in background after login
   loadUserPaidStatus();
   // Students always land on Home — never restore to a sub-screen on load
   if (startScreen === 'teacher') { showTeacherDashboard(); return; }
   if (startScreen === 'parent-insight') { showParentTipScreen(); return; }
   if (startScreen === 'parent') { showParentPortal(); setTimeout(requestPushPermission, 1500); return; }
-  if (STATE.role === 'student') { showHome(); setTimeout(requestPushPermission, 1500); }
+  if (STATE.role === 'student') {
+    await restoreCardProgressFromSupabase(STATE.user);
+    showHome();
+    setTimeout(requestPushPermission, 1500);
+  }
   else if (STATE.role === 'teacher') showTeacherDashboard();
   else { showParentPortal(); setTimeout(requestPushPermission, 1500); }
 }
@@ -5699,8 +5703,10 @@ function recordAndAdvance(cardId, grade) {
   // Update SRS via shared sm2Next
   const progress = LS.get('card_progress') || {};
   const existing = progress[cardId] || {};
-  progress[cardId] = { ...existing, ...sm2Next(existing, gradeNum), cardId };
+  const updated = { ...existing, ...sm2Next(existing, gradeNum), cardId };
+  progress[cardId] = updated;
   LS.set('card_progress', progress);
+  syncCardProgress(cardId, updated);
 
   incrementCardCount();
 
@@ -5820,6 +5826,55 @@ async function submitAIAnswer(cardId) {
   }
 }
 
+function syncCardProgress(cardId, prog) {
+  const user = STATE.user;
+  if (!user?.id || !user?.token) return;
+  fetch(CONFIG.SUPABASE_URL + '/rest/v1/card_progress', {
+    method: 'POST',
+    headers: {
+      'apikey': CONFIG.SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + user.token,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates,return=minimal'
+    },
+    body: JSON.stringify({
+      user_id: user.id,
+      card_id: cardId,
+      easy_count: prog.easyCount || 0,
+      interval: prog.interval || 1,
+      repetitions: prog.repetitions || 0,
+      next_review: prog.nextReview ? prog.nextReview.slice(0, 10) : null,
+      last_grade: prog.lastGrade ?? null,
+      last_reviewed: new Date().toISOString()
+    })
+  }).catch(() => {});
+}
+
+async function restoreCardProgressFromSupabase(user) {
+  if (!user?.id || !user?.token) return;
+  try {
+    const res = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/card_progress?user_id=eq.' + user.id + '&select=card_id,easy_count,interval,repetitions,next_review,last_grade',
+      { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) return;
+    const local = LS.get('card_progress') || {};
+    rows.forEach(r => {
+      local[r.card_id] = {
+        cardId: r.card_id,
+        easyCount: r.easy_count || 0,
+        interval: r.interval || 1,
+        repetitions: r.repetitions || 0,
+        nextReview: r.next_review ? new Date(r.next_review).toISOString() : null,
+        lastGrade: r.last_grade ?? null
+      };
+    });
+    LS.set('card_progress', local);
+  } catch(e) {}
+}
+
 function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
   const user = STATE.user;
   if (!user?.id || !user?.token) return;
@@ -5847,8 +5902,10 @@ function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
 function recordGrade(cardId, grade, aiGraded) {
   const progress = LS.get('card_progress') || {};
   const existing = progress[cardId] || {};
-  progress[cardId] = { ...existing, ...sm2Next(existing, grade), cardId };
+  const updated = { ...existing, ...sm2Next(existing, grade), cardId };
+  progress[cardId] = updated;
   LS.set('card_progress', progress);
+  syncCardProgress(cardId, updated);
 
   // Increment daily card count
   incrementCardCount();
