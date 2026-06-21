@@ -5715,7 +5715,8 @@ function recordAndAdvance(cardId, grade) {
     date: new Date().toISOString()
   });
   LS.set('card_history', history.slice(0, 200));
-  
+  syncStudyHistoryRow(cardId, gradeNum, card, true);
+
   // Show next button instead of auto-advancing
   const ratingWrap = document.getElementById('rating-wrap');
   if (ratingWrap) {
@@ -5793,7 +5794,7 @@ async function submitAIAnswer(cardId) {
   const result = await gradeAnswer(card.question, card.answer, answer, timeSeconds);
 
   const gradeNum = { 'again': 0, 'hard': 1, 'good': 2, 'easy': 3 }[result.grade] ?? 2;
-  recordGrade(cardId, gradeNum);
+  recordGrade(cardId, gradeNum, true);
 
   // Show feedback
   const feedbackArea = document.getElementById('ai-feedback-area');
@@ -5819,7 +5820,31 @@ async function submitAIAnswer(cardId) {
   }
 }
 
-function recordGrade(cardId, grade) {
+function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
+  const user = STATE.user;
+  if (!user?.id || !user?.token) return;
+  fetch(CONFIG.SUPABASE_URL + '/rest/v1/study_history', {
+    method: 'POST',
+    headers: {
+      'apikey': CONFIG.SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + user.token,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({
+      user_id: user.id,
+      card_id: cardId,
+      question: card?.question || card?.q || '',
+      subject: card?.subject || '',
+      topic_name: card?.topic_name || card?.topic || '',
+      grade: gradeNum,
+      ai_graded: !!aiGraded,
+      phase: STATE.sessionPhase || null
+    })
+  }).catch(() => {});
+}
+
+function recordGrade(cardId, grade, aiGraded) {
   const progress = LS.get('card_progress') || {};
   const existing = progress[cardId] || {};
   progress[cardId] = { ...existing, ...sm2Next(existing, grade), cardId };
@@ -5836,6 +5861,7 @@ function recordGrade(cardId, grade) {
     topic: card?.topic_name || card?.topic, grade, date: new Date().toISOString()
   });
   LS.set('card_history', history.slice(0, 200));
+  syncStudyHistoryRow(cardId, grade, card, aiGraded);
 }
 
 function nextCard() {
