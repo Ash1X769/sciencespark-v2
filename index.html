@@ -4425,6 +4425,9 @@ function getDueCards(user) {
   const due = [];
   const newCards = [];
   cards.forEach(c => {
+    // Skip cards already completed today (survive logout/refresh)
+    const doneToday = STATE.todayProgress[c.topic];
+    if (doneToday && doneToday.has(c.id)) return;
     if (!progress[c.id]) {
       newCards.push(c);
     } else if (new Date(progress[c.id].nextReview) <= now) {
@@ -7682,7 +7685,8 @@ function doLogout() {
     }).catch(() => {});
   }
   [localStorage, sessionStorage].forEach(store => {
-    Object.keys(store).filter(k => k.startsWith('ss_')).forEach(k => store.removeItem(k));
+    // Preserve ss_mid_session so the resume-session modal works after logout+login
+    Object.keys(store).filter(k => k.startsWith('ss_') && k !== 'ss_mid_session').forEach(k => store.removeItem(k));
   });
   Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token')).forEach(k => localStorage.removeItem(k));
   STATE.user = null;
@@ -7690,6 +7694,7 @@ function doLogout() {
   STATE.tutorHistory = [];
   STATE.cardQueue = [];
   STATE.currentCardIndex = 0;
+  STATE.todayProgress = {};
   showAuth();
 }
 
