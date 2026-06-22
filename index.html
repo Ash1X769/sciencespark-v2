@@ -4409,44 +4409,45 @@ function getCardsForUser(user) {
 
 function getDueCards(user) {
   const allCards = getCardsForUser(user);
-  // Free tier: restrict to primary subject only
-  const cards = user.is_paid ? allCards : allCards.filter(c => c.subject === (user.primary_subject || 'Biology'));
   const progress = LS.get('card_progress') || {};
   const now = new Date();
   const today = new Date().toDateString();
 
-  // Reset daily counts if new day
+  // Reset daily counts if new day (used by getTodaysCardCount elsewhere)
   const sessionState = LS.get('session_state') || {};
   if (sessionState.date !== today) {
     LS.set('session_state', { date: today, cardsStudied: 0 });
   }
 
-  // Separate due reviews and new cards
-  const due = [];
-  const newCards = [];
-  cards.forEach(c => {
-    if (STATE.todayDone[c.subject]?.has(c.id)) return;
-    if (!progress[c.id]) {
-      newCards.push(c);
-    } else if (new Date(progress[c.id].nextReview) <= now) {
-      due.push(c);
-    }
+  // Free tier: only primary subject; paid: all three
+  const subjects = user.is_paid
+    ? ['Biology', 'Chemistry', 'Physics']
+    : [user.primary_subject || 'Biology'];
+
+  const combined = [];
+
+  subjects.forEach(subject => {
+    // How many more cards is this student allowed for this subject today
+    const remaining = getRemainingCards(subject);
+    if (remaining <= 0) return;
+
+    const subjectCards = allCards.filter(
+      c => c.subject === subject && !STATE.todayDone[subject]?.has(c.id)
+    );
+
+    const due      = subjectCards.filter(c =>  progress[c.id] && new Date(progress[c.id].nextReview) <= now);
+    const newCards = subjectCards.filter(c => !progress[c.id]);
+
+    // Reviews first, fill remaining slots with new cards, cap at subject's daily allowance
+    const reviewPick = due.slice(0, remaining);
+    const newPick    = newCards.slice(0, remaining - reviewPick.length);
+    combined.push(...reviewPick, ...newPick);
   });
 
-  // Pick up to 4 review cards and 6 new cards
-  const reviewPick = due.slice(0, CONFIG.REVIEW_CARDS_PER_SESSION);
-  // Always give new users cards - default 6 new cards per session
-  const newSlots = Math.max(CONFIG.NEW_CARDS_PER_SESSION, CONFIG.CARDS_PER_SESSION - reviewPick.length);
-  const newPick = newCards.slice(0, newSlots);
-  const combined = [...reviewPick, ...newPick];
-
-  // Group by topic so the session feels coherent
-  // Find the most common topic in the combined set
+  // Sort by most common topic so the session feels coherent
   const topicCounts = {};
   combined.forEach(c => { topicCounts[c.topic] = (topicCounts[c.topic] || 0) + 1; });
   const primaryTopic = Object.entries(topicCounts).sort((a,b) => b[1]-a[1])[0]?.[0];
-
-  // Put primary topic cards first
   if (primaryTopic) {
     combined.sort((a, b) => {
       if (a.topic === primaryTopic && b.topic !== primaryTopic) return -1;
