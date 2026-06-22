@@ -4424,6 +4424,7 @@ function getDueCards(user) {
   // Separate due reviews and new cards
   const due = [];
   const newCards = [];
+  console.log('todayDone:', JSON.stringify(Object.fromEntries(Object.entries(STATE.todayDone||{}).map(([k,v])=>[k,[...v]]))));
   cards.forEach(c => {
     // Skip cards already completed today (survive logout/refresh)
     const doneToday = STATE.todayProgress[c.topic];
@@ -4434,6 +4435,7 @@ function getDueCards(user) {
       due.push(c);
     }
   });
+  console.log('newCards before filter:', newCards.length, 'after filter:', newCards.filter(c=>!STATE.todayDone?.[c.subject]?.has(c.id)).length);
 
   // Pick up to 4 review cards and 6 new cards
   const reviewPick = due.slice(0, CONFIG.REVIEW_CARDS_PER_SESSION);
@@ -5882,6 +5884,7 @@ function syncCardProgress(cardId, prog) {
 
 async function restoreCardProgressFromSupabase(user) {
   if (!user?.id || !user?.token) return;
+  console.log('restoring for user', user.id);
   const headers = { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token };
 
   // Multi-user guard: if the locally cached progress belongs to a different user, discard it
@@ -5924,6 +5927,7 @@ async function restoreCardProgressFromSupabase(user) {
     );
     if (res2.ok) {
       const todayRows = await res2.json();
+      console.log('today study_history rows:', todayRows.length, JSON.stringify(todayRows.slice(0,3)));
       const todayProgress = {};
       (todayRows || []).forEach(r => {
         // Derive topic key from card_id prefix e.g. 'b1_001' → 'B1'
