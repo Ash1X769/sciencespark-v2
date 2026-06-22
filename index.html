@@ -5271,7 +5271,11 @@ function showHome() {
   const subjects = ['Biology', 'Chemistry', 'Physics'];
   const subjectData = subjects.map(subj => {
     const cards = allCards.filter(c => c.subject === subj);
-    const due = cards.filter(c => !progress[c.id] || new Date(progress[c.id].nextReview) <= now);
+    const due = cards.filter(c => {
+      const doneToday = STATE.todayProgress[c.topic];
+      if (doneToday && doneToday.has(c.id)) return false;
+      return !progress[c.id] || new Date(progress[c.id].nextReview) <= now;
+    });
     return { subj, cards: cards.length, due: Math.min(due.length, 10), color: subjectColor(subj), emoji: subj === 'Biology' ? '🌿' : subj === 'Chemistry' ? '⚗️' : '⚡' };
   });
 
@@ -5879,6 +5883,14 @@ function syncCardProgress(cardId, prog) {
 async function restoreCardProgressFromSupabase(user) {
   if (!user?.id || !user?.token) return;
   const headers = { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token };
+
+  // Multi-user guard: if the locally cached progress belongs to a different user, discard it
+  const cpOwner = LS.get('cp_owner');
+  if (cpOwner && cpOwner !== user.id) {
+    LS.del('card_progress');
+  }
+  LS.set('cp_owner', user.id);
+
   try {
     const res = await fetch(
       CONFIG.SUPABASE_URL + '/rest/v1/card_progress?user_id=eq.' + user.id + '&select=card_id,easy_count,interval,repetitions,next_review,last_grade',
@@ -7685,8 +7697,12 @@ function doLogout() {
     }).catch(() => {});
   }
   [localStorage, sessionStorage].forEach(store => {
-    // Preserve ss_mid_session so the resume-session modal works after logout+login
-    Object.keys(store).filter(k => k.startsWith('ss_') && k !== 'ss_mid_session').forEach(k => store.removeItem(k));
+    // Keep ss_card_progress (written synchronously on every grade — wiping it causes re-login data loss
+    // if fire-and-forget Supabase syncs haven't completed yet).
+    // Keep ss_mid_session so the resume modal works after logout+login.
+    // Keep ss_cp_owner so the multi-user guard in restoreCardProgressFromSupabase can detect a different user.
+    const keep = new Set(['ss_card_progress', 'ss_mid_session', 'ss_cp_owner']);
+    Object.keys(store).filter(k => k.startsWith('ss_') && !keep.has(k)).forEach(k => store.removeItem(k));
   });
   Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token')).forEach(k => localStorage.removeItem(k));
   STATE.user = null;
