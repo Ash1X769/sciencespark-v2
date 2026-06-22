@@ -1886,7 +1886,7 @@ let STATE = {
   sessionDuration: 10,
   flashcardFlipped: false,
   pendingAnswerTime: null,
-  todayProgress: {}, // { [topicKey]: Set of card_ids done today }
+  todayDone: {}, // { [subject: string]: Set<cardId> } — cards graded today, keyed by subject
 };
 
 // ============================================================
@@ -4424,18 +4424,14 @@ function getDueCards(user) {
   // Separate due reviews and new cards
   const due = [];
   const newCards = [];
-  console.log('todayDone:', JSON.stringify(Object.fromEntries(Object.entries(STATE.todayDone||{}).map(([k,v])=>[k,[...v]]))));
   cards.forEach(c => {
-    // Skip cards already completed today (survive logout/refresh)
-    const doneToday = STATE.todayProgress[c.topic];
-    if (doneToday && doneToday.has(c.id)) return;
+    if (STATE.todayDone[c.subject]?.has(c.id)) return;
     if (!progress[c.id]) {
       newCards.push(c);
     } else if (new Date(progress[c.id].nextReview) <= now) {
       due.push(c);
     }
   });
-  console.log('newCards before filter:', newCards.length, 'after filter:', newCards.filter(c=>!STATE.todayDone?.[c.subject]?.has(c.id)).length);
 
   // Pick up to 4 review cards and 6 new cards
   const reviewPick = due.slice(0, CONFIG.REVIEW_CARDS_PER_SESSION);
@@ -5274,8 +5270,7 @@ function showHome() {
   const subjectData = subjects.map(subj => {
     const cards = allCards.filter(c => c.subject === subj);
     const due = cards.filter(c => {
-      const doneToday = STATE.todayProgress[c.topic];
-      if (doneToday && doneToday.has(c.id)) return false;
+      if (STATE.todayDone[c.subject]?.has(c.id)) return false;
       return !progress[c.id] || new Date(progress[c.id].nextReview) <= now;
     });
     return { subj, cards: cards.length, due: Math.min(due.length, 10), color: subjectColor(subj), emoji: subj === 'Biology' ? '🌿' : subj === 'Chemistry' ? '⚗️' : '⚡' };
@@ -5736,9 +5731,11 @@ function recordAndAdvance(cardId, grade) {
   LS.set('card_progress', progress);
   syncCardProgress(cardId, updated);
 
-  // Track today's topic progress in-memory
-  const topicKey = card?.topic || cardId.split('_')[0].toUpperCase();
-  markCardDoneToday(cardId, topicKey);
+  // Track today's progress in-memory, keyed by subject
+  if (card?.subject) {
+    if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
+    STATE.todayDone[card.subject].add(cardId);
+  }
 
   incrementCardCount();
 
@@ -5884,7 +5881,6 @@ function syncCardProgress(cardId, prog) {
 
 async function restoreCardProgressFromSupabase(user) {
   if (!user?.id || !user?.token) return;
-  console.log('restoring for user', user.id);
   const headers = { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token };
 
   // Multi-user guard: if the locally cached progress belongs to a different user, discard it
@@ -5922,33 +5918,27 @@ async function restoreCardProgressFromSupabase(user) {
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
     const res2 = await fetch(
       CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=eq.' + user.id +
-      '&created_at=gte.' + today + 'T00:00:00Z&select=card_id',
+      '&created_at=gte.' + today + 'T00:00:00Z&select=card_id,subject',
       { headers }
     );
     if (res2.ok) {
       const todayRows = await res2.json();
-      console.log('today study_history rows:', todayRows.length, JSON.stringify(todayRows.slice(0,3)));
-      const todayProgress = {};
+      const todayDone = {};
       (todayRows || []).forEach(r => {
-        // Derive topic key from card_id prefix e.g. 'b1_001' → 'B1'
-        const topicKey = r.card_id.split('_')[0].toUpperCase();
-        if (!todayProgress[topicKey]) todayProgress[topicKey] = new Set();
-        todayProgress[topicKey].add(r.card_id);
+        if (!r.subject) return;
+        if (!todayDone[r.subject]) todayDone[r.subject] = new Set();
+        todayDone[r.subject].add(r.card_id);
       });
-      STATE.todayProgress = todayProgress;
+      STATE.todayDone = todayDone;
     }
   } catch(e) {}
 }
 
-// Return how many cards a student has already done today for a topic
-function getTodayDoneForTopic(topicKey) {
-  return STATE.todayProgress[topicKey] ? STATE.todayProgress[topicKey].size : 0;
-}
-
-// Mark a card as done today in-memory (called on each graded card)
-function markCardDoneToday(cardId, topicKey) {
-  if (!STATE.todayProgress[topicKey]) STATE.todayProgress[topicKey] = new Set();
-  STATE.todayProgress[topicKey].add(cardId);
+function isSubjectLockedToday(subject) {
+  const user = STATE.user;
+  const subjectKey = { Biology: 'bio', Chemistry: 'chem', Physics: 'phys' }[subject];
+  const limit = (subjectKey && user?.[subjectKey + '_cards_per_day']) || CONFIG.CARDS_PER_SESSION;
+  return (STATE.todayDone[subject]?.size || 0) >= limit;
 }
 
 function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
@@ -5984,10 +5974,12 @@ function recordGrade(cardId, grade, aiGraded) {
   LS.set('card_progress', progress);
   syncCardProgress(cardId, updated);
 
-  // Track today's topic progress in-memory
+  // Track today's progress in-memory, keyed by subject
   const card = STATE.cardQueue[STATE.currentCardIndex];
-  const topicKey = card?.topic || cardId.split('_')[0].toUpperCase();
-  markCardDoneToday(cardId, topicKey);
+  if (card?.subject) {
+    if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
+    STATE.todayDone[card.subject].add(cardId);
+  }
 
   // Increment daily card count
   incrementCardCount();
@@ -6959,8 +6951,7 @@ function startFlashcardsForTopic(topicKey) {
   const allTopicCards = SAMPLE_CARDS.filter(c => c.topic === topicKey);
   if (allTopicCards.length === 0) { showToast('No cards for this topic yet'); return; }
 
-  const doneTodayIds = STATE.todayProgress[topicKey] || new Set();
-  const remaining = allTopicCards.filter(c => !doneTodayIds.has(c.id));
+  const remaining = allTopicCards.filter(c => !STATE.todayDone[c.subject]?.has(c.id));
 
   if (remaining.length === 0) {
     showModal(`<div class="modal-handle"></div>
@@ -7714,7 +7705,7 @@ function doLogout() {
   STATE.tutorHistory = [];
   STATE.cardQueue = [];
   STATE.currentCardIndex = 0;
-  STATE.todayProgress = {};
+  STATE.todayDone = {};
   showAuth();
 }
 
