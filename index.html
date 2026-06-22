@@ -5042,32 +5042,43 @@ function urlBase64ToUint8Array(base64String) {
 // STUDENT HOME SCREEN
 // ============================================================
 
-function showStudyHistory() {
+async function showStudyHistory() {
   STATE.screen = 'history'; saveScreen('history');
-  const history = LS.get('card_history') || [];
+  const user = STATE.user;
   const progress = LS.get('card_progress') || {};
 
   const gradeColor = { again:'#DC2626', hard:'#D97706', good:'#16A34A', easy:'#4F46E5', 0:'#DC2626', 1:'#D97706', 2:'#16A34A', 3:'#4F46E5' };
   const gradeLabel = { again:'Again', hard:'Hard', good:'Good', easy:'Easy', 0:'Again', 1:'Hard', 2:'Good', 3:'Easy' };
   const gradeEmoji = { again:'😵', hard:'😰', good:'🙂', easy:'🌟', 0:'😵', 1:'😰', 2:'🙂', 3:'🌟' };
 
-  // Aggregate: one entry per card (history is newest-first, so first hit = most recent)
+  // Fetch last 80 rows from Supabase, ordered newest-first
+  let rows = [];
+  if (user?.id && user?.token) {
+    try {
+      const res = await fetch(
+        CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=eq.' + user.id +
+        '&select=card_id,subject,topic_name,grade,created_at&order=created_at.desc&limit=80',
+        { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+      );
+      if (res.ok) rows = await res.json();
+    } catch(e) {}
+  }
+
+  // Aggregate: one entry per card (rows already newest-first, so first hit = most recent grade)
   const byCard = {};
-  history.forEach(h => {
-    const key = h.cardId || h.id || h.question;
-    if (!key) return;
-    if (!byCard[key]) {
-      byCard[key] = {
-        cardId: key,
-        question: h.question,
-        subject: h.subject,
-        topic: h.topic,
-        grade: h.grade,
-        date: h.date,
+  rows.forEach(r => {
+    if (!r.card_id) return;
+    if (!byCard[r.card_id]) {
+      byCard[r.card_id] = {
+        cardId: r.card_id,
+        subject: r.subject,
+        topic: r.topic_name,
+        grade: r.grade,
+        date: r.created_at,
         attempts: 1
       };
     } else {
-      byCard[key].attempts++;
+      byCard[r.card_id].attempts++;
     }
   });
   const cards = Object.values(byCard);
@@ -5097,7 +5108,7 @@ function showStudyHistory() {
         const em = gradeEmoji[grade] || '📚';
         const date = h.date ? new Date(h.date).toLocaleDateString('en-GB', {day:'numeric',month:'short'}) : '';
         const subjectEmoji = h.subject === 'Biology' ? '🌿' : h.subject === 'Chemistry' ? '⚗️' : '⚡';
-        const qText = (h.question || 'Card').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+        const qText = h.topic || h.cardId || 'Card';
         const prog = progress[h.cardId];
         let dueStr = '';
         if (prog?.nextReview) {
@@ -6979,116 +6990,9 @@ function startFlashcardsForTopic(topicKey) {
 // ============================================================
 // PROGRESS / HISTORY SCREEN
 // ============================================================
-async function showHistory() {
-  console.log('showHistory called, user:', STATE.user?.id, 'token:', STATE.user?.token ? 'yes' : 'no');
-  STATE.screen = 'history';
-  const user = STATE.user;
-  const progress = LS.get('card_progress') || {};
-  const cards = getCardsForUser(user);
-
-  // Topic mastery (from local card_progress)
-  const topicGroups = {};
-  cards.forEach(c => {
-    if (!topicGroups[c.topic]) topicGroups[c.topic] = { name: c.topic_name, subject: c.subject, total: 0, mastered: 0 };
-    topicGroups[c.topic].total++;
-    const p = progress[c.id];
-    if (p && (p.lastGrade ?? -1) >= 2) topicGroups[c.topic].mastered++;
-  });
-
-  // Fetch recent history directly from Supabase
-  let history = [];
-  if (user?.id && user?.token) {
-    try {
-      const res = await fetch(
-        CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=eq.' + user.id +
-        '&select=card_id,subject,topic_name,grade,created_at&order=created_at.desc&limit=80',
-        { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
-      );
-      if (res.ok) history = await res.json();
-      console.log('study_history fetch status:', res.status, 'rows:', history.length);
-    } catch(e) {}
-  }
-
-  const html = `
-${renderNavBar('history')}
-<div class="screen" id="screen-history">
-  <div class="top-bar">
-    <div></div>
-    <div style="font-size:18px;font-weight:800;">My Progress</div>
-    <div></div>
-  </div>
-
-  <div style="flex:1;overflow-y:auto;padding:20px 20px 100px;">
-    <!-- Stats summary -->
-    <div class="stats-grid" style="margin-bottom:20px;">
-      <div class="stat-card">
-        <div class="stat-number" style="color:var(--ss-green);">${user.streak || 0}</div>
-        <div class="stat-label">Day Streak 🔥</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number" style="color:var(--ss-blue);">${user.xp || 0}</div>
-        <div class="stat-label">Total XP</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number" style="color:var(--ss-orange);">${Object.keys(progress).length}</div>
-        <div class="stat-label">Cards Done</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number" style="color:var(--ss-purple);">Lvl ${Math.floor((user.xp||0)/CONFIG.XP_PER_LEVEL)+1}</div>
-        <div class="stat-label">Level</div>
-      </div>
-    </div>
-
-    <!-- Topic progress -->
-    <div class="section-title">Topic Progress</div>
-    ${Object.entries(topicGroups).map(([key, t]) => {
-      const pct = t.total > 0 ? Math.round((t.mastered/t.total)*100) : 0;
-      const color = pct >= 80 ? 'var(--ss-green)' : pct >= 50 ? 'var(--ss-blue)' : 'var(--ss-orange)';
-      return `
-        <div class="topic-progress">
-          <div class="topic-progress-header">
-            <div class="topic-progress-name">${t.name || key}</div>
-            <div class="topic-progress-pct" style="color:${color};">${pct}%</div>
-          </div>
-          <div class="topic-progress-bar">
-            <div class="topic-progress-fill" style="width:${pct}%;background:${color};"></div>
-          </div>
-        </div>`;
-    }).join('') || '<p style="color:var(--text-secondary);font-weight:600;font-size:14px;">No data yet — complete your first session!</p>'}
-
-    <!-- Recent history -->
-    <div class="section-title" style="margin-top:24px;">Recent Cards (last ${history.length})</div>
-    ${history.length === 0
-      ? '<p style="color:var(--text-secondary);font-weight:600;font-size:14px;">No history yet — complete your first session!</p>'
-      : history.map(r => {
-          const gradeMap = { 0: 'again', 1: 'hard', 2: 'good', 3: 'easy' };
-          const grade = gradeMap[r.grade] || 'good';
-          const date = new Date(r.created_at).toLocaleDateString('en-GB', {day:'numeric',month:'short'});
-          const prog = progress[r.card_id];
-          let dueLine = '';
-          if (prog?.nextReview) {
-            const due = new Date(prog.nextReview);
-            dueLine = due <= new Date()
-              ? 'Due now'
-              : 'Next due: ' + due.toLocaleDateString('en-GB', {day:'numeric',month:'short'});
-          }
-          return `
-            <div class="history-item">
-              <div class="history-grade history-grade-${grade}">${grade.substring(0,1).toUpperCase()}</div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.topic_name || r.card_id}</div>
-                <div style="font-size:11px;color:var(--text-secondary);font-weight:600;margin-top:2px;">${r.subject || ''} · ${date}</div>
-                ${dueLine ? `<div style="font-size:11px;font-weight:700;color:#4F46E5;margin-top:2px;">📅 ${dueLine}</div>` : ''}
-              </div>
-            </div>`;
-        }).join('')}
-  </div>
-
-
-</div>`;
-
-  render(html);
-}
+// DEAD CODE — showHistory is never called. The History nav tab calls showStudyHistory().
+// Kept as a tombstone to prevent future confusion. Do not add logic here.
+// function showHistory() {}
 
 // ============================================================
 // PROFILE SCREEN
