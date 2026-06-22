@@ -6979,14 +6979,13 @@ function startFlashcardsForTopic(topicKey) {
 // ============================================================
 // PROGRESS / HISTORY SCREEN
 // ============================================================
-function showHistory() {
+async function showHistory() {
   STATE.screen = 'history';
   const user = STATE.user;
-  const history = (LS.get('card_history') || []).slice(0, 80);
   const progress = LS.get('card_progress') || {};
   const cards = getCardsForUser(user);
 
-  // Topic mastery
+  // Topic mastery (from local card_progress)
   const topicGroups = {};
   cards.forEach(c => {
     if (!topicGroups[c.topic]) topicGroups[c.topic] = { name: c.topic_name, subject: c.subject, total: 0, mastered: 0 };
@@ -6994,6 +6993,19 @@ function showHistory() {
     const p = progress[c.id];
     if (p && (p.lastGrade ?? -1) >= 2) topicGroups[c.topic].mastered++;
   });
+
+  // Fetch recent history directly from Supabase
+  let history = [];
+  if (user?.id && user?.token) {
+    try {
+      const res = await fetch(
+        CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=eq.' + user.id +
+        '&select=card_id,subject,topic_name,grade,created_at&order=created_at.desc&limit=80',
+        { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+      );
+      if (res.ok) history = await res.json();
+    } catch(e) {}
+  }
 
   const html = `
 ${renderNavBar('history')}
@@ -7046,12 +7058,11 @@ ${renderNavBar('history')}
     <div class="section-title" style="margin-top:24px;">Recent Cards (last ${history.length})</div>
     ${history.length === 0
       ? '<p style="color:var(--text-secondary);font-weight:600;font-size:14px;">No history yet — complete your first session!</p>'
-      : history.map(h => {
+      : history.map(r => {
           const gradeMap = { 0: 'again', 1: 'hard', 2: 'good', 3: 'easy' };
-          const grade = gradeMap[h.grade] || 'good';
-          const date = new Date(h.date).toLocaleDateString('en-GB', {day:'numeric',month:'short'});
-          const q = (h.question || '—').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-          const prog = progress[h.cardId];
+          const grade = gradeMap[r.grade] || 'good';
+          const date = new Date(r.created_at).toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+          const prog = progress[r.card_id];
           let dueLine = '';
           if (prog?.nextReview) {
             const due = new Date(prog.nextReview);
@@ -7063,8 +7074,8 @@ ${renderNavBar('history')}
             <div class="history-item">
               <div class="history-grade history-grade-${grade}">${grade.substring(0,1).toUpperCase()}</div>
               <div style="flex:1;min-width:0;">
-                <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${q}</div>
-                <div style="font-size:11px;color:var(--text-secondary);font-weight:600;margin-top:2px;">${h.subject || ''} · ${h.topic || ''} · ${date}</div>
+                <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.topic_name || r.card_id}</div>
+                <div style="font-size:11px;color:var(--text-secondary);font-weight:600;margin-top:2px;">${r.subject || ''} · ${date}</div>
                 ${dueLine ? `<div style="font-size:11px;font-weight:700;color:#4F46E5;margin-top:2px;">📅 ${dueLine}</div>` : ''}
               </div>
             </div>`;
