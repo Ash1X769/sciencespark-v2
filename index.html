@@ -5313,12 +5313,23 @@ function showHome() {
 
   const subjectCards = subjectData.map(s => {
     const isPrimary = s.subj === primary.subj;
-    return '<div style="border-radius:14px;padding:20px 10px 16px;text-align:center;background:' + s.color + '15;border:2px solid ' + s.color + ';position:relative;cursor:pointer;transition:transform 0.15s;" onclick="startFlashcards()">' +
-      '<div style="position:absolute;top:10px;right:10px;background:#EF4444;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;box-shadow:0 2px 6px rgba(239,68,68,0.4);">' + s.due + '</div>' +
+    const locked = isSubjectLockedToday(s.subj);
+    const doneCount = STATE.todayDone[s.subj]?.size || 0;
+    const partiallyDone = !locked && doneCount > 0;
+    const badge = locked
+      ? '<div style="position:absolute;top:10px;right:10px;font-size:20px;line-height:1;">🔒</div>'
+      : '<div style="position:absolute;top:10px;right:10px;background:#EF4444;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;box-shadow:0 2px 6px rgba(239,68,68,0.4);">' + s.due + '</div>';
+    const statusLine = locked
+      ? '<div style="font-size:12px;color:#16A34A;font-weight:700;margin-top:3px;">Complete for today ✓</div>'
+      : partiallyDone
+        ? '<div style="font-size:12px;color:#D97706;font-weight:700;margin-top:3px;">' + getRemainingCards(s.subj) + ' cards remaining</div>'
+        : '<div style="font-size:12px;color:#64748B;font-weight:700;margin-top:3px;">' + s.due + ' cards left</div>';
+    return '<div style="border-radius:14px;padding:20px 10px 16px;text-align:center;background:' + s.color + '15;border:2px solid ' + s.color + ';position:relative;cursor:pointer;transition:transform 0.15s;" onclick="startFlashcardsForSubject(\'' + s.subj + '\')">' +
+      badge +
       (isPrimary ? '<div style="font-size:12px;font-weight:900;color:#4F8EF7;margin-bottom:6px;letter-spacing:0.05em;">TODAY</div>' : '<div style="height:18px;margin-bottom:6px;"></div>') +
       '<div style="font-size:32px;margin-bottom:8px;">' + s.emoji + '</div>' +
       '<div style="font-size:15px;font-weight:900;color:#0F172A;">' + s.subj + '</div>' +
-      '<div style="font-size:12px;color:#64748B;font-weight:700;margin-top:3px;">' + s.due + ' cards left</div>' +
+      statusLine +
       '</div>';
   }).join('');
 
@@ -5950,6 +5961,54 @@ function isSubjectLockedToday(subject) {
   const subjectKey = { Biology: 'bio', Chemistry: 'chem', Physics: 'phys' }[subject];
   const limit = (subjectKey && user?.[subjectKey + '_cards_per_day']) || CONFIG.CARDS_PER_SESSION;
   return (STATE.todayDone[subject]?.size || 0) >= limit;
+}
+
+function getSubjectLimit(subject) {
+  const user = STATE.user;
+  const subjectKey = { Biology: 'bio', Chemistry: 'chem', Physics: 'phys' }[subject];
+  return (subjectKey && user?.[subjectKey + '_cards_per_day']) || CONFIG.CARDS_PER_SESSION;
+}
+
+function getRemainingCards(subject) {
+  return Math.max(0, getSubjectLimit(subject) - (STATE.todayDone[subject]?.size || 0));
+}
+
+function startFlashcardsForSubject(subject) {
+  if (isSubjectLockedToday(subject)) {
+    showModal(`<div class="modal-handle"></div>
+      <div style="text-align:center;padding:8px 0 4px;">
+        <div style="font-size:44px;margin-bottom:8px;">🔒</div>
+        <div class="modal-title">All done for today!</div>
+        <p style="color:var(--text-secondary);font-weight:600;font-size:15px;line-height:1.5;">
+          You've completed your ${subject} cards for today! Come back tomorrow 🔒
+        </p>
+        <button class="btn btn-primary btn-full" style="margin-top:20px;" onclick="closeModal()">Got it</button>
+      </div>`);
+    return;
+  }
+
+  const remaining = getRemainingCards(subject);
+  const queue = getDueCards(STATE.user).filter(c => c.subject === subject).slice(0, remaining);
+
+  if (queue.length === 0) {
+    showModal(`<div class="modal-handle"></div>
+      <div style="text-align:center;padding:8px 0 4px;">
+        <div style="font-size:44px;margin-bottom:8px;">✅</div>
+        <div class="modal-title">No cards due for ${subject} right now</div>
+        <p style="color:var(--text-secondary);font-weight:600;font-size:15px;line-height:1.5;">
+          All caught up! Check back later or try a different subject.
+        </p>
+        <button class="btn btn-primary btn-full" style="margin-top:20px;" onclick="closeModal()">OK</button>
+      </div>`);
+    return;
+  }
+
+  LS.del('mid_session');
+  STATE.cardQueue = queue;
+  STATE.cardsDone = [];
+  STATE.currentCardIndex = 0;
+  STATE.screen = 'flashcards';
+  renderFlashcard();
 }
 
 function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
@@ -6962,9 +7021,24 @@ function startFlashcardsForTopic(topicKey) {
   const allTopicCards = SAMPLE_CARDS.filter(c => c.topic === topicKey);
   if (allTopicCards.length === 0) { showToast('No cards for this topic yet'); return; }
 
-  const remaining = allTopicCards.filter(c => !STATE.todayDone[c.subject]?.has(c.id));
+  const subject = allTopicCards[0].subject;
 
-  if (remaining.length === 0) {
+  if (isSubjectLockedToday(subject)) {
+    showModal(`<div class="modal-handle"></div>
+      <div style="text-align:center;padding:8px 0 4px;">
+        <div style="font-size:44px;margin-bottom:8px;">🔒</div>
+        <div class="modal-title">All done for today!</div>
+        <p style="color:var(--text-secondary);font-weight:600;font-size:15px;line-height:1.5;">
+          You've completed your ${subject} cards for today! Come back tomorrow 🔒
+        </p>
+        <button class="btn btn-primary btn-full" style="margin-top:20px;" onclick="closeModal()">Back</button>
+      </div>`);
+    return;
+  }
+
+  const notDoneToday = allTopicCards.filter(c => !STATE.todayDone[c.subject]?.has(c.id));
+
+  if (notDoneToday.length === 0) {
     showModal(`<div class="modal-handle"></div>
       <div style="text-align:center;padding:8px 0 4px;">
         <div style="font-size:44px;margin-bottom:8px;">🔒</div>
@@ -6977,10 +7051,11 @@ function startFlashcardsForTopic(topicKey) {
     return;
   }
 
-  // Clear any mid-session snapshot for a fresh start
-  LS.del('mid_session');
+  // Cap to subject's remaining daily allowance
+  const queue = notDoneToday.slice(0, getRemainingCards(subject));
 
-  STATE.cardQueue = remaining;
+  LS.del('mid_session');
+  STATE.cardQueue = queue;
   STATE.currentCardIndex = 0;
   STATE.cardsDone = [];
   STATE._activeTopic = topicKey;
