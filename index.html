@@ -1886,6 +1886,7 @@ let STATE = {
   sessionDuration: 10,
   flashcardFlipped: false,
   pendingAnswerTime: null,
+  todayProgress: {}, // { [topicKey]: Set of card_ids done today }
 };
 
 // ============================================================
@@ -4849,6 +4850,24 @@ async function afterLogin(startScreen) {
   if (STATE.role === 'student') {
     await restoreCardProgressFromSupabase(STATE.user);
     showHome();
+    // Offer to resume mid-session if one was saved
+    const snap = LS.get('mid_session');
+    const today = new Date().toISOString().slice(0, 10);
+    if (snap && snap.userId === STATE.user.id && snap.date === today && snap.queue?.length > 0 && snap.index < snap.queue.length) {
+      const remaining = snap.queue.length - snap.index;
+      setTimeout(() => {
+        showModal(`<div class="modal-handle"></div>
+          <div style="text-align:center;padding:8px 0 4px;">
+            <div style="font-size:40px;margin-bottom:8px;">📖</div>
+            <div class="modal-title">Resume where you left off?</div>
+            <p style="color:var(--text-secondary);font-weight:600;font-size:15px;line-height:1.5;">
+              You have <strong>${remaining}</strong> card${remaining !== 1 ? 's' : ''} left in your session from earlier today.
+            </p>
+            <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="closeModal();resumeMidSession()">Resume session</button>
+            <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal();LS.del('mid_session')">Start fresh</button>
+          </div>`);
+      }, 600);
+    }
     setTimeout(requestPushPermission, 1500);
   }
   else if (STATE.role === 'teacher') showTeacherDashboard();
@@ -5708,6 +5727,10 @@ function recordAndAdvance(cardId, grade) {
   LS.set('card_progress', progress);
   syncCardProgress(cardId, updated);
 
+  // Track today's topic progress in-memory
+  const topicKey = card?.topic || cardId.split('_')[0].toUpperCase();
+  markCardDoneToday(cardId, topicKey);
+
   incrementCardCount();
 
   // Save to history
@@ -5852,27 +5875,61 @@ function syncCardProgress(cardId, prog) {
 
 async function restoreCardProgressFromSupabase(user) {
   if (!user?.id || !user?.token) return;
+  const headers = { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token };
   try {
     const res = await fetch(
       CONFIG.SUPABASE_URL + '/rest/v1/card_progress?user_id=eq.' + user.id + '&select=card_id,easy_count,interval,repetitions,next_review,last_grade',
-      { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+      { headers }
     );
     if (!res.ok) return;
     const rows = await res.json();
-    if (!Array.isArray(rows) || rows.length === 0) return;
-    const local = LS.get('card_progress') || {};
-    rows.forEach(r => {
-      local[r.card_id] = {
-        cardId: r.card_id,
-        easyCount: r.easy_count || 0,
-        interval: r.interval || 1,
-        repetitions: r.repetitions || 0,
-        nextReview: r.next_review ? new Date(r.next_review).toISOString() : null,
-        lastGrade: r.last_grade ?? null
-      };
-    });
-    LS.set('card_progress', local);
+    if (Array.isArray(rows) && rows.length > 0) {
+      const local = LS.get('card_progress') || {};
+      rows.forEach(r => {
+        local[r.card_id] = {
+          cardId: r.card_id,
+          easyCount: r.easy_count || 0,
+          interval: r.interval || 1,
+          repetitions: r.repetitions || 0,
+          nextReview: r.next_review ? new Date(r.next_review).toISOString() : null,
+          lastGrade: r.last_grade ?? null
+        };
+      });
+      LS.set('card_progress', local);
+    }
   } catch(e) {}
+
+  // Load today's study history to know which topics/cards are done
+  try {
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const res2 = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=eq.' + user.id +
+      '&created_at=gte.' + today + 'T00:00:00Z&select=card_id',
+      { headers }
+    );
+    if (res2.ok) {
+      const todayRows = await res2.json();
+      const todayProgress = {};
+      (todayRows || []).forEach(r => {
+        // Derive topic key from card_id prefix e.g. 'b1_001' → 'B1'
+        const topicKey = r.card_id.split('_')[0].toUpperCase();
+        if (!todayProgress[topicKey]) todayProgress[topicKey] = new Set();
+        todayProgress[topicKey].add(r.card_id);
+      });
+      STATE.todayProgress = todayProgress;
+    }
+  } catch(e) {}
+}
+
+// Return how many cards a student has already done today for a topic
+function getTodayDoneForTopic(topicKey) {
+  return STATE.todayProgress[topicKey] ? STATE.todayProgress[topicKey].size : 0;
+}
+
+// Mark a card as done today in-memory (called on each graded card)
+function markCardDoneToday(cardId, topicKey) {
+  if (!STATE.todayProgress[topicKey]) STATE.todayProgress[topicKey] = new Set();
+  STATE.todayProgress[topicKey].add(cardId);
 }
 
 function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
@@ -5891,6 +5948,7 @@ function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
       card_id: cardId,
       question: card?.question || card?.q || '',
       subject: card?.subject || '',
+      topic: card?.topic || cardId.split('_')[0].toUpperCase(),
       topic_name: card?.topic_name || card?.topic || '',
       grade: gradeNum,
       ai_graded: !!aiGraded,
@@ -5907,11 +5965,15 @@ function recordGrade(cardId, grade, aiGraded) {
   LS.set('card_progress', progress);
   syncCardProgress(cardId, updated);
 
+  // Track today's topic progress in-memory
+  const card = STATE.cardQueue[STATE.currentCardIndex];
+  const topicKey = card?.topic || cardId.split('_')[0].toUpperCase();
+  markCardDoneToday(cardId, topicKey);
+
   // Increment daily card count
   incrementCardCount();
 
   // Record history
-  const card = STATE.cardQueue[STATE.currentCardIndex];
   const history = LS.get('card_history') || [];
   history.unshift({
     cardId, question: card?.question || card?.q, subject: card?.subject,
@@ -6429,6 +6491,7 @@ async function submitApplyAnswer() {
 
 function endSession() {
   if (STATE._timerInterval) clearInterval(STATE._timerInterval);
+  LS.del('mid_session');
   showHome();
 }
 
@@ -6437,6 +6500,7 @@ function endSession() {
 // ============================================================
 function showSessionEnd() {
   if (STATE._timerInterval) clearInterval(STATE._timerInterval);
+  LS.del('mid_session'); // clean session complete — no need to resume
   const xpEarned = CONFIG.XP_PER_SESSION;
   if (STATE.user) {
     const oldLevel = Math.floor((STATE.user.xp || 0) / CONFIG.XP_PER_LEVEL) + 1;
@@ -6856,12 +6920,49 @@ function showKnowledgeOrganiser(key) {
   render(html);
 }
 
+function resumeMidSession() {
+  const snap = LS.get('mid_session');
+  if (!snap || !snap.queue) return;
+  const allCards = SAMPLE_CARDS;
+  const idSet = new Set(snap.queue);
+  const queue = snap.queue.map(id => allCards.find(c => c.id === id)).filter(Boolean);
+  if (queue.length === 0) { LS.del('mid_session'); return; }
+  LS.del('mid_session');
+  STATE.cardQueue = queue;
+  STATE.currentCardIndex = Math.min(snap.index, queue.length - 1);
+  STATE.cardsDone = [];
+  STATE._activeTopic = snap.topic || null;
+  STATE.screen = 'flashcards';
+  renderFlashcard();
+}
+
 function startFlashcardsForTopic(topicKey) {
-  const topicCards = SAMPLE_CARDS.filter(c => c.topic === topicKey);
-  STATE.cardQueue = topicCards;
+  const allTopicCards = SAMPLE_CARDS.filter(c => c.topic === topicKey);
+  if (allTopicCards.length === 0) { showToast('No cards for this topic yet'); return; }
+
+  const doneTodayIds = STATE.todayProgress[topicKey] || new Set();
+  const remaining = allTopicCards.filter(c => !doneTodayIds.has(c.id));
+
+  if (remaining.length === 0) {
+    showModal(`<div class="modal-handle"></div>
+      <div style="text-align:center;padding:8px 0 4px;">
+        <div style="font-size:44px;margin-bottom:8px;">🔒</div>
+        <div class="modal-title">Topic complete for today!</div>
+        <p style="color:var(--text-secondary);font-weight:600;font-size:15px;line-height:1.5;">
+          You've finished all ${allTopicCards.length} cards for this topic today. Come back tomorrow to keep going!
+        </p>
+        <button class="btn btn-primary btn-full" style="margin-top:20px;" onclick="closeModal()">Back</button>
+      </div>`);
+    return;
+  }
+
+  // Clear any mid-session snapshot for a fresh start
+  LS.del('mid_session');
+
+  STATE.cardQueue = remaining;
   STATE.currentCardIndex = 0;
   STATE.cardsDone = [];
-  if (topicCards.length === 0) { showToast('No cards for this topic yet'); return; }
+  STATE._activeTopic = topicKey;
   renderFlashcard();
 }
 
@@ -9996,6 +10097,21 @@ if ('serviceWorker' in navigator) {
       .catch(e => console.warn('SW registration failed:', e));
   });
 }
+
+// ============================================================
+// MID-SESSION SAVE — survives refresh/accidental close
+// ============================================================
+window.addEventListener('beforeunload', () => {
+  if (STATE.screen === 'flashcards' && STATE.cardQueue.length > 0 && STATE.user?.id) {
+    LS.set('mid_session', {
+      userId: STATE.user.id,
+      date: new Date().toISOString().slice(0, 10),
+      topic: STATE._activeTopic || null,
+      queue: STATE.cardQueue.map(c => c.id),
+      index: STATE.currentCardIndex,
+    });
+  }
+});
 
 // Start app
 init();
