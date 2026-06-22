@@ -6980,6 +6980,7 @@ function startFlashcardsForTopic(topicKey) {
 // PROGRESS / HISTORY SCREEN
 // ============================================================
 async function showHistory() {
+  console.log('showHistory called, user:', STATE.user?.id, 'token:', STATE.user?.token ? 'yes' : 'no');
   STATE.screen = 'history';
   const user = STATE.user;
   const progress = LS.get('card_progress') || {};
@@ -7004,6 +7005,7 @@ async function showHistory() {
         { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
       );
       if (res.ok) history = await res.json();
+      console.log('study_history fetch status:', res.status, 'rows:', history.length);
     } catch(e) {}
   }
 
