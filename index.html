@@ -5963,7 +5963,7 @@ function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
       ai_graded: !!aiGraded,
       phase: STATE.sessionPhase || null
     })
-  }).catch(() => {});
+  }).then(r => console.log('study_history write:', r.status, r.statusText)).catch(e => console.error('study_history write failed:', e));
 }
 
 function recordGrade(cardId, grade, aiGraded) {
