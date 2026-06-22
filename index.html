@@ -4397,12 +4397,21 @@ function tierLabel(tier) {
   return map[tier] || tier;
 }
 
+// Returns true for Biology B8+, Chemistry C11+, Physics P8+ (triple-only curriculum)
+function isTripleTopic(topicKey) {
+  const num = parseInt(topicKey.slice(1));
+  const p = topicKey[0];
+  return (p === 'B' && num >= 8) || (p === 'C' && num >= 11) || (p === 'P' && num >= 8);
+}
+
 function getCardsForUser(user) {
   const tier = user?.tier || 'combined_foundation';
+  const isCombined = tier === 'combined_foundation' || tier === 'combined_higher';
   return SAMPLE_CARDS.filter(c => {
-    if (tier === 'combined_foundation') return c.tier === 'F' && !c.triple_only;
-    if (tier === 'combined_higher') return (c.tier === 'F' || c.tier === 'H') && !c.triple_only;
-    if (tier === 'triple_foundation') return (c.tier === 'F' || c.tier === 'H' || c.tier === 'triple_F');
+    if (isCombined && isTripleTopic(c.topic)) return false; // tier gate — always applies
+    if (tier === 'combined_foundation') return c.tier === 'F';
+    if (tier === 'combined_higher') return c.tier === 'F' || c.tier === 'H';
+    if (tier === 'triple_foundation') return c.tier === 'F' || c.tier === 'H' || c.tier === 'triple_F';
     return true; // triple_higher: all cards
   });
 }
@@ -6038,8 +6047,14 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
   const locked = lockedTopics || [];
   const subjectEmoji = { Biology: '🌿', Chemistry: '⚗️', Physics: '⚡' };
   const subjectFn = saveFn === 'saveStudentTopicLock' ? 'saveStudentSubjectLock' : 'saveParentChildSubjectLock';
+  // Derive tier: student reads STATE.user, parent reads STATE._parentChildProfile
+  const userTier = (saveFn === 'saveStudentTopicLock')
+    ? (STATE.user?.tier || 'combined_higher')
+    : (STATE._parentChildProfile?.tier || 'combined_higher');
+  const showTriple = userTier.includes('triple');
   const topicsBySubject = {};
   SAMPLE_CARDS.forEach(c => {
+    if (!showTriple && isTripleTopic(c.topic)) return; // hide triple topics for combined students
     if (!topicsBySubject[c.subject]) topicsBySubject[c.subject] = {};
     if (!topicsBySubject[c.subject][c.topic]) topicsBySubject[c.subject][c.topic] = c.topic_name;
   });
@@ -6083,8 +6098,12 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
       const topicOnclick = childUserId
         ? saveFn + "('" + topicKey + "'," + isLocked + ",'" + childUserId + "')"
         : saveFn + "('" + topicKey + "'," + isLocked + ")";
+      const displayName = topicName.replace(' (Triple)', '');
+      const tripleBadge = (showTriple && isTripleTopic(topicKey))
+        ? '<span style="background:#E0E7FF;color:#4F46E5;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;">Triple</span>'
+        : '';
       h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid #F1F5F9;">';
-      h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + topicName + '</div>';
+      h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + displayName + tripleBadge + '</div>';
       if (scheduleLocked) {
         h += '<div style="font-size:12px;font-weight:700;color:' + (isOn ? '#15803D' : '#B91C1C') + ';">' + (isOn ? 'On' : 'Off') + '</div>';
       } else {
