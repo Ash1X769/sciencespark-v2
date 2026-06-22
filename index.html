@@ -4431,8 +4431,11 @@ function getDueCards(user) {
     const remaining = getRemainingCards(subject);
     if (remaining <= 0) return;
 
+    const lockedTopics = STATE.user?.locked_topics || [];
     const subjectCards = allCards.filter(
-      c => c.subject === subject && !STATE.todayDone[subject]?.has(c.id)
+      c => c.subject === subject &&
+           !STATE.todayDone[subject]?.has(c.id) &&
+           !lockedTopics.includes(c.topic)
     );
 
     const due      = subjectCards.filter(c =>  progress[c.id] && new Date(progress[c.id].nextReview) <= now);
@@ -4889,7 +4892,7 @@ async function loadUserPaidStatus() {
   if (!user?.token || !user?.id) return;
   try {
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     const profiles = res.ok ? await res.json() : [];
@@ -4906,6 +4909,7 @@ async function loadUserPaidStatus() {
       STATE.user.chem_frequency = p.chem_frequency || 'daily';
       STATE.user.phys_frequency = p.phys_frequency || 'daily';
       STATE.user.schedule_locked = p.schedule_locked || false;
+      STATE.user.locked_topics   = Array.isArray(p.locked_topics) ? p.locked_topics : [];
       LS.set('demo_user', STATE.user);
     }
   } catch(e) {}
@@ -6025,6 +6029,99 @@ function startFlashcardsForSubject(subject) {
   STATE.currentCardIndex = 0;
   STATE.screen = 'flashcards';
   renderFlashcard();
+}
+
+// ── Topic Unlock helpers ──────────────────────────────────────────────────────
+// Builds topic toggle UI from SAMPLE_CARDS, grouped by subject.
+// onToggleFn: 'saveStudentTopicLock' | 'saveParentChildTopicLock'
+// childUserId: null for student, child's user_id for parent
+function buildTopicsTabHTML(lockedTopics, scheduleLocked, onToggleFn, childUserId) {
+  const locked = lockedTopics || [];
+  const subjectEmoji = { Biology: '🌿', Chemistry: '⚗️', Physics: '⚡' };
+  const topicsBySubject = {};
+  SAMPLE_CARDS.forEach(c => {
+    if (!topicsBySubject[c.subject]) topicsBySubject[c.subject] = {};
+    if (!topicsBySubject[c.subject][c.topic]) topicsBySubject[c.subject][c.topic] = c.topic_name;
+  });
+  let h = '';
+  if (scheduleLocked) {
+    h += '<div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;font-weight:700;color:#92400E;">🔒 Your teacher controls topic selection — contact them to make changes</div>';
+  }
+  Object.entries(topicsBySubject).forEach(([subject, topics]) => {
+    h += '<div style="margin-bottom:18px;">';
+    h += '<div style="font-size:13px;font-weight:900;color:#0F172A;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.04em;">' + subjectEmoji[subject] + ' ' + subject + '</div>';
+    Object.entries(topics).forEach(([topicKey, topicName]) => {
+      const isLocked = locked.includes(topicKey);
+      const btnId = 'tlock-' + topicKey;
+      const onclickStr = childUserId
+        ? onToggleFn + '(\'' + topicKey + '\',' + isLocked + ',\'' + childUserId + '\')'
+        : onToggleFn + '(\'' + topicKey + '\',' + isLocked + ')';
+      h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #F1F5F9;">';
+      h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + topicName + '</div>';
+      if (scheduleLocked) {
+        h += '<div style="font-size:12px;font-weight:700;color:' + (isLocked ? '#991B1B' : '#15803D') + ';">' + (isLocked ? '🔒 Locked' : '✅ On') + '</div>';
+      } else {
+        h += '<button id="' + btnId + '" onclick="' + onclickStr + '" style="padding:5px 12px;border-radius:8px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:' + (isLocked ? '#FEE2E2' : '#F0FDF4') + ';color:' + (isLocked ? '#991B1B' : '#15803D') + ';">' + (isLocked ? '🔒 Locked' : '✅ On') + '</button>';
+      }
+      h += '</div>';
+    });
+    h += '</div>';
+  });
+  return h;
+}
+
+async function saveStudentTopicLock(topicKey, currentlyLocked) {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  const current = Array.isArray(user.locked_topics) ? user.locked_topics : [];
+  const newLocked = currentlyLocked ? current.filter(t => t !== topicKey) : [...current, topicKey];
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ locked_topics: newLocked })
+    });
+    if (res.ok) {
+      STATE.user.locked_topics = newLocked;
+      LS.set('demo_user', STATE.user);
+      const isNowLocked = newLocked.includes(topicKey);
+      const btn = document.getElementById('tlock-' + topicKey);
+      if (btn) {
+        btn.textContent = isNowLocked ? '🔒 Locked' : '✅ On';
+        btn.style.background = isNowLocked ? '#FEE2E2' : '#F0FDF4';
+        btn.style.color = isNowLocked ? '#991B1B' : '#15803D';
+        btn.onclick = function() { saveStudentTopicLock(topicKey, isNowLocked); };
+      }
+      showToast((isNowLocked ? '🔒 Locked' : '✅ Unlocked') + ': ' + topicKey);
+    } else { showToast('Could not save — check locked_topics column in Supabase'); }
+  } catch(e) { showToast('Error saving topic'); }
+}
+
+async function saveParentChildTopicLock(topicKey, currentlyLocked, childUserId) {
+  const user = STATE.user;
+  if (!user?.token || !childUserId) return;
+  const child = STATE._parentChildProfile;
+  const current = Array.isArray(child?.locked_topics) ? child.locked_topics : [];
+  const newLocked = currentlyLocked ? current.filter(t => t !== topicKey) : [...current, topicKey];
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + encodeURIComponent(childUserId), {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ locked_topics: newLocked })
+    });
+    if (res.ok) {
+      if (child) child.locked_topics = newLocked;
+      const isNowLocked = newLocked.includes(topicKey);
+      const btn = document.getElementById('tlock-' + topicKey);
+      if (btn) {
+        btn.textContent = isNowLocked ? '🔒 Locked' : '✅ On';
+        btn.style.background = isNowLocked ? '#FEE2E2' : '#F0FDF4';
+        btn.style.color = isNowLocked ? '#991B1B' : '#15803D';
+        btn.onclick = function() { saveParentChildTopicLock(topicKey, isNowLocked, childUserId); };
+      }
+      showToast((isNowLocked ? '🔒 Locked' : '✅ Unlocked') + ': ' + topicKey);
+    } else { showToast('Could not save — check RLS allows parent to update child profile'); }
+  } catch(e) { showToast('Error saving topic'); }
 }
 
 function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
@@ -7210,6 +7307,20 @@ ${renderNavBar('profile')}
 
     <!-- Study Schedule -->
     ${buildScheduleCardHTML(user)}
+
+    <!-- My Topics -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.topics-chevron').textContent=this.nextElementSibling.style.display==='block'?'▲':'▼';">
+        <div>
+          <div style="font-size:15px;font-weight:800;">📚 My Topics</div>
+          <div style="font-size:12px;color:var(--text-secondary);font-weight:600;margin-top:2px;">Choose which topics appear in your sessions</div>
+        </div>
+        <span class="topics-chevron" style="font-size:12px;color:#64748B;font-weight:700;">▼</span>
+      </div>
+      <div style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #F1F5F9;">
+        ${buildTopicsTabHTML(user.locked_topics || [], user.schedule_locked || false, 'saveStudentTopicLock', null)}
+      </div>
+    </div>
 
     <!-- Progress Tracker -->
     <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border:1.5px solid #86EFAC;">
@@ -8995,7 +9106,7 @@ async function showParentPortal() {
 
   if (linkedStudentId) {
     try {
-      const cUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + linkedStudentId + '&select=user_id,display_name,streak,xp,level,tier,year_group,exam_board,parent_code';
+      const cUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + linkedStudentId + '&select=user_id,display_name,streak,xp,level,tier,year_group,exam_board,parent_code,locked_topics,schedule_locked';
       console.log('[ParentPortal] fetching child profile:', cUrl);
       const cRes = await fetch(cUrl, { headers });
       const cProfiles = cRes.ok ? await cRes.json() : [];
@@ -9010,7 +9121,9 @@ async function showParentPortal() {
           tier: cp.tier || '',
           year_group: cp.year_group,
           exam_board: cp.exam_board || 'AQA',
-          user_id: cp.user_id
+          user_id: cp.user_id,
+          locked_topics: Array.isArray(cp.locked_topics) ? cp.locked_topics : [],
+          schedule_locked: cp.schedule_locked || false
         };
         console.log('[ParentPortal] child loaded:', child.name, 'user_id:', child.user_id);
       } else {
@@ -9301,6 +9414,7 @@ async function showParentPortal() {
         <button id="ptab-tracker"  onclick="parentTab('tracker')"  class="nav-tab">📈 Tracker</button>
         <button id="ptab-feed"     onclick="parentTab('feed')"     class="nav-tab">📰 Feed</button>
         <button id="ptab-insights" onclick="parentTab('insights')" class="nav-tab">✨ Insights<span class="insight-badge" id="insight-badge-dot" style="display:none;"></span></button>
+        <button id="ptab-topics"   onclick="parentTab('topics')"   class="nav-tab">📚 Topics</button>
         <button id="ptab-profile"  onclick="parentTab('profile')"  class="nav-tab">👤 Profile</button>
       </div>
     </div>
@@ -9318,6 +9432,7 @@ async function showParentPortal() {
         <div style="text-align:center;padding:40px 20px;color:#7B5E45;"><div style="font-size:32px;margin-bottom:12px;">📰</div><div style="font-size:15px;font-weight:700;">Loading insights...</div></div>
       </div>
       <div id="pcontent-insights" style="display:none;">${buildParentInsightHTML(child, childHistory, user.display_name?.split(' ')[0] || 'there', insightTip)}</div>
+      <div id="pcontent-topics"  style="display:none;padding:0 20px;"></div>
       <div id="pcontent-profile" style="display:none;padding:0 20px;">${buildParentProfileTabHTML(user, allChildren, linkedStudentId)}</div>
     </div>
   </div>`;
@@ -9922,7 +10037,7 @@ async function addLinkedChild() {
 }
 
 function parentTab(tab) {
-  ['progress','history','tracker','feed','insights','profile'].forEach(function(t) {
+  ['progress','history','tracker','feed','insights','topics','profile'].forEach(function(t) {
     const btn     = document.getElementById('ptab-' + t);
     const content = document.getElementById('pcontent-' + t);
     if (btn) btn.classList.toggle('active', t === tab);
@@ -9934,6 +10049,16 @@ function parentTab(tab) {
     STATE.parentHasNewInsight = false;
     const dot = document.getElementById('insight-badge-dot');
     if (dot) dot.style.display = 'none';
+  }
+  if (tab === 'topics') {
+    const child = STATE._parentChildProfile;
+    const el = document.getElementById('pcontent-topics');
+    if (el) el.innerHTML = buildTopicsTabHTML(
+      child?.locked_topics || [],
+      child?.schedule_locked || false,
+      'saveParentChildTopicLock',
+      child?.user_id || ''
+    );
   }
   if (tab === 'profile') {
     const cName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
