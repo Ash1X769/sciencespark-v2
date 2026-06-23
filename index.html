@@ -11486,6 +11486,7 @@ async function joinClass() {
     if (error || !data) { alert('Class code not found. Check with your teacher.'); return; }
     const userId = (await supabase.auth.getUser()).data.user.id;
     await supabase.from('class_members').upsert({ class_id: data.id, student_id: userId });
+    await supabase.from('profiles').update({ class_code: code }).eq('user_id', userId);
     STATE.user.class_code = code;
     LS.set('demo_user', STATE.user);
     alert('Joined class: ' + data.name + ' ✅');
