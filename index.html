@@ -11699,23 +11699,26 @@ async function restoreCardProgressFromSupabase(user) {
       CONFIG.SUPABASE_URL + '/rest/v1/card_progress?user_id=eq.' + user.id + '&select=card_id,easy_count,interval,repetitions,next_review,last_grade',
       { headers }
     );
-    if (!res.ok) return;
-    const rows = await res.json();
-    if (Array.isArray(rows) && rows.length > 0) {
-      const local = LS.get('card_progress') || {};
-      rows.forEach(r => {
-        local[r.card_id] = {
-          cardId: r.card_id,
-          easyCount: r.easy_count || 0,
-          interval: r.interval || 1,
-          repetitions: r.repetitions || 0,
-          nextReview: r.next_review ? new Date(r.next_review).toISOString() : null,
-          lastGrade: r.last_grade ?? null
-        };
-      });
-      LS.set('card_progress', local);
+    if (res.ok) {
+      const rows = await res.json();
+      if (Array.isArray(rows) && rows.length > 0) {
+        const local = LS.get('card_progress') || {};
+        rows.forEach(r => {
+          local[r.card_id] = {
+            cardId: r.card_id,
+            easyCount: r.easy_count || 0,
+            interval: r.interval || 1,
+            repetitions: r.repetitions || 0,
+            nextReview: r.next_review ? new Date(r.next_review).toISOString() : null,
+            lastGrade: r.last_grade ?? null
+          };
+        });
+        LS.set('card_progress', local);
+      }
+    } else {
+      console.warn('[restoreCardProgress] card_progress fetch failed:', res.status);
     }
-  } catch(e) {}
+  } catch(e) { console.error('[restoreCardProgress] card_progress fetch error:', e); }
 
   // Load today's study history to know which topics/cards are done
   try {
@@ -11734,8 +11737,10 @@ async function restoreCardProgressFromSupabase(user) {
         todayDone[r.subject].add(r.card_id);
       });
       STATE.todayDone = todayDone;
+    } else {
+      console.warn('[restoreCardProgress] study_history fetch failed:', res2.status);
     }
-  } catch(e) {}
+  } catch(e) { console.error('[restoreCardProgress] study_history fetch error:', e); }
 }
 
 function isSubjectLockedToday(subject) {
@@ -25886,23 +25891,26 @@ async function restoreCardProgressFromSupabase(user) {
       CONFIG.SUPABASE_URL + '/rest/v1/card_progress?user_id=eq.' + user.id + '&select=card_id,easy_count,interval,repetitions,next_review,last_grade',
       { headers }
     );
-    if (!res.ok) return;
-    const rows = await res.json();
-    if (Array.isArray(rows) && rows.length > 0) {
-      const local = LS.get('card_progress') || {};
-      rows.forEach(r => {
-        local[r.card_id] = {
-          cardId: r.card_id,
-          easyCount: r.easy_count || 0,
-          interval: r.interval || 1,
-          repetitions: r.repetitions || 0,
-          nextReview: r.next_review ? new Date(r.next_review).toISOString() : null,
-          lastGrade: r.last_grade ?? null
-        };
-      });
-      LS.set('card_progress', local);
+    if (res.ok) {
+      const rows = await res.json();
+      if (Array.isArray(rows) && rows.length > 0) {
+        const local = LS.get('card_progress') || {};
+        rows.forEach(r => {
+          local[r.card_id] = {
+            cardId: r.card_id,
+            easyCount: r.easy_count || 0,
+            interval: r.interval || 1,
+            repetitions: r.repetitions || 0,
+            nextReview: r.next_review ? new Date(r.next_review).toISOString() : null,
+            lastGrade: r.last_grade ?? null
+          };
+        });
+        LS.set('card_progress', local);
+      }
+    } else {
+      console.warn('[restoreCardProgress] card_progress fetch failed:', res.status);
     }
-  } catch(e) {}
+  } catch(e) { console.error('[restoreCardProgress] card_progress fetch error:', e); }
 
   // Load today's study history to know which topics/cards are done
   try {
@@ -25921,8 +25929,10 @@ async function restoreCardProgressFromSupabase(user) {
         todayDone[r.subject].add(r.card_id);
       });
       STATE.todayDone = todayDone;
+    } else {
+      console.warn('[restoreCardProgress] study_history fetch failed:', res2.status);
     }
-  } catch(e) {}
+  } catch(e) { console.error('[restoreCardProgress] study_history fetch error:', e); }
 }
 
 function isSubjectLockedToday(subject) {
