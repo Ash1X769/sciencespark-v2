@@ -10827,13 +10827,21 @@ function showLevelUpCelebration(newLevel, callback) {
 async function loadClassLeaderboard() {
   const user = STATE.user;
   const section = document.getElementById('leaderboard-section');
-  if (!section || !user?.token || !user?.class_code) {
+  if (!section || !user?.token || !user?.id) {
     if (section) section.style.display = 'none';
     return;
   }
   try {
+    const meRes = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=class_code',
+      { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+    );
+    const meData = meRes.ok ? await meRes.json() : [];
+    const classCode = meData[0]?.class_code;
+    if (!classCode) { section.style.display = 'none'; return; }
+
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?class_code=eq.' + encodeURIComponent(user.class_code) + '&role=eq.student&select=display_name,xp&order=xp.desc&limit=10',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?class_code=eq.' + encodeURIComponent(classCode) + '&role=eq.student&select=display_name,xp&order=xp.desc&limit=10',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     if (!res.ok) { section.style.display = 'none'; return; }
@@ -11240,8 +11248,8 @@ ${renderNavBar('profile')}
     <!-- Join a Class -->
     <div class="card" style="margin-bottom:16px;">
       <div style="font-size:15px;font-weight:800;margin-bottom:12px;">🏫 My Classes</div>
-      ${user.class_code ? '<div style="background:#F0FDF4;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;border:1px solid #BBF7D0;"><div><div style=\"font-size:12px;font-weight:800;color:#16A34A;\">✅ CURRENT CLASS</div><div style=\"font-size:14px;font-weight:900;color:#0F172A;margin-top:2px;\">Code: ' + user.class_code + '</div></div><button onclick=\"leaveClass()\" style=\"padding:5px 10px;border-radius:6px;border:1px solid #E2E8F0;background:white;font-size:11px;font-weight:700;cursor:pointer;color:#EF4444;font-family:inherit;\">Leave</button></div>' : '<div style=\"font-size:13px;color:#64748B;font-weight:600;margin-bottom:10px;\">Not in a class yet.</div>' }
-      <div style="font-size:12px;font-weight:800;color:#64748B;margin-bottom:8px;">${user.class_code ? 'JOIN ANOTHER CLASS' : 'JOIN A CLASS'}</div>
+      <div id="profile-class-section"><div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:10px;">Loading class info…</div></div>
+      <div id="profile-join-label" style="font-size:12px;font-weight:800;color:#64748B;margin-bottom:8px;">JOIN A CLASS</div>
       <div style="display:flex;gap:8px;">
         <input type="text" id="join-class-input" class="input" placeholder="Enter class code" style="flex:1;margin:0;">
         <button onclick="joinClass()" style="padding:10px 16px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">Join</button>
@@ -11332,6 +11340,36 @@ ${renderNavBar('profile')}
   render(html);
   // Fetch live push_subscription status from Supabase and update section (fixes post-login state)
   refreshNotifSection('student', 'student-notif-section', null);
+  refreshProfileClassName();
+}
+
+async function refreshProfileClassName() {
+  const user = STATE.user;
+  const section = document.getElementById('profile-class-section');
+  const joinLabel = document.getElementById('profile-join-label');
+  if (!section || !user?.token || !user?.id) return;
+  try {
+    const pRes = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=class_code',
+      { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+    );
+    const pData = pRes.ok ? await pRes.json() : [];
+    const classCode = pData[0]?.class_code;
+    if (!classCode) {
+      section.innerHTML = '<div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:10px;">Not in a class yet.</div>';
+      return;
+    }
+    const cRes = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/classes?code=eq.' + encodeURIComponent(classCode) + '&select=name',
+      { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+    );
+    const cData = cRes.ok ? await cRes.json() : [];
+    const className = cData[0]?.name || classCode;
+    section.innerHTML = '<div style="background:#F0FDF4;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;border:1px solid #BBF7D0;"><div><div style="font-size:12px;font-weight:800;color:#16A34A;">✅ CURRENT CLASS</div><div style="font-size:14px;font-weight:900;color:#0F172A;margin-top:2px;">' + className + '</div></div><button onclick="leaveClass()" style="padding:5px 10px;border-radius:6px;border:1px solid #E2E8F0;background:white;font-size:11px;font-weight:700;cursor:pointer;color:#EF4444;font-family:inherit;">Leave</button></div>';
+    if (joinLabel) joinLabel.textContent = 'JOIN ANOTHER CLASS';
+  } catch(e) {
+    if (section) section.innerHTML = '<div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:10px;">Not in a class yet.</div>';
+  }
 }
 
 
