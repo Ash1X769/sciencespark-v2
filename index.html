@@ -10618,8 +10618,9 @@ async function afterLogin(startScreen) {
   if (startScreen === 'parent-insight') { showParentTipScreen(); return; }
   if (startScreen === 'parent') { showParentPortal(); setTimeout(requestPushPermission, 1500); return; }
   if (STATE.role === 'student') {
+    showHome();  // render nav + home immediately; card counts update below
     await restoreCardProgressFromSupabase(STATE.user);
-    showHome();
+    if (STATE.screen === 'home') showHome();  // re-render with restored card counts
     // Offer to resume mid-session if one was saved
     const snap = LS.get('mid_session');
     const today = new Date().toISOString().slice(0, 10);
@@ -12245,20 +12246,20 @@ function selectMCQ(qIdx, el) {
     else if (btn === el && !isCorrect) btn.classList.add('wrong');
     btn.disabled = true;
   });
-  if (isCorrect) {
-    mcqState[`q${qIdx}`].done = true;
-    checkAllMCQsDone();
-  }
+  mcqState[`q${qIdx}`].done = true;
+  mcqState[`q${qIdx}`].wasCorrect = isCorrect;
+  checkAllMCQsDone();
 }
 
 function checkAllMCQsDone() {
-  const allDone = Object.values(mcqState).every(s => s.done);
+  const states = Object.values(mcqState);
+  const allDone = states.every(s => s.done);
   if (allDone) {
     const btn = document.getElementById('mcq-continue-btn') || document.getElementById('continue-btn');
     if (btn) {
       btn.disabled = false;
       btn.style.opacity = '1';
-      btn.textContent = '🎉 All correct! Continue →';
+      btn.textContent = states.every(s => s.wasCorrect) ? '🎉 All correct! Continue →' : 'Continue →';
     }
   }
 }
@@ -15047,8 +15048,9 @@ async function afterLogin(startScreen) {
   if (startScreen === 'parent-insight') { showParentTipScreen(); return; }
   if (startScreen === 'parent') { showParentPortal(); setTimeout(requestPushPermission, 1500); return; }
   if (STATE.role === 'student') {
+    showHome();  // render nav + home immediately; card counts update below
     await restoreCardProgressFromSupabase(STATE.user);
-    showHome();
+    if (STATE.screen === 'home') showHome();  // re-render with restored card counts
     // Offer to resume mid-session if one was saved
     const snap = LS.get('mid_session');
     const today = new Date().toISOString().slice(0, 10);
@@ -16672,20 +16674,20 @@ function selectMCQ(qIdx, el) {
     else if (btn === el && !isCorrect) btn.classList.add('wrong');
     btn.disabled = true;
   });
-  if (isCorrect) {
-    mcqState[`q${qIdx}`].done = true;
-    checkAllMCQsDone();
-  }
+  mcqState[`q${qIdx}`].done = true;
+  mcqState[`q${qIdx}`].wasCorrect = isCorrect;
+  checkAllMCQsDone();
 }
 
 function checkAllMCQsDone() {
-  const allDone = Object.values(mcqState).every(s => s.done);
+  const states = Object.values(mcqState);
+  const allDone = states.every(s => s.done);
   if (allDone) {
     const btn = document.getElementById('mcq-continue-btn') || document.getElementById('continue-btn');
     if (btn) {
       btn.disabled = false;
       btn.style.opacity = '1';
-      btn.textContent = '🎉 All correct! Continue →';
+      btn.textContent = states.every(s => s.wasCorrect) ? '🎉 All correct! Continue →' : 'Continue →';
     }
   }
 }
