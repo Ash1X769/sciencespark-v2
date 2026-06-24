@@ -10203,10 +10203,10 @@ function getDueCards(user) {
     const reviewCap = subjectLimit - minNew;                    // e.g. limit=15 → reviewCap=10
     const newDoneToday = STATE.todayDone[subject]?.size || 0;   // only new cards count
 
-    const lockedTopics = STATE.user?.locked_topics || [];
+    const lockedTopics = (STATE.user?.locked_topics || []).map(t => t.toUpperCase());
     // todayDone NOT applied to base filter — reviews self-exclude via nextReview after grading
     const subjectCards = allCards.filter(
-      c => c.subject === subject && !lockedTopics.includes(c.topic)
+      c => c.subject === subject && !lockedTopics.includes(c.topic.toUpperCase())
     );
 
     // Due reviews: date-only comparison (timezone fix), oldest-overdue first
@@ -11842,9 +11842,10 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
   const showTriple = userTier.includes('triple');
   const topicsBySubject = {};
   SAMPLE_CARDS.forEach(c => {
-    if (!showTriple && isTripleTopic(c.topic)) return; // hide triple topics for combined students
+    const tk = c.topic.toUpperCase(); // normalise case so B1 and b1 don't create duplicate rows
+    if (!showTriple && isTripleTopic(tk)) return; // hide triple topics for combined students
     if (!topicsBySubject[c.subject]) topicsBySubject[c.subject] = {};
-    if (!topicsBySubject[c.subject][c.topic]) topicsBySubject[c.subject][c.topic] = c.topic_name;
+    if (!topicsBySubject[c.subject][tk]) topicsBySubject[c.subject][tk] = c.topic_name;
   });
   let h = '';
   h += '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:#1E40AF;">⚡ <strong>Revise Now</strong> — Practice any topic anytime without using your daily card limit. Complete your daily cards to keep your streak! 🔥</div>';
@@ -14692,10 +14693,10 @@ function getDueCards(user) {
     const reviewCap = subjectLimit - minNew;                    // e.g. limit=15 → reviewCap=10
     const newDoneToday = STATE.todayDone[subject]?.size || 0;   // only new cards count
 
-    const lockedTopics = STATE.user?.locked_topics || [];
+    const lockedTopics = (STATE.user?.locked_topics || []).map(t => t.toUpperCase());
     // todayDone NOT applied to base filter — reviews self-exclude via nextReview after grading
     const subjectCards = allCards.filter(
-      c => c.subject === subject && !lockedTopics.includes(c.topic)
+      c => c.subject === subject && !lockedTopics.includes(c.topic.toUpperCase())
     );
 
     // Due reviews: date-only comparison (timezone fix), oldest-overdue first
@@ -16326,9 +16327,10 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
   const showTriple = userTier.includes('triple');
   const topicsBySubject = {};
   SAMPLE_CARDS.forEach(c => {
-    if (!showTriple && isTripleTopic(c.topic)) return; // hide triple topics for combined students
+    const tk = c.topic.toUpperCase(); // normalise case so B1 and b1 don't create duplicate rows
+    if (!showTriple && isTripleTopic(tk)) return; // hide triple topics for combined students
     if (!topicsBySubject[c.subject]) topicsBySubject[c.subject] = {};
-    if (!topicsBySubject[c.subject][c.topic]) topicsBySubject[c.subject][c.topic] = c.topic_name;
+    if (!topicsBySubject[c.subject][tk]) topicsBySubject[c.subject][tk] = c.topic_name;
   });
   let h = '';
   h += '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:#1E40AF;">⚡ <strong>Revise Now</strong> — Practice any topic anytime without using your daily card limit. Complete your daily cards to keep your streak! 🔥</div>';
