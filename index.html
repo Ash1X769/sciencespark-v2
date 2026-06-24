@@ -16417,20 +16417,22 @@ function _refreshTopicsUI(isParent, childUserId) {
 
 function getMasteryForTopic(topicKey) {
   const progress = LS.get('card_progress') || {};
-  const topicCards = SAMPLE_CARDS.filter(c => c.topic === topicKey);
+  const key = topicKey.toUpperCase();
+  const topicCards = SAMPLE_CARDS.filter(c => c.topic.toUpperCase() === key);
   if (topicCards.length === 0) return 0;
   const mastered = topicCards.filter(c => (progress[c.id]?.lastGrade ?? -1) >= 2).length;
   return Math.round((mastered / topicCards.length) * 100);
 }
 
 function startQuickRevision(topicKey) {
-  const topicCards = SAMPLE_CARDS.filter(c => c.topic === topicKey);
+  const key = topicKey.toUpperCase();
+  const topicCards = SAMPLE_CARDS.filter(c => c.topic.toUpperCase() === key);
   if (topicCards.length === 0) { showToast('No cards found for this topic'); return; }
   const shuffled = [...topicCards].sort(() => Math.random() - 0.5);
   STATE.cardQueue = shuffled;
   STATE.currentCardIndex = 0;
   STATE.sessionPhase = 'quickRevision';
-  STATE._quickRevisionTopic = topicKey;
+  STATE._quickRevisionTopic = key;
   STATE._quickRevisionResults = [];
   renderFlashcard();
 }
