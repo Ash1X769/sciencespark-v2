@@ -1757,9 +1757,6 @@ textarea.input { resize: vertical; min-height: 100px; }
   cursor: pointer;
   font-family: Nunito, sans-serif;
 }
-@media (max-width: 767px) {
-  #ai-chat-widget { display: none !important; }
-}
 @keyframes confettiFall {
   0%   { transform: translateY(-10px) rotate(var(--rot,0deg)) scale(1); opacity:1; }
   100% { transform: translateY(110vh) rotate(calc(var(--rot,0deg) + 360deg)) scale(0.5); opacity:0; }
@@ -11362,7 +11359,14 @@ function renderFlashcard() {
   <div class="session-header">
     <button class="btn btn-ghost btn-sm" onclick="showHome()">← Home</button>
     <div class="progress-dots">${dots}</div>
-    <div style="font-size:13px;font-weight:700;color:var(--text-secondary);">${current+1}/${total}</div>
+    ${STATE.sessionPhase === 'quickRevision'
+      ? `<div style="display:flex;align-items:center;gap:6px;">
+           <button onclick="qrPrev()" ${current === 0 ? 'disabled' : ''} style="width:28px;height:28px;border-radius:50%;border:none;background:${current===0?'#E2E8F0':'#6366F1'};color:${current===0?'#94A3B8':'white'};font-size:16px;cursor:${current===0?'default':'pointer'};display:flex;align-items:center;justify-content:center;font-weight:900;padding:0;">‹</button>
+           <span style="font-size:13px;font-weight:700;color:var(--text-secondary);">${current+1}/${total}</span>
+           <button onclick="qrNext()" ${current>=total-1?'disabled':''} style="width:28px;height:28px;border-radius:50%;border:none;background:${current>=total-1?'#E2E8F0':'#6366F1'};color:${current>=total-1?'#94A3B8':'white'};font-size:16px;cursor:${current>=total-1?'default':'pointer'};display:flex;align-items:center;justify-content:center;font-weight:900;padding:0;">›</button>
+         </div>`
+      : `<div style="font-size:13px;font-weight:700;color:var(--text-secondary);">${current+1}/${total}</div>`
+    }
   </div>
 
   <div class="flashcard-area">
@@ -15847,7 +15851,14 @@ function renderFlashcard() {
   <div class="session-header">
     <button class="btn btn-ghost btn-sm" onclick="showHome()">← Home</button>
     <div class="progress-dots">${dots}</div>
-    <div style="font-size:13px;font-weight:700;color:var(--text-secondary);">${current+1}/${total}</div>
+    ${STATE.sessionPhase === 'quickRevision'
+      ? `<div style="display:flex;align-items:center;gap:6px;">
+           <button onclick="qrPrev()" ${current === 0 ? 'disabled' : ''} style="width:28px;height:28px;border-radius:50%;border:none;background:${current===0?'#E2E8F0':'#6366F1'};color:${current===0?'#94A3B8':'white'};font-size:16px;cursor:${current===0?'default':'pointer'};display:flex;align-items:center;justify-content:center;font-weight:900;padding:0;">‹</button>
+           <span style="font-size:13px;font-weight:700;color:var(--text-secondary);">${current+1}/${total}</span>
+           <button onclick="qrNext()" ${current>=total-1?'disabled':''} style="width:28px;height:28px;border-radius:50%;border:none;background:${current>=total-1?'#E2E8F0':'#6366F1'};color:${current>=total-1?'#94A3B8':'white'};font-size:16px;cursor:${current>=total-1?'default':'pointer'};display:flex;align-items:center;justify-content:center;font-weight:900;padding:0;">›</button>
+         </div>`
+      : `<div style="font-size:13px;font-weight:700;color:var(--text-secondary);">${current+1}/${total}</div>`
+    }
   </div>
 
   <div class="flashcard-area">
@@ -16428,13 +16439,22 @@ function startQuickRevision(topicKey) {
   const key = topicKey.toUpperCase();
   const topicCards = SAMPLE_CARDS.filter(c => c.topic.toUpperCase() === key);
   if (topicCards.length === 0) { showToast('No cards found for this topic'); return; }
-  const shuffled = [...topicCards].sort(() => Math.random() - 0.5);
+  const shuffled = [...topicCards].sort(() => Math.random() - 0.5).slice(0, 20);
   STATE.cardQueue = shuffled;
   STATE.currentCardIndex = 0;
   STATE.sessionPhase = 'quickRevision';
+  STATE.screen = 'quickRevision';
   STATE._quickRevisionTopic = key;
   STATE._quickRevisionResults = [];
+  showAIChatWidget();
   renderFlashcard();
+}
+
+function qrPrev() {
+  if (STATE.currentCardIndex > 0) { STATE.currentCardIndex--; renderFlashcard(); }
+}
+function qrNext() {
+  if (STATE.currentCardIndex < STATE.cardQueue.length - 1) { STATE.currentCardIndex++; renderFlashcard(); }
 }
 
 function showQuickRevisionEnd() {
