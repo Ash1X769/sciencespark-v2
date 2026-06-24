@@ -14679,11 +14679,6 @@ function incrementCardCount() {
   }
 }
 
-// ============================================================
-// RENDER ENGINE
-// ============================================================
-const app = document.getElementById('app');
-
 function render(html) {
   app.innerHTML = html;
   window.scrollTo(0, 0);
@@ -16628,8 +16623,6 @@ function showFullSessionMCQ() {
 
   render(html);
 }
-
-let mcqState = {};
 function renderMCQs() {
   mcqState = {};
   const primaryTopic = STATE.cardQueue[0]?.topic;
