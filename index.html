@@ -9882,17 +9882,21 @@ const KNOWLEDGE_ORGANISERS = {
 // ============================================================
 function sm2Next(card, grade) {
   // grade: 0=again, 1=hard, 2=good, 3=easy
-  // repetitions always increments — never resets, it's a record of how many times seen
   let { repetitions = 0, easyCount = 0 } = card;
+  const prevInterval = card.interval || 1;
 
   let interval;
-  if (grade === 0 || grade === 1) {
+  if (grade === 0) {
     interval = 1;
+  } else if (grade === 1) {
+    // Hard: slightly longer than Again, shorter than Good
+    interval = Math.max(2, Math.round(prevInterval * 0.8));
   } else if (grade === 2) {
-    interval = 3;
+    // Good: grow by 3 days each time (minimum 3)
+    interval = Math.max(3, prevInterval + 3);
   } else {
-    // Easy: 7 days first time, 28 days every time after
-    interval = easyCount === 0 ? 7 : 28;
+    // Easy: 7 days first time, then ×4 (minimum 14)
+    interval = easyCount === 0 ? 7 : Math.max(14, Math.round(prevInterval * 4));
     easyCount++;
   }
 
@@ -10174,8 +10178,11 @@ function getCardsForUser(user) {
 function getDueCards(user) {
   const allCards = getCardsForUser(user);
   const progress = LS.get('card_progress') || {};
-  const now = new Date();
-  const today = new Date().toDateString();
+
+  // Timezone-safe local date string (YYYY-MM-DD) — cards become due at local midnight, not 1am BST
+  const _ld = new Date();
+  const todayStr = `${_ld.getFullYear()}-${String(_ld.getMonth()+1).padStart(2,'0')}-${String(_ld.getDate()).padStart(2,'0')}`;
+  const today = _ld.toDateString();
 
   // Reset daily counts if new day (used by getTodaysCardCount elsewhere)
   const sessionState = LS.get('session_state') || {};
@@ -10191,23 +10198,35 @@ function getDueCards(user) {
   const combined = [];
 
   subjects.forEach(subject => {
-    // How many more cards is this student allowed for this subject today
-    const remaining = getRemainingCards(subject);
-    if (remaining <= 0) return;
+    const subjectLimit = getSubjectLimit(subject);
+    const minNew = Math.max(1, Math.round(subjectLimit * 0.3)); // e.g. limit=15 → minNew=5
+    const reviewCap = subjectLimit - minNew;                    // e.g. limit=15 → reviewCap=10
+    const newDoneToday = STATE.todayDone[subject]?.size || 0;   // only new cards count
 
     const lockedTopics = STATE.user?.locked_topics || [];
+    // todayDone NOT applied to base filter — reviews self-exclude via nextReview after grading
     const subjectCards = allCards.filter(
-      c => c.subject === subject &&
-           !STATE.todayDone[subject]?.has(c.id) &&
-           !lockedTopics.includes(c.topic)
+      c => c.subject === subject && !lockedTopics.includes(c.topic)
     );
 
-    const due      = subjectCards.filter(c =>  progress[c.id] && new Date(progress[c.id].nextReview) <= now);
-    const newCards = subjectCards.filter(c => !progress[c.id]);
+    // Due reviews: date-only comparison (timezone fix), oldest-overdue first
+    const due = subjectCards
+      .filter(c => progress[c.id] && (progress[c.id].nextReview || '').slice(0, 10) <= todayStr)
+      .sort((a, b) => (progress[a.id].nextReview || '').localeCompare(progress[b.id].nextReview || ''));
 
-    // Reviews first, fill remaining slots with new cards, cap at subject's daily allowance
-    const reviewPick = due.slice(0, remaining);
-    const newPick    = newCards.slice(0, remaining - reviewPick.length);
+    // New cards: no progress entry and not already introduced today
+    const newCards = subjectCards.filter(c => !progress[c.id] && !STATE.todayDone[subject]?.has(c.id));
+
+    // Nothing left to do for this subject today
+    if (newDoneToday >= subjectLimit && due.length === 0) return;
+
+    // Reviews: serve oldest-overdue first, capped at (limit - minNew)
+    const reviewPick = due.slice(0, reviewCap);
+
+    // New cards: guarantee minNew, fill remaining slots, subtract already done today
+    const newSlots = Math.max(minNew, subjectLimit - reviewPick.length) - newDoneToday;
+    const newPick = newCards.slice(0, Math.max(0, newSlots));
+
     combined.push(...reviewPick, ...newPick);
   });
 
@@ -11530,20 +11549,28 @@ function recordAndAdvance(cardId, grade) {
   // Update SRS via shared sm2Next
   const progress = LS.get('card_progress') || {};
   const existing = progress[cardId] || {};
+  const wasNew = !existing.repetitions; // no prior repetitions → genuinely new card
   const updated = { ...existing, ...sm2Next(existing, gradeNum), cardId };
   progress[cardId] = updated;
   LS.set('card_progress', progress);
   syncCardProgress(cardId, updated);
 
-  // Track today's progress in-memory, keyed by subject
-  if (card?.subject) {
-    if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
-    STATE.todayDone[card.subject].add(cardId);
+  const isQR = STATE.sessionPhase === 'quickRevision';
+
+  if (!isQR) {
+    // Only new cards count toward the daily new-card limit
+    if (wasNew && card?.subject) {
+      if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
+      STATE.todayDone[card.subject].add(cardId);
+    }
+    incrementCardCount();
+  } else {
+    // Track result for quick revision end summary
+    if (!STATE._quickRevisionResults) STATE._quickRevisionResults = [];
+    STATE._quickRevisionResults.push({ cardId, grade: gradeNum, q: card?.q || card?.question });
   }
 
-  incrementCardCount();
-
-  // Save to history
+  // Save to history (always)
   const history = LS.get('card_history') || [];
   history.unshift({
     cardId,
@@ -11570,7 +11597,9 @@ function recordAndAdvance(cardId, grade) {
       nextBtn.onclick = () => {
         STATE.currentCardIndex++;
         if (STATE.currentCardIndex >= STATE.cardQueue.length) {
-          if (STATE.sessionPhase === 'embed') {
+          if (STATE.sessionPhase === 'quickRevision') {
+            showQuickRevisionEnd();
+          } else if (STATE.sessionPhase === 'embed') {
             if (STATE._timerInterval) clearInterval(STATE._timerInterval);
             showTransition('embed-to-apply');
           } else {
@@ -11728,10 +11757,16 @@ async function restoreCardProgressFromSupabase(user) {
     if (res2.ok) {
       const todayRows = await res2.json();
       const todayDone = {};
+      const localProgress = LS.get('card_progress') || {};
       (todayRows || []).forEach(r => {
         if (!r.subject) return;
-        if (!todayDone[r.subject]) todayDone[r.subject] = new Set();
-        todayDone[r.subject].add(r.card_id);
+        const prog = localProgress[r.card_id];
+        // Only count genuinely new cards (repetitions=1 = graded for the first time ever today)
+        // Review cards are not counted — they don't consume daily new-card slots
+        if (prog && prog.repetitions === 1) {
+          if (!todayDone[r.subject]) todayDone[r.subject] = new Set();
+          todayDone[r.subject].add(r.card_id);
+        }
       });
       STATE.todayDone = todayDone;
     }
@@ -11812,6 +11847,7 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
     if (!topicsBySubject[c.subject][c.topic]) topicsBySubject[c.subject][c.topic] = c.topic_name;
   });
   let h = '';
+  h += '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:#1E40AF;">⚡ <strong>Revise Now</strong> — Practice any topic anytime without using your daily card limit. Complete your daily cards to keep your streak! 🔥</div>';
   if (scheduleLocked) {
     h += '<div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;font-weight:700;color:#92400E;">🔒 Your teacher controls topic selection — contact them to make changes</div>';
   }
@@ -11855,14 +11891,23 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
       const tripleBadge = (showTriple && isTripleTopic(topicKey))
         ? '<span style="background:#E0E7FF;color:#4F46E5;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;">Triple</span>'
         : '';
+      const _mastery = getMasteryForTopic(topicKey);
+      const masteryBadge = _mastery >= 80
+        ? '<span style="background:#DCFCE7;color:#15803D;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;margin-left:6px;vertical-align:middle;">★ Mastered</span>'
+        : _mastery >= 40
+        ? '<span style="background:#FEF3C7;color:#92400E;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;vertical-align:middle;">' + _mastery + '%</span>'
+        : '';
+      const reviseBtn = '<button onclick="startQuickRevision(\'' + topicKey + '\')" style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;border:none;background:#6366F1;color:white;cursor:pointer;white-space:nowrap;">Revise</button>';
       h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid #F1F5F9;">';
-      h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + displayName + tripleBadge + '</div>';
+      h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + displayName + tripleBadge + masteryBadge + '</div>';
       if (scheduleLocked) {
-        h += '<div style="font-size:12px;font-weight:700;color:' + (isOn ? '#15803D' : '#B91C1C') + ';">' + (isOn ? 'On' : 'Off') + '</div>';
+        h += '<div style="display:flex;align-items:center;gap:8px;">' + reviseBtn;
+        h += '<div style="font-size:12px;font-weight:700;color:' + (isOn ? '#15803D' : '#B91C1C') + ';">' + (isOn ? 'On' : 'Off') + '</div></div>';
       } else {
+        h += '<div style="display:flex;align-items:center;gap:8px;">' + reviseBtn;
         h += '<div onclick="' + topicOnclick + '" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:' + topicBg + ';position:relative;transition:background 0.2s;flex-shrink:0;">';
         h += '<div style="position:absolute;top:3px;' + thumbPos + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>';
-        h += '</div>';
+        h += '</div></div>';
       }
       h += '</div>';
     });
@@ -11988,22 +12033,29 @@ function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
 function recordGrade(cardId, grade, aiGraded) {
   const progress = LS.get('card_progress') || {};
   const existing = progress[cardId] || {};
+  const wasNew = !existing.repetitions; // no prior repetitions → genuinely new card
   const updated = { ...existing, ...sm2Next(existing, grade), cardId };
   progress[cardId] = updated;
   LS.set('card_progress', progress);
   syncCardProgress(cardId, updated);
 
-  // Track today's progress in-memory, keyed by subject
   const card = STATE.cardQueue[STATE.currentCardIndex];
-  if (card?.subject) {
-    if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
-    STATE.todayDone[card.subject].add(cardId);
+  const isQR = STATE.sessionPhase === 'quickRevision';
+
+  if (!isQR) {
+    // Only new cards count toward the daily new-card limit
+    if (wasNew && card?.subject) {
+      if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
+      STATE.todayDone[card.subject].add(cardId);
+    }
+    incrementCardCount();
+  } else {
+    // Track result for quick revision end summary
+    if (!STATE._quickRevisionResults) STATE._quickRevisionResults = [];
+    STATE._quickRevisionResults.push({ cardId, grade, q: card?.q || card?.question });
   }
 
-  // Increment daily card count
-  incrementCardCount();
-
-  // Record history
+  // Record history (always — quick revision still writes to study_history)
   const history = LS.get('card_history') || [];
   history.unshift({
     cardId, question: card?.question || card?.q, subject: card?.subject,
@@ -12016,7 +12068,9 @@ function recordGrade(cardId, grade, aiGraded) {
 function nextCard() {
   STATE.currentCardIndex++;
   if (STATE.currentCardIndex >= STATE.cardQueue.length) {
-    if (STATE.sessionPhase === 'embed') {
+    if (STATE.sessionPhase === 'quickRevision') {
+      showQuickRevisionEnd();
+    } else if (STATE.sessionPhase === 'embed') {
       if (STATE._timerInterval) clearInterval(STATE._timerInterval);
       showTransition('embed-to-apply');
     } else {
@@ -14425,17 +14479,21 @@ const STUDENT_TIPS = [
 // ============================================================
 function sm2Next(card, grade) {
   // grade: 0=again, 1=hard, 2=good, 3=easy
-  // repetitions always increments — never resets, it's a record of how many times seen
   let { repetitions = 0, easyCount = 0 } = card;
+  const prevInterval = card.interval || 1;
 
   let interval;
-  if (grade === 0 || grade === 1) {
+  if (grade === 0) {
     interval = 1;
+  } else if (grade === 1) {
+    // Hard: slightly longer than Again, shorter than Good
+    interval = Math.max(2, Math.round(prevInterval * 0.8));
   } else if (grade === 2) {
-    interval = 3;
+    // Good: grow by 3 days each time (minimum 3)
+    interval = Math.max(3, prevInterval + 3);
   } else {
-    // Easy: 7 days first time, 28 days every time after
-    interval = easyCount === 0 ? 7 : 28;
+    // Easy: 7 days first time, then ×4 (minimum 14)
+    interval = easyCount === 0 ? 7 : Math.max(14, Math.round(prevInterval * 4));
     easyCount++;
   }
 
@@ -14609,8 +14667,11 @@ function getCardsForUser(user) {
 function getDueCards(user) {
   const allCards = getCardsForUser(user);
   const progress = LS.get('card_progress') || {};
-  const now = new Date();
-  const today = new Date().toDateString();
+
+  // Timezone-safe local date string (YYYY-MM-DD) — cards become due at local midnight, not 1am BST
+  const _ld = new Date();
+  const todayStr = `${_ld.getFullYear()}-${String(_ld.getMonth()+1).padStart(2,'0')}-${String(_ld.getDate()).padStart(2,'0')}`;
+  const today = _ld.toDateString();
 
   // Reset daily counts if new day (used by getTodaysCardCount elsewhere)
   const sessionState = LS.get('session_state') || {};
@@ -14626,23 +14687,35 @@ function getDueCards(user) {
   const combined = [];
 
   subjects.forEach(subject => {
-    // How many more cards is this student allowed for this subject today
-    const remaining = getRemainingCards(subject);
-    if (remaining <= 0) return;
+    const subjectLimit = getSubjectLimit(subject);
+    const minNew = Math.max(1, Math.round(subjectLimit * 0.3)); // e.g. limit=15 → minNew=5
+    const reviewCap = subjectLimit - minNew;                    // e.g. limit=15 → reviewCap=10
+    const newDoneToday = STATE.todayDone[subject]?.size || 0;   // only new cards count
 
     const lockedTopics = STATE.user?.locked_topics || [];
+    // todayDone NOT applied to base filter — reviews self-exclude via nextReview after grading
     const subjectCards = allCards.filter(
-      c => c.subject === subject &&
-           !STATE.todayDone[subject]?.has(c.id) &&
-           !lockedTopics.includes(c.topic)
+      c => c.subject === subject && !lockedTopics.includes(c.topic)
     );
 
-    const due      = subjectCards.filter(c =>  progress[c.id] && new Date(progress[c.id].nextReview) <= now);
-    const newCards = subjectCards.filter(c => !progress[c.id]);
+    // Due reviews: date-only comparison (timezone fix), oldest-overdue first
+    const due = subjectCards
+      .filter(c => progress[c.id] && (progress[c.id].nextReview || '').slice(0, 10) <= todayStr)
+      .sort((a, b) => (progress[a.id].nextReview || '').localeCompare(progress[b.id].nextReview || ''));
 
-    // Reviews first, fill remaining slots with new cards, cap at subject's daily allowance
-    const reviewPick = due.slice(0, remaining);
-    const newPick    = newCards.slice(0, remaining - reviewPick.length);
+    // New cards: no progress entry and not already introduced today
+    const newCards = subjectCards.filter(c => !progress[c.id] && !STATE.todayDone[subject]?.has(c.id));
+
+    // Nothing left to do for this subject today
+    if (newDoneToday >= subjectLimit && due.length === 0) return;
+
+    // Reviews: serve oldest-overdue first, capped at (limit - minNew)
+    const reviewPick = due.slice(0, reviewCap);
+
+    // New cards: guarantee minNew, fill remaining slots, subtract already done today
+    const newSlots = Math.max(minNew, subjectLimit - reviewPick.length) - newDoneToday;
+    const newPick = newCards.slice(0, Math.max(0, newSlots));
+
     combined.push(...reviewPick, ...newPick);
   });
 
@@ -15960,20 +16033,28 @@ function recordAndAdvance(cardId, grade) {
   // Update SRS via shared sm2Next
   const progress = LS.get('card_progress') || {};
   const existing = progress[cardId] || {};
+  const wasNew = !existing.repetitions; // no prior repetitions → genuinely new card
   const updated = { ...existing, ...sm2Next(existing, gradeNum), cardId };
   progress[cardId] = updated;
   LS.set('card_progress', progress);
   syncCardProgress(cardId, updated);
 
-  // Track today's progress in-memory, keyed by subject
-  if (card?.subject) {
-    if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
-    STATE.todayDone[card.subject].add(cardId);
+  const isQR = STATE.sessionPhase === 'quickRevision';
+
+  if (!isQR) {
+    // Only new cards count toward the daily new-card limit
+    if (wasNew && card?.subject) {
+      if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
+      STATE.todayDone[card.subject].add(cardId);
+    }
+    incrementCardCount();
+  } else {
+    // Track result for quick revision end summary
+    if (!STATE._quickRevisionResults) STATE._quickRevisionResults = [];
+    STATE._quickRevisionResults.push({ cardId, grade: gradeNum, q: card?.q || card?.question });
   }
 
-  incrementCardCount();
-
-  // Save to history
+  // Save to history (always)
   const history = LS.get('card_history') || [];
   history.unshift({
     cardId,
@@ -16000,7 +16081,9 @@ function recordAndAdvance(cardId, grade) {
       nextBtn.onclick = () => {
         STATE.currentCardIndex++;
         if (STATE.currentCardIndex >= STATE.cardQueue.length) {
-          if (STATE.sessionPhase === 'embed') {
+          if (STATE.sessionPhase === 'quickRevision') {
+            showQuickRevisionEnd();
+          } else if (STATE.sessionPhase === 'embed') {
             if (STATE._timerInterval) clearInterval(STATE._timerInterval);
             showTransition('embed-to-apply');
           } else {
@@ -16158,10 +16241,16 @@ async function restoreCardProgressFromSupabase(user) {
     if (res2.ok) {
       const todayRows = await res2.json();
       const todayDone = {};
+      const localProgress = LS.get('card_progress') || {};
       (todayRows || []).forEach(r => {
         if (!r.subject) return;
-        if (!todayDone[r.subject]) todayDone[r.subject] = new Set();
-        todayDone[r.subject].add(r.card_id);
+        const prog = localProgress[r.card_id];
+        // Only count genuinely new cards (repetitions=1 = graded for the first time ever today)
+        // Review cards are not counted — they don't consume daily new-card slots
+        if (prog && prog.repetitions === 1) {
+          if (!todayDone[r.subject]) todayDone[r.subject] = new Set();
+          todayDone[r.subject].add(r.card_id);
+        }
       });
       STATE.todayDone = todayDone;
     }
@@ -16242,6 +16331,7 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
     if (!topicsBySubject[c.subject][c.topic]) topicsBySubject[c.subject][c.topic] = c.topic_name;
   });
   let h = '';
+  h += '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:#1E40AF;">⚡ <strong>Revise Now</strong> — Practice any topic anytime without using your daily card limit. Complete your daily cards to keep your streak! 🔥</div>';
   if (scheduleLocked) {
     h += '<div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;font-weight:700;color:#92400E;">🔒 Your teacher controls topic selection — contact them to make changes</div>';
   }
@@ -16285,14 +16375,23 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
       const tripleBadge = (showTriple && isTripleTopic(topicKey))
         ? '<span style="background:#E0E7FF;color:#4F46E5;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;">Triple</span>'
         : '';
+      const _mastery = getMasteryForTopic(topicKey);
+      const masteryBadge = _mastery >= 80
+        ? '<span style="background:#DCFCE7;color:#15803D;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;margin-left:6px;vertical-align:middle;">★ Mastered</span>'
+        : _mastery >= 40
+        ? '<span style="background:#FEF3C7;color:#92400E;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;vertical-align:middle;">' + _mastery + '%</span>'
+        : '';
+      const reviseBtn = '<button onclick="startQuickRevision(\'' + topicKey + '\')" style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;border:none;background:#6366F1;color:white;cursor:pointer;white-space:nowrap;">Revise</button>';
       h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid #F1F5F9;">';
-      h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + displayName + tripleBadge + '</div>';
+      h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + displayName + tripleBadge + masteryBadge + '</div>';
       if (scheduleLocked) {
-        h += '<div style="font-size:12px;font-weight:700;color:' + (isOn ? '#15803D' : '#B91C1C') + ';">' + (isOn ? 'On' : 'Off') + '</div>';
+        h += '<div style="display:flex;align-items:center;gap:8px;">' + reviseBtn;
+        h += '<div style="font-size:12px;font-weight:700;color:' + (isOn ? '#15803D' : '#B91C1C') + ';">' + (isOn ? 'On' : 'Off') + '</div></div>';
       } else {
+        h += '<div style="display:flex;align-items:center;gap:8px;">' + reviseBtn;
         h += '<div onclick="' + topicOnclick + '" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:' + topicBg + ';position:relative;transition:background 0.2s;flex-shrink:0;">';
         h += '<div style="position:absolute;top:3px;' + thumbPos + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>';
-        h += '</div>';
+        h += '</div></div>';
       }
       h += '</div>';
     });
@@ -16311,6 +16410,60 @@ function _refreshTopicsUI(isParent, childUserId) {
     const el = document.getElementById('my-topics-content');
     if (el) el.innerHTML = buildTopicsTabHTML(STATE.user.locked_topics || [], STATE.user.schedule_locked || false, 'saveStudentTopicLock', null);
   }
+}
+
+
+function getMasteryForTopic(topicKey) {
+  const progress = LS.get('card_progress') || {};
+  const topicCards = SAMPLE_CARDS.filter(c => c.topic === topicKey);
+  if (topicCards.length === 0) return 0;
+  const mastered = topicCards.filter(c => (progress[c.id]?.lastGrade ?? -1) >= 2).length;
+  return Math.round((mastered / topicCards.length) * 100);
+}
+
+function startQuickRevision(topicKey) {
+  const topicCards = SAMPLE_CARDS.filter(c => c.topic === topicKey);
+  if (topicCards.length === 0) { showToast('No cards found for this topic'); return; }
+  const shuffled = [...topicCards].sort(() => Math.random() - 0.5);
+  STATE.cardQueue = shuffled;
+  STATE.currentCardIndex = 0;
+  STATE.sessionPhase = 'quickRevision';
+  STATE._quickRevisionTopic = topicKey;
+  STATE._quickRevisionResults = [];
+  renderFlashcard();
+}
+
+function showQuickRevisionEnd() {
+  const results = STATE._quickRevisionResults || [];
+  const total = results.length;
+  const goodPlus = results.filter(r => r.grade >= 2).length;
+  const pct = total > 0 ? Math.round((goodPlus / total) * 100) : 0;
+  const topicName = STATE.cardQueue[0]?.topic_name || STATE._quickRevisionTopic || 'Topic';
+  const weakCards = results.filter(r => r.grade <= 1).map(r => r.q || r.cardId).filter(Boolean).slice(0, 5);
+  const topicKey = STATE._quickRevisionTopic || '';
+  const emoji = pct >= 80 ? '\u{1F31F}' : pct >= 50 ? '\u{1F4AA}' : '\u{1F4DA}';
+  const scoreColor = pct >= 70 ? 'var(--ss-green)' : pct >= 50 ? 'var(--ss-blue)' : 'var(--ss-orange)';
+  const weakHtml = weakCards.length > 0
+    ? '<div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:12px;padding:14px 16px;margin-bottom:16px;"><div style="font-size:13px;font-weight:800;color:#92400E;margin-bottom:8px;">Worth reviewing again:</div>'
+      + weakCards.map(q => '<div style="font-size:12px;font-weight:600;color:#78350F;padding:4px 0;border-bottom:1px solid #FDE68A;">' + (q.length > 90 ? q.slice(0,90) + '\u2026' : q) + '</div>').join('')
+      + '</div>'
+    : '<div style="background:#DCFCE7;border-radius:12px;padding:14px 16px;margin-bottom:16px;text-align:center;font-size:14px;font-weight:700;color:#15803D;">No weak cards \u2014 great revision!</div>';
+  const html = '<div class="screen"><div style="flex:1;overflow-y:auto;padding:24px 20px 100px;">'
+    + '<div style="text-align:center;padding:16px 0 24px;">'
+    + '<div style="font-size:48px;margin-bottom:8px;">' + emoji + '</div>'
+    + '<div style="font-size:22px;font-weight:900;margin-bottom:6px;">Quick Revision Done!</div>'
+    + '<div style="font-size:14px;color:var(--text-secondary);font-weight:600;">' + topicName + '</div>'
+    + '</div>'
+    + '<div class="stats-grid" style="margin-bottom:20px;">'
+    + '<div class="stat-card"><div class="stat-number" style="color:var(--ss-blue);">' + total + '</div><div class="stat-label">Cards Seen</div></div>'
+    + '<div class="stat-card"><div class="stat-number" style="color:' + scoreColor + ';">' + pct + '%</div><div class="stat-label">Good + Easy</div></div>'
+    + '</div>'
+    + weakHtml
+    + '<div style="background:#EFF6FF;border-radius:10px;padding:12px 14px;font-size:12px;font-weight:600;color:#1E40AF;margin-bottom:20px;">SRS intervals updated. This session does not count toward your daily streak \u2014 complete your daily cards to keep it!</div>'
+    + '<button class="btn btn-primary btn-full" onclick="showHome()" style="margin-bottom:12px;">Back to Home</button>'
+    + '<button class="btn btn-ghost btn-full" onclick="startQuickRevision(\'' + topicKey + '\')">Revise Again</button>'
+    + '</div></div>';
+  render(html);
 }
 
 async function _patchLockedTopics(url, token, newLocked) {
@@ -16418,22 +16571,29 @@ function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
 function recordGrade(cardId, grade, aiGraded) {
   const progress = LS.get('card_progress') || {};
   const existing = progress[cardId] || {};
+  const wasNew = !existing.repetitions; // no prior repetitions → genuinely new card
   const updated = { ...existing, ...sm2Next(existing, grade), cardId };
   progress[cardId] = updated;
   LS.set('card_progress', progress);
   syncCardProgress(cardId, updated);
 
-  // Track today's progress in-memory, keyed by subject
   const card = STATE.cardQueue[STATE.currentCardIndex];
-  if (card?.subject) {
-    if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
-    STATE.todayDone[card.subject].add(cardId);
+  const isQR = STATE.sessionPhase === 'quickRevision';
+
+  if (!isQR) {
+    // Only new cards count toward the daily new-card limit
+    if (wasNew && card?.subject) {
+      if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
+      STATE.todayDone[card.subject].add(cardId);
+    }
+    incrementCardCount();
+  } else {
+    // Track result for quick revision end summary
+    if (!STATE._quickRevisionResults) STATE._quickRevisionResults = [];
+    STATE._quickRevisionResults.push({ cardId, grade, q: card?.q || card?.question });
   }
 
-  // Increment daily card count
-  incrementCardCount();
-
-  // Record history
+  // Record history (always — quick revision still writes to study_history)
   const history = LS.get('card_history') || [];
   history.unshift({
     cardId, question: card?.question || card?.q, subject: card?.subject,
@@ -16446,7 +16606,9 @@ function recordGrade(cardId, grade, aiGraded) {
 function nextCard() {
   STATE.currentCardIndex++;
   if (STATE.currentCardIndex >= STATE.cardQueue.length) {
-    if (STATE.sessionPhase === 'embed') {
+    if (STATE.sessionPhase === 'quickRevision') {
+      showQuickRevisionEnd();
+    } else if (STATE.sessionPhase === 'embed') {
       if (STATE._timerInterval) clearInterval(STATE._timerInterval);
       showTransition('embed-to-apply');
     } else {
