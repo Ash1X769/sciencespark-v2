@@ -13372,22 +13372,22 @@ async function showProgressTracker() {
 async function joinClass() {
   const code = (document.getElementById('join-class-input')?.value || '').trim().toUpperCase();
   if (!code) { alert('Please enter a class code'); return; }
-  try {
-    const { data, error } = await supabase.from('classes').select('*').eq('code', code).single();
-    if (error || !data) { alert('Class code not found. Check with your teacher.'); return; }
-    const userId = (await supabase.auth.getUser()).data.user.id;
-    await supabase.from('class_members').upsert({ class_id: data.id, student_id: userId });
-    await supabase.from('profiles').update({ class_code: code }).eq('user_id', userId);
-    STATE.user.class_code = code;
-    LS.set('demo_user', STATE.user);
-    alert('Joined class: ' + data.name + ' ✅');
-    showProfile();
-  } catch(e) {
-    STATE.user.class_code = code;
-    LS.set('demo_user', STATE.user);
-    alert('Code saved! ✅');
-    showProfile();
-  }
+  const userId = STATE.user?.id;
+  if (!userId) { alert('Not logged in'); return; }
+  const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + userId, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': CONFIG.SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + STATE.user.token
+    },
+    body: JSON.stringify({ class_code: code })
+  });
+  if (!res.ok) { alert('Could not save class code. Please try again.'); return; }
+  STATE.user.class_code = code;
+  LS.set('demo_user', STATE.user);
+  alert('Class code saved! ✅');
+  showProfile();
 }
 
 function copyParentCode(code) {
@@ -17800,22 +17800,22 @@ async function showProgressTracker() {
 async function joinClass() {
   const code = (document.getElementById('join-class-input')?.value || '').trim().toUpperCase();
   if (!code) { alert('Please enter a class code'); return; }
-  try {
-    const { data, error } = await supabase.from('classes').select('*').eq('code', code).single();
-    if (error || !data) { alert('Class code not found. Check with your teacher.'); return; }
-    const userId = (await supabase.auth.getUser()).data.user.id;
-    await supabase.from('class_members').upsert({ class_id: data.id, student_id: userId });
-    await supabase.from('profiles').update({ class_code: code }).eq('user_id', userId);
-    STATE.user.class_code = code;
-    LS.set('demo_user', STATE.user);
-    alert('Joined class: ' + data.name + ' ✅');
-    showProfile();
-  } catch(e) {
-    STATE.user.class_code = code;
-    LS.set('demo_user', STATE.user);
-    alert('Code saved! ✅');
-    showProfile();
-  }
+  const userId = STATE.user?.id;
+  if (!userId) { alert('Not logged in'); return; }
+  const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + userId, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': CONFIG.SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + STATE.user.token
+    },
+    body: JSON.stringify({ class_code: code })
+  });
+  if (!res.ok) { alert('Could not save class code. Please try again.'); return; }
+  STATE.user.class_code = code;
+  LS.set('demo_user', STATE.user);
+  alert('Class code saved! ✅');
+  showProfile();
 }
 
 function copyParentCode(code) {
