@@ -16439,7 +16439,7 @@ function startQuickRevision(topicKey) {
   const key = topicKey.toUpperCase();
   const topicCards = SAMPLE_CARDS.filter(c => c.topic.toUpperCase() === key);
   if (topicCards.length === 0) { showToast('No cards found for this topic'); return; }
-  const shuffled = [...topicCards].sort(() => Math.random() - 0.5).slice(0, 20);
+  const shuffled = [...topicCards].sort(() => Math.random() - 0.5);
   STATE.cardQueue = shuffled;
   STATE.currentCardIndex = 0;
   STATE.sessionPhase = 'quickRevision';
