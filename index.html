@@ -1612,7 +1612,7 @@ textarea.input { resize: vertical; min-height: 100px; }
 
 /* ── V1 FLASHCARD STYLES ── */
 .ans-list { list-style: none; padding: 0; margin: 12px 0 0 0; }
-.ans-list li { padding: 8px 12px; margin-bottom: 6px; background: #F0FBF7; border-radius: 10px; font-size: 14px; font-weight: 700; color: #1a1a2e; border-left: 3px solid #00C896; line-height: 1.5; }
+.ans-list li { padding: 8px 12px 8px 22px; margin-bottom: 6px; background: #F0FBF7; border-radius: 10px; font-size: 14px; font-weight: 700; color: #1a1a2e; border-left: 3px solid #00C896; line-height: 1.5; position: relative; }
 .ans-list li strong { color: #00C896; }
 .reveal-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #2D6A4F, #00C896); color: white; border: none; border-radius: 14px; font-size: 15px; font-weight: 800; cursor: pointer; font-family: inherit; margin-top: 8px; }
 .card-hint { background: #FFF8E1; border-radius: 10px; padding: 10px 14px; margin-top: 8px; font-size: 13px; font-weight: 700; color: #8B6914; border-left: 3px solid #FFB300; }
@@ -2048,24 +2048,24 @@ const SAMPLE_CARDS = [
     examA: '1 mark: active site changes shape. 1 mark: substrate no longer fits / enzyme no longer works.' },
 
   { id: 'b2_005', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'F', exam_board: 'AQA',
-    q: 'Where is **amylase** produced and what does it do?',
-    a: ['Produced in the **salivary glands** and **pancreas**', 'Breaks down **starch** into **sugars** (maltose)'],
+    q: 'a) Where is **amylase** produced? b) What does it do?',
+    a: ['**a)** Produced in the **salivary glands** and **pancreas**', '**b)** Breaks down **starch** into **sugars** (maltose)'],
     hint: 'Amylase → starch → sugars. Made in 2 places, acts in mouth and small intestine',
     exam_q: 'State where amylase is produced and what it digests. [2 marks]',
     examMarks: 2,
     examA: '1 mark: salivary glands / pancreas. 1 mark: breaks down starch into sugars/maltose.' },
 
   { id: 'b2_006', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'F', exam_board: 'AQA',
-    q: 'Where is **protease** produced and what does it do?',
-    a: ['Produced in the **stomach** and **pancreas**', 'Breaks down **proteins** into **amino acids**'],
+    q: 'a) Where is **protease** produced? b) What does it do?',
+    a: ['**a)** Produced in the **stomach** and **pancreas**', '**b)** Breaks down **proteins** into **amino acids**'],
     hint: 'Protease → proteins → amino acids',
     exam_q: 'State where protease is produced and what it digests. [2 marks]',
     examMarks: 2,
     examA: '1 mark: stomach / pancreas. 1 mark: breaks down proteins into amino acids.' },
 
   { id: 'b2_007', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', tier: 'F', exam_board: 'AQA',
-    q: 'Where is **lipase** produced and what does it do?',
-    a: ['Produced in the **pancreas**', 'Breaks down **fats (lipids)** into **fatty acids** and **glycerol**'],
+    q: 'a) Where is **lipase** produced? b) What does it do?',
+    a: ['**a)** Produced in the **pancreas**', '**b)** Breaks down **fats (lipids)** into **fatty acids** and **glycerol**'],
     hint: 'Lipase → lipids → fatty acids + glycerol. Only in small intestine area',
     exam_q: 'State where lipase is produced and what it digests. [2 marks]',
     examMarks: 2,
@@ -2465,8 +2465,8 @@ const SAMPLE_CARDS = [
     examA: '1 mark: 25% / 1 in 4 / 0.25.' },
 
   { id: 'b6_008', subject: 'Biology', topic: 'B6', topic_name: 'Inheritance, Variation and Evolution', tier: 'F', exam_board: 'AQA',
-    q: 'How do **fossils provide evidence for evolution**? Why is the fossil record incomplete?',
-    a: ['Fossils are preserved remains of organisms found in rock — they show **life existed millions of years ago**', 'Comparing fossils from different aged rock layers shows how organisms **changed over time** → evidence for evolution', '**Record is incomplete** because: soft-bodied organisms rarely fossilise; most organisms decompose before fossilisation; many fossils remain undiscovered; fossilising conditions are rare'],
+    q: 'a) How do **fossils provide evidence for evolution**? b) Why is the fossil record incomplete?',
+    a: ['**a)** Fossils are preserved remains of organisms found in rock — they show **life existed millions of years ago**', 'Comparing fossils from different aged rock layers shows how organisms **changed over time** → evidence for evolution', '**b)** Record is incomplete because: soft-bodied organisms rarely fossilise; most organisms decompose before fossilisation; many fossils remain undiscovered; fossilising conditions are rare'],
     hint: 'Fossils in rock show change over time = evolution evidence. Incomplete: soft bodies don\'t fossilise, most decompose, most undiscovered.',
     exam_q: 'Explain how fossils provide evidence for evolution. [2 marks]',
     examMarks: 2,
@@ -2559,8 +2559,8 @@ const SAMPLE_CARDS = [
 
   // B1 Higher gap-fill
   { id: 'b1_018', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology', tier: 'H', exam_board: 'AQA',
-    q: 'How do you **calculate surface area to volume ratio** and why does it decrease as organisms grow?',
-    a: ['**SA:Vol ratio = Surface area ÷ Volume**', 'Cube side 1 cm → SA = 6 cm², Vol = 1 cm³ → ratio 6:1; cube side 2 cm → SA = 24 cm², Vol = 8 cm³ → ratio 3:1', 'As organisms grow, **volume increases faster** (cubed) than surface area (squared) → SA:Vol ratio **decreases**', 'Small SA:Vol ratio means diffusion is too slow to supply all cells → **specialised exchange surfaces** and circulatory systems are needed'],
+    q: 'a) How do you **calculate surface area to volume ratio**? b) Why does it decrease as organisms grow?',
+    a: ['**a)** **SA:Vol ratio = Surface area ÷ Volume**', 'Cube side 1 cm → SA = 6 cm², Vol = 1 cm³ → ratio 6:1; cube side 2 cm → SA = 24 cm², Vol = 8 cm³ → ratio 3:1', '**b)** As organisms grow, **volume increases faster** (cubed) than surface area (squared) → SA:Vol ratio **decreases**', 'Small SA:Vol ratio means diffusion is too slow to supply all cells → **specialised exchange surfaces** and circulatory systems are needed'],
     hint: 'SA:Vol = SA ÷ Vol. Double size → SA ×4, Vol ×8 → ratio halves. Larger = smaller ratio = needs exchange surfaces + transport system.',
     exam_q: 'Calculate the SA:Vol ratio of a cube with sides 3 cm. Explain what this means for diffusion. [3 marks]',
     examMarks: 3,
@@ -3470,8 +3470,8 @@ const SAMPLE_CARDS = [
     examA: '1 mark: in darkness LDR has high resistance. 1 mark: high resistance gives high voltage across LDR / triggers switching circuit. 1 mark: light switches on / as it gets light the resistance falls and the lamp switches off.' },
 
   { id: 'p2_023', subject: 'Physics', topic: 'P2', topic_name: 'Electricity', tier: 'F', exam_board: 'AQA',
-    q: 'Why is the **live wire dangerous** even when a switch is open? What happens when live wire touches earth?',
-    a: ['The **live wire** is at 230 V (alternating, dangerous voltage) relative to earth — this is maintained by the power station **even when the switch is open**', 'The switch interrupts the **circuit path** but does NOT disconnect the live wire from its source of voltage', 'If the switch is in the **neutral wire** instead of the live, the appliance is disconnected from current flow but the live wire terminal is still at 230 V → touching it causes **electric shock** or **death**', 'If live wire touches **earth**: huge current flows → fuse blows or circuit breaker trips → circuit disconnected for safety'],
+    q: 'a) Why is the **live wire dangerous** even when a switch is open? b) What happens when live wire touches earth?',
+    a: ['**a)** The **live wire** is at 230 V (alternating, dangerous voltage) relative to earth — this is maintained by the power station **even when the switch is open**', 'The switch interrupts the **circuit path** but does NOT disconnect the live wire from its source of voltage', 'If the switch is in the **neutral wire** instead of the live, the appliance is disconnected from current flow but the live wire terminal is still at 230 V → touching it causes **electric shock** or **death**', '**b)** If live wire touches **earth**: huge current flows → fuse blows or circuit breaker trips → circuit disconnected for safety'],
     hint: 'Live wire = always at 230 V (even switch open). Switch in circuit breaks current flow, not the live voltage. Live + earth = short circuit → massive current → fuse blows.',
     exam_q: 'Explain why the live wire is dangerous even when the switch in a circuit is open. [2 marks]',
     examMarks: 2,
@@ -3801,40 +3801,40 @@ const SAMPLE_CARDS = [
     examA: '1 mark: the active site has a specific shape complementary to the substrate. 1 mark: the substrate binds to the active site / enzyme-substrate complex forms / reaction occurs there.' },
 
   { id: 'b2_024', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', subtopic: 'B2.4', subtopic_name: 'Food Tests (Required Practical)', tier: 'F', exam_board: 'AQA',
-    q: 'How do you test for **starch**? What is a positive result?',
-    a: ['Add **iodine solution** (yellow-brown) to the sample', 'Positive result: colour changes from **yellow-brown to blue-black**', 'No change (stays yellow-brown) = starch absent'],
+    q: 'a) How do you test for **starch**? b) What is a positive result?',
+    a: ['**a)** Add **iodine solution** (yellow-brown) to the sample', '**b)** Positive result: colour changes from **yellow-brown to blue-black**', 'No change (stays yellow-brown) = starch absent'],
     hint: 'Iodine for starch. Blue-black = starch present. Yellow-brown = absent',
     exam_q: 'Describe how to test for the presence of starch. State the positive result. [2 marks]',
     examMarks: 2,
     examA: '1 mark: add iodine solution. 1 mark: positive result — colour changes from yellow-brown to blue-black.' },
 
   { id: 'b2_025', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', subtopic: 'B2.4', subtopic_name: 'Food Tests (Required Practical)', tier: 'F', exam_board: 'AQA',
-    q: 'How do you test for **sugar (glucose)**? What is a positive result?',
-    a: ['Add **Benedict\'s reagent** (blue) to the sample and **heat in a water bath**', 'Positive result: colour changes from **blue to brick-red/orange** precipitate', 'Yellow/green indicates small amounts of sugar; blue = no reducing sugar'],
+    q: 'a) How do you test for **sugar (glucose)**? b) What is a positive result?',
+    a: ['**a)** Add **Benedict\'s reagent** (blue) to the sample and **heat in a water bath**', '**b)** Positive result: colour changes from **blue to brick-red/orange** precipitate', 'Yellow/green indicates small amounts of sugar; blue = no reducing sugar'],
     hint: 'Benedict\'s + heat. Brick red = lots of glucose. Orange/yellow = some. Blue = none',
     exam_q: 'Describe how to test for the presence of glucose. State the positive result. [2 marks]',
     examMarks: 2,
     examA: '1 mark: add Benedict\'s reagent and heat (in water bath). 1 mark: positive result — solution turns brick-red/orange precipitate.' },
 
   { id: 'b2_026', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', subtopic: 'B2.4', subtopic_name: 'Food Tests (Required Practical)', tier: 'F', exam_board: 'AQA',
-    q: 'How do you test for **protein**? What is a positive result?',
-    a: ['Add **Biuret reagent** (sodium hydroxide then dilute copper sulfate solution)', 'Positive result: colour changes from **blue to purple/violet**'],
+    q: 'a) How do you test for **protein**? b) What is a positive result?',
+    a: ['**a)** Add **Biuret reagent** (sodium hydroxide then dilute copper sulfate solution)', '**b)** Positive result: colour changes from **blue to purple/violet**'],
     hint: 'Biuret for Protein → Purple. BiPP. Blue to purple = protein present',
     exam_q: 'Describe how to test for the presence of protein. State the positive result. [2 marks]',
     examMarks: 2,
     examA: '1 mark: add Biuret reagent / add NaOH then dilute copper sulfate. 1 mark: positive result — solution turns purple/violet.' },
 
   { id: 'b2_027', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', subtopic: 'B2.4', subtopic_name: 'Food Tests (Required Practical)', tier: 'F', exam_board: 'AQA',
-    q: 'How do you test for **lipids (fats)**? What is a positive result?',
-    a: ['Dissolve the sample in **ethanol**, then add the solution to **water**', 'Positive result: a **white cloudy emulsion** forms (milky precipitate)', 'Clear = no lipids present'],
+    q: 'a) How do you test for **lipids (fats)**? b) What is a positive result?',
+    a: ['**a)** Dissolve the sample in **ethanol**, then add the solution to **water**', '**b)** Positive result: a **white cloudy emulsion** forms (milky precipitate)', 'Clear = no lipids present'],
     hint: 'Emulsion test: ethanol first, then water. Cloudy white = fat present',
     exam_q: 'Describe how to test for the presence of lipids. State the positive result. [2 marks]',
     examMarks: 2,
     examA: '1 mark: add ethanol, shake, then add water. 1 mark: positive result — white cloudy emulsion/milky precipitate forms.' },
 
   { id: 'b2_028', subject: 'Biology', topic: 'B2', topic_name: 'Organisation', subtopic: 'B2.5', subtopic_name: 'Digestive Enzymes', tier: 'F', exam_board: 'AQA',
-    q: 'What is **bile**? Where is it produced and stored?',
-    a: ['Bile is an **alkaline** fluid that aids fat digestion', 'Produced in the **liver**', 'Stored in the **gall bladder**', 'Released into the **small intestine** (duodenum) when fat is present'],
+    q: 'a) What is **bile**? b) Where is it produced and stored?',
+    a: ['**a)** Bile is an **alkaline** fluid that aids fat digestion', '**b)** Produced in the **liver**', 'Stored in the **gall bladder**', 'Released into the **small intestine** (duodenum) when fat is present'],
     hint: 'Liver makes it, gall bladder stores it. Bile = alkaline fat-helper. Liver → Gall bladder → Small intestine',
     exam_q: 'State where bile is produced and where it is stored. [2 marks]',
     examMarks: 2,
@@ -4619,8 +4619,8 @@ const SAMPLE_CARDS = [
     examA: '1 mark: aluminium is more reactive than carbon / above carbon in reactivity series. 1 mark: iron is less reactive than carbon / carbon can reduce iron oxide but not aluminium oxide.' },
 
   { id: 'c4_041', subject: 'Chemistry', topic: 'C4', topic_name: 'Chemical Changes', subtopic: 'C4.5', subtopic_name: 'Reactions of Acids', tier: 'F', exam_board: 'AQA',
-    q: 'What is **neutralisation**? Give the ionic equation.',
-    a: ['Neutralisation is the reaction between an **acid** and a **base (or alkali)** to form **salt + water**', 'Ionic equation: **H⁺(aq) + OH⁻(aq) → H₂O(l)**', 'This net ionic equation applies to all acid-alkali neutralisations regardless of the specific acid or alkali'],
+    q: 'a) What is **neutralisation**? b) Give the ionic equation.',
+    a: ['**a)** Neutralisation is the reaction between an **acid** and a **base (or alkali)** to form **salt + water**', '**b)** Ionic equation: **H⁺(aq) + OH⁻(aq) → H₂O(l)**', 'This net ionic equation applies to all acid-alkali neutralisations regardless of the specific acid or alkali'],
     hint: 'Acid + base → salt + water. ALWAYS. Ionic: H+ + OH- → H2O. This is the key ionic equation for neutralisation',
     exam_q: 'Write the ionic equation for neutralisation. [1 mark]',
     examMarks: 1,
@@ -4747,8 +4747,8 @@ const SAMPLE_CARDS = [
     examA: '1 mark: alkenes contain a C=C double bond / are unsaturated. 1 mark: the double bond can react with other molecules / undergo addition reactions.' },
 
   { id: 'c7_029', subject: 'Chemistry', topic: 'C7', topic_name: 'Organic Chemistry', subtopic: 'C7.5', subtopic_name: 'Alkenes', tier: 'F', exam_board: 'AQA',
-    q: 'What is the **test for an alkene**? Give the positive result.',
-    a: ['**Add bromine water** (orange/brown) to the substance and shake', '**Positive result**: bromine water is **decolourised** (turns colourless)', 'The bromine adds across the C=C double bond (**electrophilic addition**); alkanes do NOT decolourise bromine water'],
+    q: 'a) What is the **test for an alkene**? b) Give the positive result.',
+    a: ['**a)** **Add bromine water** (orange/brown) to the substance and shake', '**b)** **Positive result**: bromine water is **decolourised** (turns colourless)', 'The bromine adds across the C=C double bond (**electrophilic addition**); alkanes do NOT decolourise bromine water'],
     hint: 'Bromine water + alkene → decolourised (colourless). Stays orange = no C=C. Alkene breaks the Br-Br bond',
     exam_q: 'How can you distinguish between hexane (an alkane) and hexene (an alkene)? [2 marks]',
     examMarks: 2,
@@ -4989,8 +4989,8 @@ const SAMPLE_CARDS = [
   // ── Physics F/H (48 cards) ──────────────────────────────────
 
   { id: 'p1_024', subject: 'Physics', topic: 'P1', topic_name: 'Energy', subtopic: 'P1.3', subtopic_name: 'Key Equations', tier: 'F', exam_board: 'AQA',
-    q: 'What is the **equation for efficiency**? Give both versions.',
-    a: ['**Efficiency = useful energy output ÷ total energy input**', 'Or: **Efficiency = useful power output ÷ total power input**', 'Expressed as a **decimal** (e.g. 0.75) or a **percentage** (multiply by 100)', 'Always **≤ 1.0** (or ≤ 100%) — no device can output more energy than is put in'],
+    q: 'a) What is the **equation for efficiency**? b) Give both versions.',
+    a: ['**a)** **Efficiency = useful energy output ÷ total energy input**', '**b)** Or: **Efficiency = useful power output ÷ total power input**', 'Expressed as a **decimal** (e.g. 0.75) or a **percentage** (multiply by 100)', 'Always **≤ 1.0** (or ≤ 100%) — no device can output more energy than is put in'],
     hint: 'Efficiency = useful out / total in. Decimal or %. Never above 1.0 (or 100%). Two versions: energy or power',
     exam_q: 'A motor transfers 600 J of electrical energy. 450 J is transferred as useful kinetic energy. Calculate the efficiency. [2 marks]',
     examMarks: 2,
@@ -5045,8 +5045,8 @@ const SAMPLE_CARDS = [
     examA: '1 mark: Q = 2 × 300 (converting 5 min to 300 s). 1 mark: Q = 600 C.' },
 
   { id: 'p2_027', subject: 'Physics', topic: 'P2', topic_name: 'Electricity', subtopic: 'P2.2', subtopic_name: 'Key Equations', tier: 'F', exam_board: 'AQA',
-    q: 'What is **Ohm\'s Law**? Give the equation.',
-    a: ['**At constant temperature**, the current through an ohmic conductor is **directly proportional** to the potential difference across it', '**V = I × R** (potential difference = current × resistance)', '**V** = volts (V), **I** = amperes (A), **R** = ohms (Ω)'],
+    q: 'a) What is **Ohm\'s Law**? b) Give the equation.',
+    a: ['**a)** **At constant temperature**, the current through an ohmic conductor is **directly proportional** to the potential difference across it', '**b)** **V = I × R** (potential difference = current × resistance)', '**V** = volts (V), **I** = amperes (A), **R** = ohms (Ω)'],
     hint: 'V = IR. Voltage = Current × Resistance. Ohm\'s Law: I ∝ V at constant temp. Double V → double I',
     exam_q: 'A resistor has a resistance of 10 Ω. A current of 0.5 A passes through it. Calculate the potential difference. [2 marks]',
     examMarks: 2,
@@ -9500,7 +9500,7 @@ const SAMPLE_CARDS = [
       '**Iodine solution** (stain) and a dropper pipette',
       '**Scalpel** or scissors, forceps, mounted needle'
     ],
-    hint: 'SMCF: Stain, Mount, Cover, Focus — the four steps. Always list specific items, not just "staining solution"',
+    hint: '8 items to name: **light microscope**, **slides**, **cover slips**, **iodine solution** (stain), **dropper pipette**, **scalpel**, **forceps**, **mounted needle**. Exam often asks for 2–3 — always name the specific stain (\'iodine solution\', not just \'stain\').',
     exam_q: 'Name two pieces of equipment used to prepare a temporary microscope slide of plant cells. [2 marks]',
     examMarks: 2,
     examA: '1 mark each: microscope slide / cover slip / scalpel / forceps / iodine solution / mounted needle / dropper pipette (any two).' },
@@ -9524,10 +9524,10 @@ const SAMPLE_CARDS = [
     { id: 'brpa1_003', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology',
       subtopic: 'B1.RPA1', subtopic_name: 'Required Practical: Microscopy',
       tier: 'F', exam_board: 'AQA',
-      q: 'How do you calculate **total magnification** of a light microscope? State the three objective lens powers typically available.',
+      q: 'a) How do you calculate **total magnification** of a light microscope? b) State the three objective lens powers typically available.',
       a: [
-        '**Total magnification = eyepiece lens power × objective lens power**',
-        'Standard objectives: **×4** (scanning), **×10** (low), **×40** (high power)',
+        '**a)** **Total magnification = eyepiece lens power × objective lens power**',
+        '**b)** Standard objectives: **×4** (scanning), **×10** (low), **×40** (high power)',
         'With a ×10 eyepiece: total magnifications are **×40, ×100, ×400**',
         'Always state total magnification when drawing or describing cells'
       ],
@@ -9539,11 +9539,11 @@ const SAMPLE_CARDS = [
     { id: 'brpa1_004', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology',
       subtopic: 'B1.RPA1', subtopic_name: 'Required Practical: Microscopy',
       tier: 'F', exam_board: 'AQA',
-      q: 'How do you calculate **actual cell size** from a microscope image, and how do you convert between mm and μm?',
+      q: 'a) How do you calculate **actual cell size** from a microscope image? b) How do you convert between mm and μm?',
       a: [
-        '**Actual size = image size ÷ magnification**',
+        '**a)** **Actual size = image size ÷ magnification**',
         'Measure the image with a ruler (in mm), then divide by total magnification',
-        '**1 mm = 1000 μm** (micrometres) — multiply mm answer by 1000 to convert',
+        '**b)** **1 mm = 1000 μm** (micrometres) — multiply mm answer by 1000 to convert',
         'e.g. image = 5 mm, magnification = ×500 → actual = 5 ÷ 500 = 0.01 mm = **10 μm**'
       ],
       hint: 'MAI triangle: A = I ÷ M. Then ×1000 to convert mm → μm. One step at a time',
@@ -9569,11 +9569,11 @@ const SAMPLE_CARDS = [
     { id: 'brpa1_006', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology',
       subtopic: 'B1.RPA1', subtopic_name: 'Required Practical: Microscopy',
       tier: 'F', exam_board: 'AQA',
-      q: 'How do you calculate the **size to draw** a cell in a biological drawing at a given magnification? State the rules for biological drawings.',
+      q: 'a) How do you calculate the **size to draw** a cell in a biological drawing? b) State the rules for biological drawings.',
       a: [
-        '**Drawing size = actual size × magnification**',
+        '**a)** **Drawing size = actual size × magnification**',
         'e.g. actual cell = 20 μm; draw at ×500 → drawing = 20 × 500 = 10,000 μm = **10 mm**',
-        'Rules for biological drawings: use a **sharp pencil**, **single unbroken lines**, **no shading or colouring**',
+        '**b)** Rules for biological drawings: use a **sharp pencil**, **single unbroken lines**, **no shading or colouring**',
         'Add a **scale bar** (e.g. = 10 μm) and label structures with **straight ruled lines** that do not cross'
       ],
       hint: 'Drawing size = Actual × Magnification (reverse of finding actual size). Scale bar is compulsory. Pencil only, no shading',
@@ -9637,7 +9637,7 @@ const SAMPLE_CARDS = [
       '**Sucrose solutions** at 0.0, 0.2, 0.4, 0.6, 0.8, 1.0 mol/dm³',
       '**Balance** (accurate to 0.01 g), boiling tubes or beakers, paper towel, stopwatch'
     ],
-    hint: 'Six concentrations (0–1.0 mol/dm³). Cork borer = consistent diameter. Accurate balance needed (±0.01 g)',
+    hint: 'Key equipment: **cork borer** (same-diameter cylinders), **ruler** (same length), **balance** (measure mass change), **boiling tubes** with lids. Must name concentration units (mol/dm³). Always dry the chip with paper towel before reweighing.',
     exam_q: 'Name three pieces of equipment needed for an osmosis investigation using potato cylinders. [3 marks]',
     examMarks: 3,
     examA: '1 mark each: cork borer / potato / sucrose solutions of different concentrations / balance / boiling tubes / ruler / paper towel (any three).' },
@@ -9676,12 +9676,12 @@ const SAMPLE_CARDS = [
     { id: 'brpa2_004', subject: 'Biology', topic: 'B1', topic_name: 'Cell Biology',
       subtopic: 'B1.RPA2', subtopic_name: 'Required Practical: Osmosis',
       tier: 'F', exam_board: 'AQA',
-      q: 'State the formula for **percentage change in mass** and explain why this is used instead of absolute mass change.',
+      q: 'a) State the formula for **percentage change in mass**. b) Explain why this is used instead of absolute mass change.',
       a: [
-        '**% change in mass = ((final mass − initial mass) ÷ initial mass) × 100**',
+        '**a)** **% change in mass = ((final mass − initial mass) ÷ initial mass) × 100**',
         'Positive value: potato gained mass → water moved INTO the cell (external solution is MORE dilute than cell contents)',
         'Negative value: potato lost mass → water moved OUT of the cell (external solution is MORE concentrated than cell contents)',
-        'Use % change (not absolute change) because cylinders cannot all be cut to exactly the same starting mass'
+        '**b)** Use % change (not absolute change) because cylinders cannot all be cut to exactly the same starting mass'
       ],
       hint: '((Final − Initial)/Initial) × 100. Positive = gain = dilute outside. Negative = loss = concentrated outside. % corrects for unequal starts',
       exam_q: 'A potato cylinder has an initial mass of 4.0 g and a final mass of 4.6 g. Calculate the percentage change in mass. [2 marks]',
@@ -9916,7 +9916,7 @@ const SAMPLE_CARDS = [
       '**Buffer solutions** at pH 3, 5, 7, 9, 11 (range of 5 values)',
       '**Water bath** at constant temperature (e.g. 35°C), test tubes, stopwatch, pipettes/syringes'
     ],
-    hint: 'Buffers control pH. Iodine on spotting tile every 30 s — time from start until no blue-black colour = time for starch to be digested',
+    hint: 'Must name: **buffer solutions** (NOT just \'acid and alkali\'), **spotting tile** (iodine test drops), **37°C water bath** (controls temperature), **graduated syringe** (accurate volumes). Buffer = key word examiners look for. Amylase + starch need equal volumes.',
     exam_q: 'Name two pieces of equipment needed to investigate the effect of pH on amylase activity. [2 marks]',
     examMarks: 2,
     examA: '1 mark each: buffer solutions / water bath / spotting tile / iodine solution / stopwatch / amylase / starch solution (any two).' },
@@ -10053,7 +10053,7 @@ const SAMPLE_CARDS = [
       '**Beaker of water** with dissolved **sodium hydrogen carbonate (NaHCO₃)** to supply CO₂',
       '**Stopwatch**, gas syringe or capillary tube to collect and measure O₂ produced'
     ],
-    hint: 'Elodea in NaHCO₃ (CO₂ supply) + lamp + ruler. Count O₂ bubbles/min at each lamp distance. Cut stem at an angle to unblock xylem',
+    hint: 'Must name: **Elodea** (or pondweed), **sodium hydrogen carbonate** (NaHCO₃, CO₂ source), **lamp** (light source), **ruler** (distance from lamp), **stopwatch**. Saying \'NaHCO₃\' (not just \'CO₂\') shows you know the dissolved CO₂ source.',
     exam_q: 'State two pieces of equipment needed to investigate how light intensity affects the rate of photosynthesis in Elodea. [2 marks]',
     examMarks: 2,
     examA: '1 mark each: Elodea / lamp / ruler / sodium hydrogen carbonate solution / stopwatch / gas syringe (any two).' },
@@ -10190,7 +10190,7 @@ const SAMPLE_CARDS = [
       '**Hydrogen carbonate indicator** (red → yellow in CO₂) or gas syringe to collect CO₂',
       '**Thermostatically controlled water bath**, boiling tubes, bungs and delivery tubes, stopwatch, syringes for measuring volumes'
     ],
-    hint: 'Yeast + glucose → CO₂ (anaerobic). Hydrogen carbonate indicator: red → yellow = CO₂ arriving. Thermostat = consistent temperature',
+    hint: 'Must name: **conical flask + airtight bung** (captures CO₂), **delivery tube** into indicator, **hydrogen carbonate indicator** (turns yellow in CO₂), **water bath** + thermometer. State \'airtight bung\' — CO₂ produced anaerobically must be measured.',
     exam_q: 'Name two pieces of equipment needed to investigate the effect of temperature on yeast respiration. [2 marks]',
     examMarks: 2,
     examA: '1 mark each: water bath / yeast suspension / glucose solution / hydrogen carbonate indicator / stopwatch / delivery tube / gas syringe (any two).' },
@@ -10325,7 +10325,7 @@ const SAMPLE_CARDS = [
       '**Non-pathogenic bacterial culture** (e.g. harmless E. coli strain)',
       '**Paper discs** soaked in antibiotic solutions of known concentration, sterile forceps, adhesive tape, incubator'
     ],
-    hint: 'Aseptic = sterile throughout. Flame loop, work near Bunsen, seal plates, incubate upside down at ≤25°C. Zone = effectiveness',
+    hint: 'Must name: **Bunsen burner** (flame the inoculation loop), **inoculation loop** (transfer bacteria), **agar plates**, **sticky tape** (seal edges but not completely). State \'flame loop until glowing red\' for aseptic technique marks. Incubate at max 25°C in school.',
     exam_q: 'State three pieces of equipment needed to investigate the effectiveness of antibiotics using aseptic technique. [3 marks]',
     examMarks: 3,
     examA: '1 mark each: nutrient agar plate / inoculating loop / Bunsen burner / bacterial culture / antibiotic discs / sterile forceps / adhesive tape (any three).' },
@@ -10461,7 +10461,7 @@ const SAMPLE_CARDS = [
       '**Measuring tape** (for setting up a grid or transect line)',
       '**Identification key**, tally chart, random number table or app, clipboard'
     ],
-    hint: 'Quadrat = fixed-area sample frame. Tape = grid/transect. ID key = species. Random numbers = no bias. Tally = count',
+    hint: 'Must name: **quadrat** (state size, e.g. 0.5 m²), **tape measure** (mark transect or grid), **random number table** (random placement), **identification key** (species ID). Must justify random placement = avoids sampling bias. State quadrat size specifically.',
     exam_q: 'State three pieces of equipment needed for a field investigation using quadrats. [3 marks]',
     examMarks: 3,
     examA: '1 mark each: quadrat / measuring tape / identification key / tally chart / random number table (any three).' },
@@ -10615,7 +10615,7 @@ const SAMPLE_CARDS = [
       '**Bunsen burner**, tripod, gauze, heat-resistant mat, beaker',
       '**Funnel and filter paper** (for filtration), **evaporating dish** and glass rod'
     ],
-    hint: 'Warm acid + excess copper oxide → filter → evaporate → crystallise. Four equipment groups: heating, filtering, evaporating, timing',
+    hint: 'Four equipment groups: **heating** (Bunsen+tripod+gauze+heatproof mat), **filtering** (funnel+filter paper+conical flask), **evaporating** (evaporating basin), **measuring** (measuring cylinder). Name at least one from each group. Use spatula for copper oxide — add until excess.',
     exam_q: 'State the name of the salt produced when copper(II) oxide reacts with dilute sulfuric acid, and name two pieces of equipment needed to prepare it. [3 marks]',
     examMarks: 3,
     examA: '1 mark: copper(II) sulfate. 1 mark each: any two of — beaker / funnel / filter paper / evaporating dish / glass rod / Bunsen burner (any two).' },
@@ -10754,7 +10754,7 @@ const SAMPLE_CARDS = [
       '**Graphite electrodes** (or copper electrodes for copper plating), **beaker** of electrolyte solution',
       '**Accurate balance** (to 0.01 g), stopwatch, sandpaper (to clean electrodes), distilled water'
     ],
-    hint: 'Power supply + ammeter + two electrodes + electrolyte + accurate balance. Clean electrodes before weighing — oxidation products distort mass',
+    hint: 'Must specify: **d.c. power supply** (not a.c.), **carbon (graphite) electrodes** (inert), **electrolyte** solution, **leads and clips**. For gas collection: test tube over electrode or gas syringe. State \'inert electrodes\' — they don\'t react with the electrolyte.',
     exam_q: 'Name three pieces of equipment needed to investigate electrolysis of copper sulfate solution. [3 marks]',
     examMarks: 3,
     examA: '1 mark each: power supply / ammeter / electrodes (graphite or copper) / beaker / balance / stopwatch (any three).' },
@@ -10893,7 +10893,7 @@ const SAMPLE_CARDS = [
       '**Thermometer or temperature probe/datalogger** (accurate to 0.1°C)',
       '**Measuring cylinders**, dilute hydrochloric acid, sodium hydroxide solution, glass stirring rod'
     ],
-    hint: 'Polystyrene cup = insulating calorimeter. Lid = reduces heat loss. Temperature probe = more accurate than mercury thermometer. Always same volumes',
+    hint: 'Must name: **polystyrene cup** (NOT glass beaker — insulator), **lid** (reduces heat loss), **accurate thermometer** (±0.5°C), **measuring cylinder**. Polystyrene cup vs. glass beaker = 1 mark. Lid = 1 mark. These two are the most common exam losses.',
     exam_q: 'State two pieces of equipment used to measure energy changes in a neutralisation reaction and explain why each is used. [4 marks]',
     examMarks: 4,
     examA: '1 mark each: polystyrene cup / thermometer. 1 mark each: polystyrene cup insulates to reduce heat loss to surroundings / thermometer measures the temperature change accurately.' },
@@ -11174,7 +11174,7 @@ const SAMPLE_CARDS = [
       '**Thermometer** (bulb positioned at the **side arm junction**, not in the liquid)',
       '**Anti-bumping granules**, heat source (Bunsen or heating mantle), clamp stands, rubber tubing for condenser cooling water'
     ],
-    hint: 'Thermometer bulb at side arm (not in liquid) = reads vapour temperature. Anti-bumping granules = smooth boiling. Cold water in at bottom of condenser',
+    hint: 'Must name: **Liebig condenser** with water flowing through, **thermometer at the side arm** (not in liquid — reads vapour temperature), **anti-bumping granules**, **receiving flask**. Thermometer position = common 1-mark question. Water flows in at bottom, out at top.',
     exam_q: 'State the position of the thermometer in a distillation apparatus and explain why it is placed there. [2 marks]',
     examMarks: 2,
     examA: '1 mark: thermometer bulb is positioned at the junction of the flask and the side arm / at the point where vapour exits. 1 mark: so it measures the temperature of the vapour (not the liquid), giving the boiling point of the fraction being collected.' },
@@ -11314,7 +11314,7 @@ const SAMPLE_CARDS = [
       '**Capillary tube** (to spot samples), appropriate **solvent** (e.g. water for water-soluble dyes; propanone for non-polar substances)',
       '**Developing chamber** (beaker or chromatography tank + lid) to keep atmosphere saturated with solvent vapour'
     ],
-    hint: 'PENCIL only (pen ink would travel up with the solvent). Solvent below baseline. Saturated atmosphere = even solvent rise',
+    hint: 'Must state: **pencil** (NOT pen — pen ink would dissolve), **chromatography paper**, **solvent** kept below the pencil baseline, **clip/hook** to suspend paper (not touching the base). Pencil vs. pen = classic 1-mark question. Baseline drawn before adding solvent.',
     exam_q: 'State two pieces of equipment needed for paper chromatography and one reason why a pencil must be used to draw the baseline. [3 marks]',
     examMarks: 3,
     examA: '1 mark each: chromatography paper / ruler / capillary tube / beaker / pencil (any two). 1 mark: pencil is insoluble in the solvent so the baseline does not dissolve and travel with the solvent front (pen ink would move and contaminate results).' },
@@ -11452,7 +11452,7 @@ const SAMPLE_CARDS = [
       '**Test tubes** and dropping pipettes; dilute sodium hydroxide (NaOH), silver nitrate (AgNO₃), dilute nitric acid (HNO₃), barium chloride (BaCl₂)',
       '**Universal indicator or pH paper** (optional), limewater for carbonate test'
     ],
-    hint: 'Two categories: flame tests (cations by colour), reagent tests (cations by precipitate with NaOH; anions by precipitate with AgNO₃ or BaCl₂)',
+    hint: 'Two categories: **Flame test** (nichrome wire loop, HCl to clean, Bunsen) and **Reagent tests** (NaOH for cations; AgNO₃ + HNO₃ for halides; BaCl₂ + HCl for sulfates). Must say \'nichrome wire\' not just \'wire\'. HNO₃ acidifies before AgNO₃ — prevents CO₃²⁻ false positive.',
     exam_q: 'State two pieces of equipment and two reagents needed for the tests for ions practical. [4 marks]',
     examMarks: 4,
     examA: '1 mark each equipment: nichrome wire loop / Bunsen burner / test tubes / dropping pipette (any two). 1 mark each reagent: NaOH / AgNO₃ / HNO₃ / BaCl₂ (any two).' },
@@ -11608,7 +11608,7 @@ const SAMPLE_CARDS = [
       '**Silver nitrate (AgNO₃) and dilute HNO₃** to test for dissolved chloride ions (Cl⁻)',
       '**Distillation apparatus**: round-bottomed flask, Liebig condenser, collecting flask, Bunsen/heating mantle, thermometer, anti-bumping granules'
     ],
-    hint: 'Tests: pH (indicator), dissolved ions (AgNO₃ + HNO₃), total dissolved solids (evaporate + weigh residue). Purify by distillation',
+    hint: 'Test kit: **pH paper/meter**, **AgNO₃ + HNO₃** (halide ions), **evaporating dish** (dissolved solids), **chlorine test paper**. Purification equipment: distillation apparatus OR filtration layers (sand/gravel/charcoal). State which test identifies which impurity.',
     exam_q: 'State two tests used to compare water samples in the water purification practical. [2 marks]',
     examMarks: 2,
     examA: '1 mark each: pH test (using indicator or pH meter) / silver nitrate test for chloride ions / evaporation to find total dissolved solids (any two).' },
@@ -11760,7 +11760,7 @@ const SAMPLE_CARDS = [
       '**12 V immersion heater**, power supply, **ammeter** (series), **voltmeter** (parallel with heater), stopwatch',
       '**Digital thermometer or temperature probe**, **digital balance**, insulating lagging (to reduce heat loss)'
     ],
-    hint: 'Block has TWO holes: heater in one, thermometer in the other. Joulemeter replaces ammeter + voltmeter + stopwatch as a more direct option. Lagging reduces heat loss',
+    hint: 'Must name: **metal block with 2 holes** (heater in one, thermometer in the other), **joulemeter** (replaces ammeter+voltmeter, reads energy directly), **insulating lagging** (reduces heat loss). Mention \'oil in holes\' for good thermal contact — often worth 1 mark.',
     exam_q: 'State two pieces of equipment needed to measure the specific heat capacity of aluminium using an electrical heater. [2 marks]',
     examMarks: 2,
     examA: '1 mark each: ammeter / voltmeter / stopwatch / thermometer / joulemeter / immersion heater / digital balance (any two).' },
@@ -11916,7 +11916,7 @@ const SAMPLE_CARDS = [
       '**Insulating materials** (e.g. cotton wool, bubble wrap, newspaper, aluminium foil, no insulation as control)',
       'Elastic bands or tape to secure insulation; ruler to measure material thickness'
     ],
-    hint: 'Same beaker, same volume of water, same starting temperature for each material. The "no insulation" beaker is the control. Identical conditions except the material',
+    hint: 'Must control: **same mass/thickness** of insulating material, **same volume of water**, **same starting temperature**. Name specific materials: \'cotton wool\', \'bubble wrap\', \'foil\'. Thermometer + stopwatch for every trial. Control variables = key examiner focus.',
     exam_q: 'State two pieces of equipment needed to investigate the thermal insulation properties of different materials. [2 marks]',
     examMarks: 2,
     examA: '1 mark each: identical beakers / thermometer / stopwatch / measuring cylinder / insulating materials (any two).' },
@@ -12052,7 +12052,7 @@ const SAMPLE_CARDS = [
       '**Ammeter in series** (reads current through the wire); **voltmeter in parallel** with the wire segment between the clips',
       '**Metre ruler** alongside the wire to set the clip separation accurately'
     ],
-    hint: 'Voltmeter in PARALLEL with wire. Ammeter in SERIES. Variable resistor keeps current low. Clip position sets the length being tested',
+    hint: 'Must name: **nichrome wire** (NOT copper — has measurable resistance), **ammeter in series** with the wire, **voltmeter in parallel** with the measured length, **rheostat** (variable resistor, keeps current low). Ammeter series and voltmeter parallel = guaranteed exam question.',
     exam_q: 'Describe how to set up a circuit to investigate how the resistance of a wire depends on its length. [3 marks]',
     examMarks: 3,
     examA: '1 mark: connect wire between two crocodile clips; connect ammeter in series. 1 mark: connect voltmeter in parallel with the wire (between the clips). 1 mark: include a variable resistor to control current.' },
@@ -12189,7 +12189,7 @@ const SAMPLE_CARDS = [
       '**Protective resistor in series with the diode** (essential — prevents the diode passing a dangerously large current)',
       'Connecting leads, each component to be tested'
     ],
-    hint: 'Protective resistor for diode — compulsory! Rheostat varies V. Voltmeter in parallel. Ammeter in series. Test each component in turn',
+    hint: 'Must name: **rheostat** (varies voltage), **ammeter in series**, **voltmeter in parallel**, **protective resistor** (compulsory for diode — prevents burnout). For diode: reverse connections for reverse-bias readings. Protective resistor = 1 mark — always include it.',
     exam_q: 'State why a protective resistor must be used in series with the diode when investigating its IV characteristics. [1 mark]',
     examMarks: 1,
     examA: '1 mark: to prevent the diode passing too large a current in the forward direction, which would damage it / the diode has very low resistance in forward bias and could be destroyed without a protective resistor.' },
@@ -12345,7 +12345,7 @@ const SAMPLE_CARDS = [
       '**Liquid**: digital balance, measuring cylinder (to measure volume directly)',
       'Formula for all: **ρ = m/V** (density = mass ÷ volume)'
     ],
-    hint: 'Three methods, one formula. Regular = ruler + balance. Irregular = displacement (water). Liquid = measuring cylinder + balance. ρ = m/V always',
+    hint: 'Three methods need different equipment: **Regular** solid = ruler + balance; **Irregular** solid = eureka/displacement can + measuring cylinder + string + balance; **Liquid** = measuring cylinder + balance. Always name the balance — mass is needed for ALL methods. Formula: ρ = m ÷ V.',
     exam_q: 'State the equipment needed to find the density of an irregular solid. [2 marks]',
     examMarks: 2,
     examA: '1 mark each: digital balance / measuring cylinder / water (any two).' },
@@ -12487,7 +12487,7 @@ const SAMPLE_CARDS = [
       '**Pointer** (e.g. pin taped to bottom of spring, or sticky note) to read the ruler accurately',
       '**Eye protection** (spring can snap or masses can fall)'
     ],
-    hint: 'Pointer + ruler for accurate length reading. Masses add force: F = mg (use g = 9.8 or 10 N/kg as instructed). Always load and unload to check elastic limit',
+    hint: 'Must name: **retort stand + boss + clamp** (support spring), **metre rule** clamped vertically alongside spring, **pointer** attached to spring (removes parallax error), **slotted masses** (100 g each). Pointer = key item examiners look for. Use 5–6+ masses to get a valid graph.',
     exam_q: 'State two pieces of equipment needed for the Hooke\\\'s Law investigation. [2 marks]',
     examMarks: 2,
     examA: '1 mark each: spring / slotted masses / metre ruler / retort stand / pointer (any two).' },
@@ -12626,7 +12626,7 @@ const SAMPLE_CARDS = [
       '**Metre ruler** (or printed grid on the screen below) to measure wavelength',
       'White paper or screen below tank to see projected wave shadows'
     ],
-    hint: 'Signal generator sets frequency. Strobe at same frequency freezes waves. Measure λ from frozen image. v = fλ',
+    hint: 'Must name: **signal generator** (sets and displays frequency f), **stroboscope/strobe lamp** (freezes wave pattern to measure λ), **ruler** on screen below. Measure multiple wavelengths for accuracy: λ = total distance ÷ number of waves. Speed = fλ.',
     exam_q: 'State two pieces of equipment needed to measure the wavelength of waves in a ripple tank. [2 marks]',
     examMarks: 2,
     examA: '1 mark each: ripple tank / signal generator / stroboscope (or slow-motion camera) / metre ruler (any two).' },
@@ -12766,7 +12766,7 @@ const SAMPLE_CARDS = [
       '**Ray box** with a single narrow slit (to produce one ray of light)',
       '**A3 white paper**, pencil, protractor, ruler — to trace rays and measure angles'
     ],
-    hint: 'Draw around the block first. Trace the incident and emergent rays. Use pencil only. Protractor measures angles from the normal, NOT from the surface',
+    hint: 'Must name: **ray box + single-slit card** (produces single ray), **glass/perspex rectangular block**, **sharp pencil** (trace ray paths — NOT pen), **protractor** (measure angles from the normal). Always draw the normal first — angles are from normal, not from surface.',
     exam_q: 'State two pieces of equipment needed to investigate refraction through a glass block. [2 marks]',
     examMarks: 2,
     examA: '1 mark each: ray box / glass block / protractor / white paper / ruler (any two).' },
@@ -13317,6 +13317,112 @@ const KNOWLEDGE_ORGANISERS = {
   },
 };
 
+
+// ============================================================
+// WORKING OUT SECTIONS — step-by-step worked examples
+// ============================================================
+const WORKING_OUT = {
+  'b1_018': 'Given: cube side = 3 cm. | Equation: SA = 6 × side²; Vol = side³. | Step 1: SA = 6 × 3² = 54 cm². | Step 2: Vol = 3³ = 27 cm³. | Step 3: SA:Vol = 54 ÷ 27 = **2:1 cm⁻¹**.',
+  'b2_019': 'Given: heart rate = 75 bpm; stroke volume = 80 mL. | Equation: cardiac output = heart rate × stroke volume. | Step 1: 75 × 80 = 6000 mL/min. | Step 2: 6000 ÷ 1000 = **6 L/min**.',
+  'b1_022': 'Given: image width = 30 mm; actual width = 0.02 mm. | Equation: magnification = image size ÷ actual size. | Step 1: 30 ÷ 0.02 = **×1500**.',
+  'b1_7f_g09': 'Given: initial = 4.0 g; final = 3.6 g. | Equation: % change = ((final − initial) ÷ initial) × 100. | Step 1: change = 3.6 − 4.0 = −0.4 g. | Step 2: (−0.4 ÷ 4.0) × 100 = **−10%**. | Negative = water left cell (external solution more concentrated).',
+  'b1_t02': 'Given: division every 20 min; 2 hours = 120 min. | Equation: N = 2ⁿ where n = divisions. | Step 1: n = 120 ÷ 20 = 6 divisions. | Step 2: N = 2⁶ = **64 bacteria**. | (For 3 hours: n = 9 → 2⁹ = 512.)',
+  'b1_t09': 'Given: diameter = 14 mm; π = 3.14. | Equation: area = πr². | Step 1: r = 14 ÷ 2 = 7 mm. | Step 2: area = 3.14 × 7² = 3.14 × 49 = **153.9 mm²**.',
+  'b1_t10': 'Given: diameters = 12 mm, 14 mm, 13 mm. | Equation: mean = sum ÷ n. | Step 1: 12 + 14 + 13 = 39. | Step 2: 39 ÷ 3 = **13 mm**.',
+  'c3_021': 'Given: H₂O; Ar: H=1, O=16. | Equation: % mass = (mass of element ÷ Mr) × 100. | Step 1: Mr(H₂O) = (2×1) + 16 = 18. | Step 2: (16 ÷ 18) × 100 = **88.9%**.',
+  'c3_022': 'Given: mass = 2 g; volume = 250 cm³. | Equation: conc. (g/dm³) = mass ÷ vol (dm³). | Step 1: 250 cm³ = 0.25 dm³. | Step 2: 2 ÷ 0.25 = **8 g/dm³**.',
+  'c3_023': 'Given: Ca = 4.0 g, O = 3.2 g; Ar: Ca=40, O=16. | Step 1: mol Ca = 4.0 ÷ 40 = 0.1; mol O = 3.2 ÷ 16 = 0.2. | Step 2: ratio Ca:O = 0.1:0.2 = **1:2** → formula **CaO₂**.',
+  'c3_024': 'Given: titres = 24.75, 24.80, 24.70, 25.40 cm³. | Step 1: outlier = 25.40 cm³ (>0.10 cm³ from others). | Step 2: mean = (24.75+24.80+24.70) ÷ 3 = **24.75 cm³**.',
+  'c3_027': 'Given: mass = 44 g; Mr(CO₂) = 44. | Equation: moles = mass ÷ Mr. | Step 1: 44 ÷ 44 = **1 mole**.',
+  'c3_028': 'Given: mass = 4 g; Mr(H₂) = 2. | Step 1: moles = 4 ÷ 2 = 2 mol. | Step 2: molecules = 2 × 6.02×10²³ = **1.20×10²⁴ molecules**.',
+  'c3_2f_g01': 'Given: H₂SO₄; Ar: H=1, S=32, O=16. | Step 1: (2×1) + 32 + (4×16) = 2+32+64 = **98**.',
+  'c3_2f_g02': 'Given: CaCO₃; Ar: Ca=40, C=12, O=16. | Step 1: 40 + 12 + (3×16) = 40+12+48 = **100**.',
+  'c3_4h_g01': 'Given: 2H₂ + O₂ → 2H₂O; 4 g H₂; Mr(H₂)=2, Mr(H₂O)=18. | Step 1: mol H₂ = 4÷2 = 2 mol. | Step 2: ratio 2H₂:2H₂O = 1:1 → 2 mol H₂O. | Step 3: mass = 2×18 = **36 g**.',
+  'c3_6h_g01': 'Given: actual = 35 g; theoretical = 50 g. | Equation: % yield = (actual ÷ theoretical) × 100. | Step 1: (35÷50)×100 = **70%**.',
+  'c3_6h_g03': 'Given: H₂+Cl₂→2HCl; desired = HCl; Ar: H=1, Cl=35.5. | Step 1: 2×Mr(HCl) = 2×36.5 = 73. Total Mr = 2+71 = 73. | Step 2: (73÷73)×100 = **100%** atom economy.',
+  'c3_7h_g01': 'Given: 0.5 mol NaOH in 250 cm³. | Equation: c = moles ÷ vol (dm³). | Step 1: 250 cm³ = 0.25 dm³. | Step 2: c = 0.5÷0.25 = **2 mol/dm³**.',
+  'c1_t07': 'Given: ¹⁰B (20%), ¹¹B (80%). | Equation: Ar = (Σ mass×%) ÷ 100. | Step 1: (10×20)+(11×80) = 200+880 = 1080. | Step 2: 1080÷100 = **10.8**.',
+  'c3_t02': 'Given: 0.25 mol O₂ at RTP (molar vol = 24 dm³/mol). | Step 1: 0.25 × 24 = **6 dm³**.',
+  'c3_t03': 'Given: 0.5 mol NaOH in 250 cm³. | Step 1: 250 cm³ = 0.25 dm³. | Step 2: c = 0.5÷0.25 = **2.0 mol/dm³**.',
+  'c3_t06': 'Given: actual = 4.8 g; theoretical = 6.0 g. | Equation: % yield = (actual÷theoretical)×100. | Step 1: (4.8÷6.0)×100 = **80%**.',
+  'c5_2h_g02': 'Given: H–H=436, Cl–Cl=242, H–Cl=431 kJ/mol. | Step 1: bonds broken: 436+242 = 678 kJ. | Step 2: bonds formed: 2×431 = 862 kJ. | Step 3: ΔH = 678−862 = **−184 kJ/mol** (exothermic).',
+  'c5_t02': 'Given: H–H=436, Cl–Cl=243, H–Cl=432 kJ/mol. | Step 1: bonds broken: 436+243 = 679 kJ. | Step 2: bonds formed: 2×432 = 864 kJ. | Step 3: ΔH = 679−864 = **−185 kJ/mol** (exothermic).',
+  'c8_t01': 'Given: substance moves 4.8 cm; solvent front 8.0 cm. | Equation: Rf = dist (substance) ÷ dist (solvent). | Step 1: 4.8÷8.0 = **0.60** (no units).',
+  'p1_020': 'Given: k=40 N/m; e=0.05 m. | Equation: Ee = ½k e². | Step 1: Ee = 0.5×40×(0.05)² = 0.5×40×0.0025 = **0.05 J**.',
+  'p1_024': 'Given: useful energy = 450 J; total = 600 J. | Equation: efficiency = useful ÷ total. | Step 1: 450÷600 = **0.75 (75%)**.',
+  'p1_t01': 'Given: E = 6000 J; t = 30 s. | Equation: P = E ÷ t. | Step 1: 6000÷30 = **200 W**.',
+  'p1_t02': 'Given: P = 2500 W; t = 4 min = 240 s. | Equation: E = P × t. | Step 1: 2500×240 = **600,000 J** (600 kJ).',
+  'p1_t03': 'Given: input = 100 J; useful = 5 J. | Equation: efficiency = useful ÷ input. | Step 1: 5÷100 = **0.05 (5%)**.',
+  'p2_024': 'Given: Vp=240 V; Vs=12 V; Ip=0.5 A. | Equation: Vp×Ip = Vs×Is. | Step 1: 240×0.5 = 120 W. | Step 2: Is = 120÷12 = **10 A**.',
+  'p2_026': 'Given: I=2 A; t=5 min=300 s. | Equation: Q = I×t. | Step 1: 2×300 = **600 C**.',
+  'p2_027': 'Given: R=10 Ω; I=0.5 A. | Equation: V = I×R. | Step 1: 0.5×10 = **5 V**.',
+  'p2_t06': 'Given: P=1150 W; V=230 V. | Equation: I = P÷V. | Step 1: 1150÷230 = **5 A**. | Choose fuse just above 5 A (13 A fuse).',
+  'p2_t07': 'Given: R=20 Ω; I=3 A. | Equation: P = I²R. | Step 1: 3²=9. | Step 2: 9×20 = **180 W**.',
+  'p2_t08': 'Given: amplitude = 2.5 div; y-scale = 4 V/div. | Equation: Vpeak = divisions × V/div. | Step 1: 2.5×4 = **10 V**.',
+  'p2_t09': 'Given: 1 wave = 4 div; time/div = 5 ms. | Step 1: T = 4×5 = 20 ms = 0.02 s. | Step 2: f = 1÷0.02 = **50 Hz**.',
+  'p3_016': 'Given: P=50 W; m=0.025 kg; t=5 min=300 s. | Step 1: E = 50×300 = 15,000 J. | Step 2: Lf = E÷m = 15,000÷0.025 = **600,000 J/kg**.',
+  'p3_t04': 'Given: m=2 kg; ΔT=80°C; c=4200 J/kg°C. | Equation: Q = mcΔT. | Step 1: Q = 2×4200×80 = **672,000 J** (672 kJ).',
+  'p3_t07': 'Given: m=0.5 kg; L=340,000 J/kg. | Equation: Q = mL. | Step 1: 0.5×340,000 = **170,000 J** (170 kJ).',
+  'p3_t11': 'Given: P₁=100 kPa; T₁=300 K; T₂=400 K (convert °C+273). | Equation: P₂ = P₁×T₂/T₁. | Step 1: 100×(400/300) = **133.3 kPa**.',
+  'p4_t03': 'Given: ²¹⁸₈₄Po; alpha = ⁴₂He. | Step 1: mass number: 218−4 = **214**. | Step 2: atomic number: 84−2 = **82** (lead). | Daughter: **²¹₄₈₂Pb**.',
+  'p5_022': 'Given: u=10 m/s; v=30 m/s; s=200 m. | Equation: v² = u²+2as. | Step 1: 900=100+400a. | Step 2: a = 800÷400 = **2 m/s²**.',
+  'p5_028': 'Given: v-t graph — triangle from (0,0) to (10 s, 20 m/s). | Area = ½×base×height. | Step 1: ½×10×20 = **100 m**.',
+  'p5_030': 'Given: F=50 N; θ=30°. | Equation: Fh = F cosθ. | Step 1: 50×cos30° = 50×0.866 = **43.3 N**.',
+  'p5_031': 'Given: m₁=5 kg, u₁=4 m/s; m₂=3 kg, u₂=0 (stick). | Step 1: p before = 5×4+0 = 20 kg·m/s. | Step 2: (5+3)×v = 20. | Step 3: v = 20÷8 = **2.5 m/s**.',
+  'p5_035': 'Given: F=50 N; d=3 m. | Equation: W = F×d. | Step 1: 50×3 = **150 J**.',
+  'p5_2f_g01': 'Given: m=60 kg; g=10 N/kg. | Equation: W = mg. | Step 1: 60×10 = **600 N**.',
+  'p5_2f_g02': 'Given: k=25 N/m; e=0.04 m. | Equation: F = ke. | Step 1: 25×0.04 = **1 N**.',
+  'p5_2f_g03': 'Given: d=240 m; t=12 s. | Equation: speed = d÷t. | Step 1: 240÷12 = **20 m/s**.',
+  'p5_2f_g04': 'Given: u=10 m/s; v=30 m/s; t=5 s. | Equation: a = (v−u)÷t. | Step 1: (30−10)÷5 = **4 m/s²**.',
+  'p5_2f_g05': 'Given: m=1000 kg; a=3 m/s². | Equation: F = ma. | Step 1: 1000×3 = **3000 N**.',
+  'p5_2h_g01': 'Given: m=70 kg; v=4 m/s. | Equation: p = mv. | Step 1: 70×4 = **280 kg·m/s**.',
+  'p5_t01': 'Given: m=1200 kg; v=15 m/s. | Equation: p = mv. | Step 1: 1200×15 = **18,000 kg·m/s**.',
+  'p5_t02': 'Given: m₁=2 kg, u=5 m/s; m₂=3 kg, u=0 (stick). | Step 1: p = 2×5 = 10. | Step 2: 5v=10 → v = **2 m/s**.',
+  'p5_t03': 'Given: astronaut 70 kg; spacecraft 420 kg, v=0.5 m/s; total p=0. | Step 1: 70v + 420×0.5 = 0. | Step 2: v = −210÷70 = **−3 m/s** (opposite direction).',
+  'p5_t04': 'Given: F=500 N; t=0.4 s. | Equation: impulse = F×t = Δp. | Step 1: 500×0.4 = **200 N·s** (= change in momentum).',
+  'p5_t06': 'Given: F=200 N; A=0.05 m². | Equation: P = F÷A. | Step 1: 200÷0.05 = **4000 Pa**.',
+  'p5_t07': 'Given: depth=5 m; ρ=1025 kg/m³; g=10 N/kg. | Equation: ΔP = ρgh. | Step 1: 1025×10×5 = **51,250 Pa** (above atmospheric).',
+  'p6_017': 'Given: f=200 Hz. | Equation: T = 1÷f. | Step 1: 1÷200 = **0.005 s** (5 ms).',
+  'p6_022': 'Given: f=50 Hz. | Equation: T = 1÷f. | Step 1: 1÷50 = **0.02 s** (20 ms).',
+  'p7_006': 'Given: l=0.3 m; I=5 A; B=0.2 T. | Equation: F = BIl. | Step 1: 0.2×5×0.3 = **0.3 N**.',
+  'p7_t04': 'Given: l=0.3 m; I=4 A; B=0.5 T. | Equation: F = BIl. | Step 1: 0.5×4×0.3 = **0.6 N**.',
+  'p7_t10': 'Given: Np=200; Ns=50; Vp=240 V. | Equation: Vs = Vp×(Ns/Np). | Step 1: 240×(50/200) = **60 V** (step-down).',
+  'p7_t11': 'Given: Vp=25 V; Vs=250 V; Ip=10 A. | Equation: Vp×Ip = Vs×Is. | Step 1: 25×10 = 250×Is. | Step 2: Is = **1 A**.',
+  'bg_b7_03': 'Given: producer = 10,000 kg; transfer = 10% each level. | Step 1: Primary consumer: 10,000×0.1 = 1,000 kg. | Step 2: Secondary: 100 kg. | Step 3: Tertiary: **10 kg**.',
+  'cg_c3_01': 'Given: volumes = 24, 25, 23, 25 cm³. | Step 1: mean = (24+25+23+25)÷4 = **24.25 cm³**. | Step 2: range = 25−23 = **2 cm³**.',
+  'cg_c6_01': 'Given: volume = 48 cm³; time = 120 s. | Equation: rate = vol÷time. | Step 1: 48÷120 = **0.4 cm³/s**.',
+  'cg_c4_05': 'Given: titres = 24.35, 24.40, 24.30, 22.10 cm³. | Step 1: outlier = 22.10 (discard). | Step 2: mean = (24.35+24.40+24.30)÷3 = **24.35 cm³**.',
+  'pg_p5_01': 'Given: reaction time = 0.6 s; speed = 20 m/s. | Equation: thinking dist = speed × time. | Step 1: 20×0.6 = **12 m**.',
+  'pg_p5_02': 'Given: driver 20 teeth; driven 60 teeth; driving 300 rpm. | Step 1: ratio = 60÷20 = 3. | Step 2: driven speed = 300÷3 = **100 rpm**.',
+  'brpa1_003': 'Given: eyepiece = ×10; objective = ×40. | Equation: total = eyepiece × objective. | Step 1: 10×40 = **×400**.',
+  'brpa1_004': 'Given: image = 6 mm; magnification = ×400. | Equation: actual = image÷mag; 1 mm = 1000 μm. | Step 1: 6÷400 = 0.015 mm. | Step 2: 0.015×1000 = **15 μm**.',
+  'brpa1_006': 'Given: actual = 25 μm; magnification = ×200. | Equation: drawing = actual×mag. | Step 1: 25×200 = 5000 μm. | Step 2: 5000÷1000 = **5 mm**.',
+  'brpa2_004': 'Given: initial = 4.0 g; final = 4.6 g. | Equation: % change = ((final−initial)÷initial)×100. | Step 1: +0.6÷4.0×100 = **+15%**. | Positive = water entered cell.',
+  'brpa4_004': 'Given: time for starch to digest = 40 s; pH 7. | Equation: rate = 1÷time. | Step 1: 1÷40 = **0.025 s⁻¹**.',
+  'brpa6_004': 'Given: CO₂ = 8 cm³; time = 4 min. | Equation: rate = vol÷time. | Step 1: 8÷4 = **2 cm³/min**.',
+  'brpa7_004': 'Given: zone diameter = 20 mm; π = 3.14. | Step 1: r = 10 mm. | Step 2: area = 3.14×10² = **314 mm²**.',
+  'brpa7_008': 'Given: diameters = 12 mm, 16 mm. | Step 1: mean = (12+16)÷2 = 14 mm; r = 7 mm. | Step 2: area = 3.14×7² = **153.9 mm²**.',
+  'crpa1_006': 'Given: actual = 3.6 g; theoretical = 5.0 g. | Equation: % yield = (actual÷theoretical)×100. | Step 1: (3.6÷5.0)×100 = **72%**.',
+  'crpa2_005': 'Given: I=1.0 A; t=1200 s; Ar(Cu)=64; F=96500. | Step 1: Q = 1.0×1200 = 1200 C. | Step 2: mol e⁻ = 1200÷96500 = 0.01244. | Step 3: mol Cu = 0.01244÷2 = 0.00622. | Step 4: mass = 0.00622×64 = **0.40 g**.',
+  'crpa3_004': 'Given: 25+25 cm³ solution; ΔT = 7.2°C; c = 4.2 J/g/°C. | Equation: Q = mcΔT. | Step 1: m = 50 g. | Step 2: 50×4.2×7.2 = **1512 J**.',
+  'crpa3_005': 'Given: Q = 1800 J; mol HCl = 0.025. | Equation: ΔH = −Q÷moles. | Step 1: 1800÷0.025 = 72,000 J/mol = **−72 kJ/mol** (exothermic).',
+  'crpa4_007': 'Given: 30°C → 90 s; 40°C → 45 s. | Equation: rate = 1÷time. | Step 1: rate at 30°C = 1÷90 = **0.011 s⁻¹**. | Step 2: at 40°C = 1÷45 = **0.022 s⁻¹**. | Ratio = ×2 faster.',
+  'crpa6_003': 'Given: substance = 4.2 cm; solvent = 7.0 cm. | Equation: Rf = substance÷solvent. | Step 1: 4.2÷7.0 = **0.60** (no units).',
+  'prpa1_004': 'Given: V=12 V; I=2.5 A; t=480 s. | Equation: E = VIt. | Step 1: 12×2.5×480 = **14,400 J**.',
+  'prpa1_005': 'Given: Q=9000 J; m=0.5 kg; ΔT=23°C. | Equation: c = Q÷(mΔT). | Step 1: 9000÷(0.5×23) = 9000÷11.5 = **782.6 J/kg/°C** (≈780).',
+  'prpa2_005': 'Given: ΔT = 75−45 = 30°C; time = 15 min. | Equation: rate = ΔT÷t. | Step 1: 30÷15 = **2 °C/min**.',
+  'prpa3_004': 'Given: V=2.4 V; I=0.6 A. | Equation: R = V÷I. | Step 1: 2.4÷0.6 = **4.0 Ω**.',
+  'prpa4_007': 'Given: from IV graph V=4 V; I=0.25 A. | Equation: R = V÷I. | Step 1: 4÷0.25 = **16 Ω**. | Note: R increases with V for filament lamp (heating).',
+  'prpa5_002': 'Given: 4×3×2 cm block; mass = 96 g. | Step 1: V = 4×3×2 = 24 cm³. | Step 2: ρ = 96÷24 = **4.0 g/cm³**.',
+  'prpa5_003': 'Given: initial water = 42 cm³; final = 57 cm³; mass = 36 g. | Step 1: V = 57−42 = 15 cm³. | Step 2: ρ = 36÷15 = **2.4 g/cm³**.',
+  'prpa5_004': 'Given: empty cyl = 48 g; full = 89 g; V = 50 cm³. | Step 1: mass liquid = 89−48 = 41 g. | Step 2: ρ = 41÷50 = **0.82 g/cm³**.',
+  'prpa6_004': 'Given: e = 4 cm = 0.04 m; F = 2 N. | Equation: k = F÷e. | Step 1: k = 2÷0.04 = **50 N/m**.',
+  'prpa7_003': 'Given: f=8 Hz; 4λ span = 16 cm. | Step 1: λ = 16÷4 = 4 cm = 0.04 m. | Step 2: v = fλ = 8×0.04 = **0.32 m/s**.',
+  'prpa7_005': 'Given: node spacing = 12 cm; f = 20 Hz. | Step 1: λ = 2×12 = 24 cm = 0.24 m. | Step 2: v = 20×0.24 = **4.8 m/s**.',
+  'prpa8_005': 'Given: i=50°; r=30°. | Equation: n = sin(i)÷sin(r). | Step 1: sin50°=0.766; sin30°=0.500. | Step 2: n = 0.766÷0.500 = **1.53**.',
+  'prpa8_008': 'Given: critical angle C = 39°. | Equation: n = 1÷sin(C). | Step 1: sin39° = 0.629. | Step 2: n = 1÷0.629 = **1.59**.',
+};
+
 // ============================================================
 // SRS SCHEDULING
 // ============================================================
@@ -13565,7 +13671,7 @@ function formatTime(secs) {
 }
 
 function bold(t) {
-  return (t || '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  return (t || '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
 }
 
 function fmtMs(ans) {
@@ -14797,6 +14903,8 @@ function renderFlashcard() {
   const examQText = bold(card.exam_q || card.examQ || '');
   const examMarks = card.examMarks || (card.mark_scheme ? '1' : '1');
   const examMS = fmtMs(card.examA || card.mark_scheme || '');
+  const _woContent = (WORKING_OUT && WORKING_OUT[card.id]) || card.workingOut || '';
+  const workingOutHTML = _woContent ? '<div style="background:#EEF2FF;border-radius:8px;padding:10px 12px;margin:6px 0 8px 0;"><div style="font-size:10px;font-weight:900;color:#4F46E5;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px;">📐 Working Out</div><div style="font-size:12px;font-weight:700;color:#1E293B;line-height:1.8;">' + bold(_woContent).split('|').join('<br>') + '</div></div>' : '';
 
   // Progress dots
   const dots = STATE.cardQueue.map((c, i) =>
@@ -14879,6 +14987,7 @@ function renderFlashcard() {
         <div class="exam-q-box">${examQText}</div>
         <span class="exam-marks-pill">${examMarks} mark${examMarks != 1 ? 's' : ''}</span>
         <div class="exam-ms-lbl">AQA Mark Scheme</div>
+        ${workingOutHTML}
         <div>${examMS}</div>
       </div>` : ''}
     </div>
@@ -15946,6 +16055,8 @@ function renderEmbedCard() {
   const examQText = bold(card.exam_q || card.examQ || '');
   const examMarks = card.examMarks || '1';
   const examMS = fmtMs(card.examA || card.mark_scheme || '');
+  const _woContent = (WORKING_OUT && WORKING_OUT[card.id]) || card.workingOut || '';
+  const workingOutHTML = _woContent ? '<div style="background:#EEF2FF;border-radius:8px;padding:10px 12px;margin:6px 0 8px 0;"><div style="font-size:10px;font-weight:900;color:#4F46E5;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px;">📐 Working Out</div><div style="font-size:12px;font-weight:700;color:#1E293B;line-height:1.8;">' + bold(_woContent).split('|').join('<br>') + '</div></div>' : '';
   const subColor = subjectColor(card.subject);
   const tierLabel = (card.tier === 'H') ? 'Higher' : 'Foundation';
   const tierClass = (card.tier === 'H') ? 'h' : 'f';
@@ -15991,6 +16102,7 @@ function renderEmbedCard() {
         <div class="exam-q-box">${examQText}</div>
         <span class="exam-marks-pill">${examMarks} mark${examMarks != 1 ? 's' : ''}</span>
         <div class="exam-ms-lbl">AQA Mark Scheme</div>
+        ${workingOutHTML}
         <div>${examMS}</div>
       </div>` : ''}
     </div>
@@ -18183,7 +18295,7 @@ function formatTime(secs) {
 }
 
 function bold(t) {
-  return (t || '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  return (t || '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
 }
 
 function fmtMs(ans) {
@@ -19410,6 +19522,8 @@ function renderFlashcard() {
   const examQText = bold(card.exam_q || card.examQ || '');
   const examMarks = card.examMarks || (card.mark_scheme ? '1' : '1');
   const examMS = fmtMs(card.examA || card.mark_scheme || '');
+  const _woContent = (WORKING_OUT && WORKING_OUT[card.id]) || card.workingOut || '';
+  const workingOutHTML = _woContent ? '<div style="background:#EEF2FF;border-radius:8px;padding:10px 12px;margin:6px 0 8px 0;"><div style="font-size:10px;font-weight:900;color:#4F46E5;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px;">📐 Working Out</div><div style="font-size:12px;font-weight:700;color:#1E293B;line-height:1.8;">' + bold(_woContent).split('|').join('<br>') + '</div></div>' : '';
 
   // Progress dots
   const dots = STATE.cardQueue.map((c, i) =>
@@ -19492,6 +19606,7 @@ function renderFlashcard() {
         <div class="exam-q-box">${examQText}</div>
         <span class="exam-marks-pill">${examMarks} mark${examMarks != 1 ? 's' : ''}</span>
         <div class="exam-ms-lbl">AQA Mark Scheme</div>
+        ${workingOutHTML}
         <div>${examMS}</div>
       </div>` : ''}
     </div>
@@ -20637,6 +20752,8 @@ function renderEmbedCard() {
   const examQText = bold(card.exam_q || card.examQ || '');
   const examMarks = card.examMarks || '1';
   const examMS = fmtMs(card.examA || card.mark_scheme || '');
+  const _woContent = (WORKING_OUT && WORKING_OUT[card.id]) || card.workingOut || '';
+  const workingOutHTML = _woContent ? '<div style="background:#EEF2FF;border-radius:8px;padding:10px 12px;margin:6px 0 8px 0;"><div style="font-size:10px;font-weight:900;color:#4F46E5;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px;">📐 Working Out</div><div style="font-size:12px;font-weight:700;color:#1E293B;line-height:1.8;">' + bold(_woContent).split('|').join('<br>') + '</div></div>' : '';
   const subColor = subjectColor(card.subject);
   const tierLabel = (card.tier === 'H') ? 'Higher' : 'Foundation';
   const tierClass = (card.tier === 'H') ? 'h' : 'f';
@@ -20682,6 +20799,7 @@ function renderEmbedCard() {
         <div class="exam-q-box">${examQText}</div>
         <span class="exam-marks-pill">${examMarks} mark${examMarks != 1 ? 's' : ''}</span>
         <div class="exam-ms-lbl">AQA Mark Scheme</div>
+        ${workingOutHTML}
         <div>${examMS}</div>
       </div>` : ''}
     </div>
