@@ -1880,6 +1880,8 @@ let STATE = {
   todayDone: {}, // { [subject: string]: Set<cardId> } — cards graded today, keyed by subject
 };
 
+const _expandedTopics = new Set(); // tracks which topic rows have their subtopics panel open
+
 // ============================================================
 // SAMPLE CARDS DATA (AQA GCSE Science)
 // This represents the structure — full 774 cards would be loaded
@@ -13401,8 +13403,10 @@ function getDueCards(user) {
 
     const lockedTopics = (STATE.user?.locked_topics || []).map(t => t.toUpperCase());
     // todayDone NOT applied to base filter — reviews self-exclude via nextReview after grading
-    const subjectCards = allCards.filter(
-      c => c.subject === subject && !lockedTopics.includes(c.topic.toUpperCase())
+    const subjectCards = allCards.filter(c =>
+      c.subject === subject &&
+      !lockedTopics.includes(c.topic.toUpperCase()) &&
+      !(c.subtopic && lockedTopics.includes(c.subtopic.toUpperCase()))
     );
 
     // Due reviews: date-only comparison (timezone fix), oldest-overdue first
@@ -15038,17 +15042,25 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
   const locked = lockedTopics || [];
   const subjectEmoji = { Biology: '🌿', Chemistry: '⚗️', Physics: '⚡' };
   const subjectFn = saveFn === 'saveStudentTopicLock' ? 'saveStudentSubjectLock' : 'saveParentChildSubjectLock';
+  const subtopicFn = saveFn === 'saveStudentTopicLock' ? 'saveStudentSubtopicLock' : 'saveParentChildSubtopicLock';
+  const isParentCtx = saveFn !== 'saveStudentTopicLock';
   // Derive tier: student reads STATE.user, parent reads STATE._parentChildProfile
   const userTier = (saveFn === 'saveStudentTopicLock')
     ? (STATE.user?.tier || 'combined_higher')
     : (STATE._parentChildProfile?.tier || 'combined_higher');
   const showTriple = userTier.includes('triple');
   const topicsBySubject = {};
+  const subtopicsByTopic = {}; // { 'B1': { 'B1.1': 'Cell Structure', 'B1.RPA1': 'Required Practical: Microscopy' } }
   SAMPLE_CARDS.forEach(c => {
-    const tk = c.topic.toUpperCase(); // normalise case so B1 and b1 don't create duplicate rows
-    if (!showTriple && isTripleTopic(tk)) return; // hide triple topics for combined students
+    const tk = c.topic.toUpperCase();
+    if (!showTriple && isTripleTopic(tk)) return;
     if (!topicsBySubject[c.subject]) topicsBySubject[c.subject] = {};
     if (!topicsBySubject[c.subject][tk]) topicsBySubject[c.subject][tk] = c.topic_name;
+    if (c.subtopic) {
+      const sk = c.subtopic.toUpperCase();
+      if (!subtopicsByTopic[tk]) subtopicsByTopic[tk] = {};
+      if (!subtopicsByTopic[tk][sk]) subtopicsByTopic[tk][sk] = c.subtopic_name || c.subtopic;
+    }
   });
   let h = '';
   h += '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:#1E40AF;">⚡ <strong>Revise Now</strong> — Practice any topic anytime without using your daily card limit. Complete your daily cards to keep your streak! 🔥</div>';
@@ -15061,7 +15073,6 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
     const allUnlocked = topicKeys.every(k => !locked.includes(k));
     const allLocked   = topicKeys.every(k =>  locked.includes(k));
     const masterLabel = allUnlocked ? 'All on' : allLocked ? 'All off' : 'Mixed';
-    // master toggle: green=all on, grey=all off, amber=mixed
     const masterBg    = allUnlocked ? '#22C55E' : allLocked ? '#E2E8F0' : '#F59E0B';
     const masterThumb = allUnlocked ? 'right:3px' : 'left:3px';
     const masterOnclick = childUserId
@@ -15084,10 +15095,16 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
     h += '</div>';
     // Individual topic rows
     Object.entries(topics).forEach(([topicKey, topicName]) => {
-      const isLocked  = locked.includes(topicKey);
-      const isOn      = !isLocked;
-      const topicBg   = isOn ? '#22C55E' : '#E2E8F0';
-      const thumbPos  = isOn ? 'right:3px' : 'left:3px';
+      const isLocked   = locked.includes(topicKey);
+      const subtopics  = subtopicsByTopic[topicKey] || {};
+      const subKeys    = Object.keys(subtopics).sort();
+      const lockedSubs = subKeys.filter(sk => locked.includes(sk));
+      // topicState: 'off' = topic key locked OR all subtopics locked; 'mixed' = some subs locked; 'on' = neither
+      const topicState = isLocked ? 'off'
+        : (subKeys.length > 0 && lockedSubs.length === subKeys.length) ? 'off'
+        : lockedSubs.length > 0 ? 'mixed' : 'on';
+      const topicBg    = topicState === 'on' ? '#22C55E' : topicState === 'mixed' ? '#F59E0B' : '#E2E8F0';
+      const thumbPos   = topicState !== 'off' ? 'right:3px' : 'left:3px';
       const topicOnclick = childUserId
         ? saveFn + "('" + topicKey + "'," + isLocked + ",'" + childUserId + "')"
         : saveFn + "('" + topicKey + "'," + isLocked + ")";
@@ -15102,18 +15119,59 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
         ? '<span style="background:#FEF3C7;color:#92400E;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;vertical-align:middle;">' + _mastery + '%</span>'
         : '';
       const reviseBtn = '<button onclick="startQuickRevision(\'' + topicKey + '\')" style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;border:none;background:#6366F1;color:white;cursor:pointer;white-space:nowrap;">Revise</button>';
+      const isExpanded = _expandedTopics.has(topicKey);
+      const expandArgs = childUserId
+        ? "'" + topicKey + "'," + isParentCtx + ",'" + childUserId + "'"
+        : "'" + topicKey + "'," + isParentCtx + ",null";
+      const expandArrow = subKeys.length > 0
+        ? '<span onclick="_toggleTopicExpand(' + expandArgs + ')" style="cursor:pointer;margin-right:8px;font-size:11px;color:#94A3B8;display:inline-block;transition:transform 0.15s;transform:' + (isExpanded ? 'rotate(90deg)' : 'rotate(0deg)') + ';">▶</span>'
+        : '<span style="display:inline-block;width:19px;margin-right:8px;"></span>';
       h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid #F1F5F9;">';
-      h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + displayName + tripleBadge + masteryBadge + '</div>';
+      h += '<div style="display:flex;align-items:center;flex:1;min-width:0;">' + expandArrow;
+      h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + displayName + tripleBadge + masteryBadge + '</div></div>';
       if (scheduleLocked) {
-        h += '<div style="display:flex;align-items:center;gap:8px;">' + reviseBtn;
-        h += '<div style="font-size:12px;font-weight:700;color:' + (isOn ? '#15803D' : '#B91C1C') + ';">' + (isOn ? 'On' : 'Off') + '</div></div>';
+        h += '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' + reviseBtn;
+        h += '<div style="font-size:12px;font-weight:700;color:' + (topicState !== 'off' ? '#15803D' : '#B91C1C') + ';">' + (topicState !== 'off' ? 'On' : 'Off') + '</div></div>';
       } else {
-        h += '<div style="display:flex;align-items:center;gap:8px;">' + reviseBtn;
+        h += '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' + reviseBtn;
         h += '<div onclick="' + topicOnclick + '" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:' + topicBg + ';position:relative;transition:background 0.2s;flex-shrink:0;">';
         h += '<div style="position:absolute;top:3px;' + thumbPos + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>';
         h += '</div></div>';
       }
       h += '</div>';
+      // Subtopic panel — shown when topic row is expanded
+      if (isExpanded && subKeys.length > 0) {
+        h += '<div style="background:#FAFAFA;border-top:1px solid #E2E8F0;">';
+        subKeys.forEach(sk => {
+          const sName        = subtopics[sk];
+          const sDirectLocked = locked.includes(sk);
+          const sOn          = !isLocked && !sDirectLocked;
+          const sBg          = sOn ? '#22C55E' : '#E2E8F0';
+          const sThumb       = sOn ? 'right:3px' : 'left:3px';
+          const isRPA        = sk.includes('.RPA');
+          const rpaBadge     = isRPA
+            ? '<span style="background:#EDE9FE;color:#7C3AED;font-size:10px;font-weight:800;padding:2px 5px;border-radius:4px;margin-left:5px;vertical-align:middle;">RPA</span>'
+            : '';
+          const subReviseBtn = '<button onclick="startQuickRevisionSubtopic(\'' + sk + '\')" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:7px;border:none;background:#818CF8;color:white;cursor:pointer;white-space:nowrap;">Revise</button>';
+          let sToggleHTML;
+          if (scheduleLocked || isLocked) {
+            // Parent topic locked — show inherited state, toggles disabled
+            sToggleHTML = '<div style="width:48px;height:26px;border-radius:13px;background:' + sBg + ';position:relative;opacity:0.4;flex-shrink:0;">';
+            sToggleHTML += '<div style="position:absolute;top:3px;' + sThumb + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.15);"></div></div>';
+          } else {
+            const sOnclick = childUserId
+              ? subtopicFn + "('" + sk + "'," + sDirectLocked + ",'" + childUserId + "')"
+              : subtopicFn + "('" + sk + "'," + sDirectLocked + ")";
+            sToggleHTML = '<div onclick="' + sOnclick + '" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:' + sBg + ';position:relative;transition:background 0.2s;flex-shrink:0;">';
+            sToggleHTML += '<div style="position:absolute;top:3px;' + sThumb + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div></div>';
+          }
+          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px 8px 38px;border-top:1px solid #F1F5F9;">';
+          h += '<div style="font-size:12px;font-weight:600;color:#4B5563;">' + sName + rpaBadge + '</div>';
+          h += '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' + subReviseBtn + sToggleHTML + '</div>';
+          h += '</div>';
+        });
+        h += '</div>';
+      }
     });
     h += '</div>';
   });
@@ -15132,6 +15190,12 @@ function _refreshTopicsUI(isParent, childUserId) {
   }
 }
 
+function _toggleTopicExpand(topicKey, isParent, childUserId) {
+  if (_expandedTopics.has(topicKey)) _expandedTopics.delete(topicKey);
+  else _expandedTopics.add(topicKey);
+  _refreshTopicsUI(isParent, childUserId);
+}
+
 async function _patchLockedTopics(url, token, newLocked) {
   return fetch(url, {
     method: 'PATCH',
@@ -15144,7 +15208,14 @@ async function saveStudentTopicLock(topicKey, currentlyLocked) {
   const user = STATE.user;
   if (!user?.token || !user?.id) return;
   const current = Array.isArray(user.locked_topics) ? user.locked_topics : [];
-  const newLocked = currentlyLocked ? current.filter(t => t !== topicKey) : [...current, topicKey];
+  let newLocked;
+  if (currentlyLocked) {
+    // Unlocking: remove the topic key AND any subtopic keys that belong to it (e.g. B1.RPA1)
+    const prefix = topicKey.toUpperCase() + '.';
+    newLocked = current.filter(t => t !== topicKey && !t.toUpperCase().startsWith(prefix));
+  } else {
+    newLocked = [...current, topicKey];
+  }
   try {
     const res = await _patchLockedTopics(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, user.token, newLocked);
     if (res.ok) {
@@ -15160,10 +15231,18 @@ async function saveStudentSubjectLock(subject, allCurrentlyUnlocked, topicKeys) 
   const user = STATE.user;
   if (!user?.token || !user?.id) return;
   const current = Array.isArray(user.locked_topics) ? user.locked_topics : [];
-  // allCurrentlyUnlocked=true means master was ON → user wants to lock all; false → unlock all
-  const newLocked = allCurrentlyUnlocked
-    ? [...new Set([...current, ...topicKeys])]
-    : current.filter(t => !topicKeys.includes(t));
+  let newLocked;
+  if (allCurrentlyUnlocked) {
+    newLocked = [...new Set([...current, ...topicKeys])];
+  } else {
+    // Unlocking all: remove topic keys AND any subtopic keys belonging to those topics
+    const upperKeys = topicKeys.map(k => k.toUpperCase());
+    const prefixes  = upperKeys.map(k => k + '.');
+    newLocked = current.filter(t => {
+      const tu = t.toUpperCase();
+      return !upperKeys.includes(tu) && !prefixes.some(p => tu.startsWith(p));
+    });
+  }
   try {
     const res = await _patchLockedTopics(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, user.token, newLocked);
     if (res.ok) {
@@ -15180,7 +15259,13 @@ async function saveParentChildTopicLock(topicKey, currentlyLocked, childUserId) 
   if (!user?.token || !childUserId) return;
   const child = STATE._parentChildProfile;
   const current = Array.isArray(child?.locked_topics) ? child.locked_topics : [];
-  const newLocked = currentlyLocked ? current.filter(t => t !== topicKey) : [...current, topicKey];
+  let newLocked;
+  if (currentlyLocked) {
+    const prefix = topicKey.toUpperCase() + '.';
+    newLocked = current.filter(t => t !== topicKey && !t.toUpperCase().startsWith(prefix));
+  } else {
+    newLocked = [...current, topicKey];
+  }
   try {
     const res = await _patchLockedTopics(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + encodeURIComponent(childUserId), user.token, newLocked);
     if (res.ok) {
@@ -15196,9 +15281,17 @@ async function saveParentChildSubjectLock(subject, allCurrentlyUnlocked, topicKe
   if (!user?.token || !childUserId) return;
   const child = STATE._parentChildProfile;
   const current = Array.isArray(child?.locked_topics) ? child.locked_topics : [];
-  const newLocked = allCurrentlyUnlocked
-    ? [...new Set([...current, ...topicKeys])]
-    : current.filter(t => !topicKeys.includes(t));
+  let newLocked;
+  if (allCurrentlyUnlocked) {
+    newLocked = [...new Set([...current, ...topicKeys])];
+  } else {
+    const upperKeys = topicKeys.map(k => k.toUpperCase());
+    const prefixes  = upperKeys.map(k => k + '.');
+    newLocked = current.filter(t => {
+      const tu = t.toUpperCase();
+      return !upperKeys.includes(tu) && !prefixes.some(p => tu.startsWith(p));
+    });
+  }
   try {
     const res = await _patchLockedTopics(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + encodeURIComponent(childUserId), user.token, newLocked);
     if (res.ok) {
@@ -15207,6 +15300,38 @@ async function saveParentChildSubjectLock(subject, allCurrentlyUnlocked, topicKe
       showToast(allCurrentlyUnlocked ? '🔒 Locked all ' + subject : '✅ Unlocked all ' + subject);
     } else { showToast('Could not save — check RLS allows parent to update child profile'); }
   } catch(e) { showToast('Error saving topic'); }
+}
+
+async function saveStudentSubtopicLock(subtopicKey, currentlyLocked) {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  const current = Array.isArray(user.locked_topics) ? user.locked_topics : [];
+  const newLocked = currentlyLocked ? current.filter(t => t !== subtopicKey) : [...current, subtopicKey];
+  try {
+    const res = await _patchLockedTopics(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, user.token, newLocked);
+    if (res.ok) {
+      STATE.user.locked_topics = newLocked;
+      LS.set('demo_user', STATE.user);
+      _refreshTopicsUI(false, null);
+      showToast((newLocked.includes(subtopicKey) ? '🔒 Locked' : '✅ Unlocked') + ': ' + subtopicKey);
+    } else { showToast('Could not save — check locked_topics column in Supabase'); }
+  } catch(e) { showToast('Error saving subtopic'); }
+}
+
+async function saveParentChildSubtopicLock(subtopicKey, currentlyLocked, childUserId) {
+  const user = STATE.user;
+  if (!user?.token || !childUserId) return;
+  const child = STATE._parentChildProfile;
+  const current = Array.isArray(child?.locked_topics) ? child.locked_topics : [];
+  const newLocked = currentlyLocked ? current.filter(t => t !== subtopicKey) : [...current, subtopicKey];
+  try {
+    const res = await _patchLockedTopics(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + encodeURIComponent(childUserId), user.token, newLocked);
+    if (res.ok) {
+      if (child) child.locked_topics = newLocked;
+      _refreshTopicsUI(true, childUserId);
+      showToast((newLocked.includes(subtopicKey) ? '🔒 Locked' : '✅ Unlocked') + ': ' + subtopicKey);
+    } else { showToast('Could not save — check RLS allows parent to update child profile'); }
+  } catch(e) { showToast('Error saving subtopic'); }
 }
 
 function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
@@ -17898,8 +18023,10 @@ function getDueCards(user) {
 
     const lockedTopics = (STATE.user?.locked_topics || []).map(t => t.toUpperCase());
     // todayDone NOT applied to base filter — reviews self-exclude via nextReview after grading
-    const subjectCards = allCards.filter(
-      c => c.subject === subject && !lockedTopics.includes(c.topic.toUpperCase())
+    const subjectCards = allCards.filter(c =>
+      c.subject === subject &&
+      !lockedTopics.includes(c.topic.toUpperCase()) &&
+      !(c.subtopic && lockedTopics.includes(c.subtopic.toUpperCase()))
     );
 
     // Due reviews: date-only comparison (timezone fix), oldest-overdue first
@@ -19530,17 +19657,25 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
   const locked = lockedTopics || [];
   const subjectEmoji = { Biology: '🌿', Chemistry: '⚗️', Physics: '⚡' };
   const subjectFn = saveFn === 'saveStudentTopicLock' ? 'saveStudentSubjectLock' : 'saveParentChildSubjectLock';
+  const subtopicFn = saveFn === 'saveStudentTopicLock' ? 'saveStudentSubtopicLock' : 'saveParentChildSubtopicLock';
+  const isParentCtx = saveFn !== 'saveStudentTopicLock';
   // Derive tier: student reads STATE.user, parent reads STATE._parentChildProfile
   const userTier = (saveFn === 'saveStudentTopicLock')
     ? (STATE.user?.tier || 'combined_higher')
     : (STATE._parentChildProfile?.tier || 'combined_higher');
   const showTriple = userTier.includes('triple');
   const topicsBySubject = {};
+  const subtopicsByTopic = {}; // { 'B1': { 'B1.1': 'Cell Structure', 'B1.RPA1': 'Required Practical: Microscopy' } }
   SAMPLE_CARDS.forEach(c => {
-    const tk = c.topic.toUpperCase(); // normalise case so B1 and b1 don't create duplicate rows
-    if (!showTriple && isTripleTopic(tk)) return; // hide triple topics for combined students
+    const tk = c.topic.toUpperCase();
+    if (!showTriple && isTripleTopic(tk)) return;
     if (!topicsBySubject[c.subject]) topicsBySubject[c.subject] = {};
     if (!topicsBySubject[c.subject][tk]) topicsBySubject[c.subject][tk] = c.topic_name;
+    if (c.subtopic) {
+      const sk = c.subtopic.toUpperCase();
+      if (!subtopicsByTopic[tk]) subtopicsByTopic[tk] = {};
+      if (!subtopicsByTopic[tk][sk]) subtopicsByTopic[tk][sk] = c.subtopic_name || c.subtopic;
+    }
   });
   let h = '';
   h += '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:#1E40AF;">⚡ <strong>Revise Now</strong> — Practice any topic anytime without using your daily card limit. Complete your daily cards to keep your streak! 🔥</div>';
@@ -19553,7 +19688,6 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
     const allUnlocked = topicKeys.every(k => !locked.includes(k));
     const allLocked   = topicKeys.every(k =>  locked.includes(k));
     const masterLabel = allUnlocked ? 'All on' : allLocked ? 'All off' : 'Mixed';
-    // master toggle: green=all on, grey=all off, amber=mixed
     const masterBg    = allUnlocked ? '#22C55E' : allLocked ? '#E2E8F0' : '#F59E0B';
     const masterThumb = allUnlocked ? 'right:3px' : 'left:3px';
     const masterOnclick = childUserId
@@ -19576,10 +19710,16 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
     h += '</div>';
     // Individual topic rows
     Object.entries(topics).forEach(([topicKey, topicName]) => {
-      const isLocked  = locked.includes(topicKey);
-      const isOn      = !isLocked;
-      const topicBg   = isOn ? '#22C55E' : '#E2E8F0';
-      const thumbPos  = isOn ? 'right:3px' : 'left:3px';
+      const isLocked   = locked.includes(topicKey);
+      const subtopics  = subtopicsByTopic[topicKey] || {};
+      const subKeys    = Object.keys(subtopics).sort();
+      const lockedSubs = subKeys.filter(sk => locked.includes(sk));
+      // topicState: 'off' = topic key locked OR all subtopics locked; 'mixed' = some subs locked; 'on' = neither
+      const topicState = isLocked ? 'off'
+        : (subKeys.length > 0 && lockedSubs.length === subKeys.length) ? 'off'
+        : lockedSubs.length > 0 ? 'mixed' : 'on';
+      const topicBg    = topicState === 'on' ? '#22C55E' : topicState === 'mixed' ? '#F59E0B' : '#E2E8F0';
+      const thumbPos   = topicState !== 'off' ? 'right:3px' : 'left:3px';
       const topicOnclick = childUserId
         ? saveFn + "('" + topicKey + "'," + isLocked + ",'" + childUserId + "')"
         : saveFn + "('" + topicKey + "'," + isLocked + ")";
@@ -19594,18 +19734,59 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
         ? '<span style="background:#FEF3C7;color:#92400E;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;vertical-align:middle;">' + _mastery + '%</span>'
         : '';
       const reviseBtn = '<button onclick="startQuickRevision(\'' + topicKey + '\')" style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;border:none;background:#6366F1;color:white;cursor:pointer;white-space:nowrap;">Revise</button>';
+      const isExpanded = _expandedTopics.has(topicKey);
+      const expandArgs = childUserId
+        ? "'" + topicKey + "'," + isParentCtx + ",'" + childUserId + "'"
+        : "'" + topicKey + "'," + isParentCtx + ",null";
+      const expandArrow = subKeys.length > 0
+        ? '<span onclick="_toggleTopicExpand(' + expandArgs + ')" style="cursor:pointer;margin-right:8px;font-size:11px;color:#94A3B8;display:inline-block;transition:transform 0.15s;transform:' + (isExpanded ? 'rotate(90deg)' : 'rotate(0deg)') + ';">▶</span>'
+        : '<span style="display:inline-block;width:19px;margin-right:8px;"></span>';
       h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid #F1F5F9;">';
-      h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + displayName + tripleBadge + masteryBadge + '</div>';
+      h += '<div style="display:flex;align-items:center;flex:1;min-width:0;">' + expandArrow;
+      h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + displayName + tripleBadge + masteryBadge + '</div></div>';
       if (scheduleLocked) {
-        h += '<div style="display:flex;align-items:center;gap:8px;">' + reviseBtn;
-        h += '<div style="font-size:12px;font-weight:700;color:' + (isOn ? '#15803D' : '#B91C1C') + ';">' + (isOn ? 'On' : 'Off') + '</div></div>';
+        h += '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' + reviseBtn;
+        h += '<div style="font-size:12px;font-weight:700;color:' + (topicState !== 'off' ? '#15803D' : '#B91C1C') + ';">' + (topicState !== 'off' ? 'On' : 'Off') + '</div></div>';
       } else {
-        h += '<div style="display:flex;align-items:center;gap:8px;">' + reviseBtn;
+        h += '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' + reviseBtn;
         h += '<div onclick="' + topicOnclick + '" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:' + topicBg + ';position:relative;transition:background 0.2s;flex-shrink:0;">';
         h += '<div style="position:absolute;top:3px;' + thumbPos + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>';
         h += '</div></div>';
       }
       h += '</div>';
+      // Subtopic panel — shown when topic row is expanded
+      if (isExpanded && subKeys.length > 0) {
+        h += '<div style="background:#FAFAFA;border-top:1px solid #E2E8F0;">';
+        subKeys.forEach(sk => {
+          const sName        = subtopics[sk];
+          const sDirectLocked = locked.includes(sk);
+          const sOn          = !isLocked && !sDirectLocked;
+          const sBg          = sOn ? '#22C55E' : '#E2E8F0';
+          const sThumb       = sOn ? 'right:3px' : 'left:3px';
+          const isRPA        = sk.includes('.RPA');
+          const rpaBadge     = isRPA
+            ? '<span style="background:#EDE9FE;color:#7C3AED;font-size:10px;font-weight:800;padding:2px 5px;border-radius:4px;margin-left:5px;vertical-align:middle;">RPA</span>'
+            : '';
+          const subReviseBtn = '<button onclick="startQuickRevisionSubtopic(\'' + sk + '\')" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:7px;border:none;background:#818CF8;color:white;cursor:pointer;white-space:nowrap;">Revise</button>';
+          let sToggleHTML;
+          if (scheduleLocked || isLocked) {
+            // Parent topic locked — show inherited state, toggles disabled
+            sToggleHTML = '<div style="width:48px;height:26px;border-radius:13px;background:' + sBg + ';position:relative;opacity:0.4;flex-shrink:0;">';
+            sToggleHTML += '<div style="position:absolute;top:3px;' + sThumb + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.15);"></div></div>';
+          } else {
+            const sOnclick = childUserId
+              ? subtopicFn + "('" + sk + "'," + sDirectLocked + ",'" + childUserId + "')"
+              : subtopicFn + "('" + sk + "'," + sDirectLocked + ")";
+            sToggleHTML = '<div onclick="' + sOnclick + '" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:' + sBg + ';position:relative;transition:background 0.2s;flex-shrink:0;">';
+            sToggleHTML += '<div style="position:absolute;top:3px;' + sThumb + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div></div>';
+          }
+          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px 8px 38px;border-top:1px solid #F1F5F9;">';
+          h += '<div style="font-size:12px;font-weight:600;color:#4B5563;">' + sName + rpaBadge + '</div>';
+          h += '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' + subReviseBtn + sToggleHTML + '</div>';
+          h += '</div>';
+        });
+        h += '</div>';
+      }
     });
     h += '</div>';
   });
@@ -19624,6 +19805,12 @@ function _refreshTopicsUI(isParent, childUserId) {
   }
 }
 
+function _toggleTopicExpand(topicKey, isParent, childUserId) {
+  if (_expandedTopics.has(topicKey)) _expandedTopics.delete(topicKey);
+  else _expandedTopics.add(topicKey);
+  _refreshTopicsUI(isParent, childUserId);
+}
+
 
 function getMasteryForTopic(topicKey) {
   const progress = LS.get('card_progress') || {};
@@ -19639,6 +19826,21 @@ function startQuickRevision(topicKey) {
   const topicCards = SAMPLE_CARDS.filter(c => c.topic.toUpperCase() === key);
   if (topicCards.length === 0) { showToast('No cards found for this topic'); return; }
   const shuffled = [...topicCards].sort(() => Math.random() - 0.5);
+  STATE.cardQueue = shuffled;
+  STATE.currentCardIndex = 0;
+  STATE.sessionPhase = 'quickRevision';
+  STATE.screen = 'quickRevision';
+  STATE._quickRevisionTopic = key;
+  STATE._quickRevisionResults = [];
+  showAIChatWidget();
+  renderFlashcard();
+}
+
+function startQuickRevisionSubtopic(subtopicKey) {
+  const key = subtopicKey.toUpperCase();
+  const subtopicCards = SAMPLE_CARDS.filter(c => c.subtopic && c.subtopic.toUpperCase() === key);
+  if (subtopicCards.length === 0) { showToast('No cards found for this subtopic'); return; }
+  const shuffled = [...subtopicCards].sort(() => Math.random() - 0.5);
   STATE.cardQueue = shuffled;
   STATE.currentCardIndex = 0;
   STATE.sessionPhase = 'quickRevision';
@@ -19701,7 +19903,14 @@ async function saveStudentTopicLock(topicKey, currentlyLocked) {
   const user = STATE.user;
   if (!user?.token || !user?.id) return;
   const current = Array.isArray(user.locked_topics) ? user.locked_topics : [];
-  const newLocked = currentlyLocked ? current.filter(t => t !== topicKey) : [...current, topicKey];
+  let newLocked;
+  if (currentlyLocked) {
+    // Unlocking: remove the topic key AND any subtopic keys that belong to it (e.g. B1.RPA1)
+    const prefix = topicKey.toUpperCase() + '.';
+    newLocked = current.filter(t => t !== topicKey && !t.toUpperCase().startsWith(prefix));
+  } else {
+    newLocked = [...current, topicKey];
+  }
   try {
     const res = await _patchLockedTopics(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, user.token, newLocked);
     if (res.ok) {
@@ -19717,10 +19926,18 @@ async function saveStudentSubjectLock(subject, allCurrentlyUnlocked, topicKeys) 
   const user = STATE.user;
   if (!user?.token || !user?.id) return;
   const current = Array.isArray(user.locked_topics) ? user.locked_topics : [];
-  // allCurrentlyUnlocked=true means master was ON → user wants to lock all; false → unlock all
-  const newLocked = allCurrentlyUnlocked
-    ? [...new Set([...current, ...topicKeys])]
-    : current.filter(t => !topicKeys.includes(t));
+  let newLocked;
+  if (allCurrentlyUnlocked) {
+    newLocked = [...new Set([...current, ...topicKeys])];
+  } else {
+    // Unlocking all: remove topic keys AND any subtopic keys belonging to those topics
+    const upperKeys = topicKeys.map(k => k.toUpperCase());
+    const prefixes  = upperKeys.map(k => k + '.');
+    newLocked = current.filter(t => {
+      const tu = t.toUpperCase();
+      return !upperKeys.includes(tu) && !prefixes.some(p => tu.startsWith(p));
+    });
+  }
   try {
     const res = await _patchLockedTopics(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, user.token, newLocked);
     if (res.ok) {
@@ -19737,7 +19954,13 @@ async function saveParentChildTopicLock(topicKey, currentlyLocked, childUserId) 
   if (!user?.token || !childUserId) return;
   const child = STATE._parentChildProfile;
   const current = Array.isArray(child?.locked_topics) ? child.locked_topics : [];
-  const newLocked = currentlyLocked ? current.filter(t => t !== topicKey) : [...current, topicKey];
+  let newLocked;
+  if (currentlyLocked) {
+    const prefix = topicKey.toUpperCase() + '.';
+    newLocked = current.filter(t => t !== topicKey && !t.toUpperCase().startsWith(prefix));
+  } else {
+    newLocked = [...current, topicKey];
+  }
   try {
     const res = await _patchLockedTopics(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + encodeURIComponent(childUserId), user.token, newLocked);
     if (res.ok) {
@@ -19753,9 +19976,17 @@ async function saveParentChildSubjectLock(subject, allCurrentlyUnlocked, topicKe
   if (!user?.token || !childUserId) return;
   const child = STATE._parentChildProfile;
   const current = Array.isArray(child?.locked_topics) ? child.locked_topics : [];
-  const newLocked = allCurrentlyUnlocked
-    ? [...new Set([...current, ...topicKeys])]
-    : current.filter(t => !topicKeys.includes(t));
+  let newLocked;
+  if (allCurrentlyUnlocked) {
+    newLocked = [...new Set([...current, ...topicKeys])];
+  } else {
+    const upperKeys = topicKeys.map(k => k.toUpperCase());
+    const prefixes  = upperKeys.map(k => k + '.');
+    newLocked = current.filter(t => {
+      const tu = t.toUpperCase();
+      return !upperKeys.includes(tu) && !prefixes.some(p => tu.startsWith(p));
+    });
+  }
   try {
     const res = await _patchLockedTopics(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + encodeURIComponent(childUserId), user.token, newLocked);
     if (res.ok) {
@@ -19764,6 +19995,38 @@ async function saveParentChildSubjectLock(subject, allCurrentlyUnlocked, topicKe
       showToast(allCurrentlyUnlocked ? '🔒 Locked all ' + subject : '✅ Unlocked all ' + subject);
     } else { showToast('Could not save — check RLS allows parent to update child profile'); }
   } catch(e) { showToast('Error saving topic'); }
+}
+
+async function saveStudentSubtopicLock(subtopicKey, currentlyLocked) {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  const current = Array.isArray(user.locked_topics) ? user.locked_topics : [];
+  const newLocked = currentlyLocked ? current.filter(t => t !== subtopicKey) : [...current, subtopicKey];
+  try {
+    const res = await _patchLockedTopics(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, user.token, newLocked);
+    if (res.ok) {
+      STATE.user.locked_topics = newLocked;
+      LS.set('demo_user', STATE.user);
+      _refreshTopicsUI(false, null);
+      showToast((newLocked.includes(subtopicKey) ? '🔒 Locked' : '✅ Unlocked') + ': ' + subtopicKey);
+    } else { showToast('Could not save — check locked_topics column in Supabase'); }
+  } catch(e) { showToast('Error saving subtopic'); }
+}
+
+async function saveParentChildSubtopicLock(subtopicKey, currentlyLocked, childUserId) {
+  const user = STATE.user;
+  if (!user?.token || !childUserId) return;
+  const child = STATE._parentChildProfile;
+  const current = Array.isArray(child?.locked_topics) ? child.locked_topics : [];
+  const newLocked = currentlyLocked ? current.filter(t => t !== subtopicKey) : [...current, subtopicKey];
+  try {
+    const res = await _patchLockedTopics(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + encodeURIComponent(childUserId), user.token, newLocked);
+    if (res.ok) {
+      if (child) child.locked_topics = newLocked;
+      _refreshTopicsUI(true, childUserId);
+      showToast((newLocked.includes(subtopicKey) ? '🔒 Locked' : '✅ Unlocked') + ': ' + subtopicKey);
+    } else { showToast('Could not save — check RLS allows parent to update child profile'); }
+  } catch(e) { showToast('Error saving subtopic'); }
 }
 
 function syncStudyHistoryRow(cardId, gradeNum, card, aiGraded) {
