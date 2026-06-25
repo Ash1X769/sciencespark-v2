@@ -15124,8 +15124,8 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
         ? "'" + topicKey + "'," + isParentCtx + ",'" + childUserId + "'"
         : "'" + topicKey + "'," + isParentCtx + ",null";
       const expandArrow = subKeys.length > 0
-        ? '<span onclick="_toggleTopicExpand(' + expandArgs + ')" style="cursor:pointer;margin-right:8px;font-size:11px;color:#94A3B8;display:inline-block;transition:transform 0.15s;transform:' + (isExpanded ? 'rotate(90deg)' : 'rotate(0deg)') + ';">▶</span>'
-        : '<span style="display:inline-block;width:19px;margin-right:8px;"></span>';
+        ? '<span onclick="_toggleTopicExpand(' + expandArgs + ')" style="cursor:pointer;margin-right:8px;font-size:14px;font-weight:900;color:#1E293B;display:inline-block;transition:transform 0.2s;transform:' + (isExpanded ? 'rotate(90deg)' : 'rotate(0deg)') + ';flex-shrink:0;">▶</span>'
+        : '<span style="display:inline-block;width:22px;margin-right:8px;flex-shrink:0;"></span>';
       h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid #F1F5F9;">';
       h += '<div style="display:flex;align-items:center;flex:1;min-width:0;">' + expandArrow;
       h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + displayName + tripleBadge + masteryBadge + '</div></div>';
@@ -19739,8 +19739,8 @@ function buildTopicsTabHTML(lockedTopics, scheduleLocked, saveFn, childUserId) {
         ? "'" + topicKey + "'," + isParentCtx + ",'" + childUserId + "'"
         : "'" + topicKey + "'," + isParentCtx + ",null";
       const expandArrow = subKeys.length > 0
-        ? '<span onclick="_toggleTopicExpand(' + expandArgs + ')" style="cursor:pointer;margin-right:8px;font-size:11px;color:#94A3B8;display:inline-block;transition:transform 0.15s;transform:' + (isExpanded ? 'rotate(90deg)' : 'rotate(0deg)') + ';">▶</span>'
-        : '<span style="display:inline-block;width:19px;margin-right:8px;"></span>';
+        ? '<span onclick="_toggleTopicExpand(' + expandArgs + ')" style="cursor:pointer;margin-right:8px;font-size:14px;font-weight:900;color:#1E293B;display:inline-block;transition:transform 0.2s;transform:' + (isExpanded ? 'rotate(90deg)' : 'rotate(0deg)') + ';flex-shrink:0;">▶</span>'
+        : '<span style="display:inline-block;width:22px;margin-right:8px;flex-shrink:0;"></span>';
       h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid #F1F5F9;">';
       h += '<div style="display:flex;align-items:center;flex:1;min-width:0;">' + expandArrow;
       h += '<div style="font-size:13px;font-weight:700;color:#374151;">' + topicKey + ' — ' + displayName + tripleBadge + masteryBadge + '</div></div>';
