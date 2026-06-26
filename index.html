@@ -13585,6 +13585,75 @@ Student's answer: ${studentAnswer}`;
   }
 }
 
+
+// ── Target grade helpers ─────────────────────────────────────────────────────
+
+function buildTargetGradeButtons(currentGrade, context, studentUserId) {
+  const pfx = 'tg-' + (studentUserId ? studentUserId.replace(/-/g,'') : 'self') + '-';
+  return [4,5,6,7,8,9].map(function(g) {
+    const sel = g === currentGrade;
+    return '<button id="' + pfx + g + '" onclick="selectTargetGrade(' + g + ',\'' + context + '\',' + (studentUserId ? JSON.stringify(studentUserId) : 'null') + ')" '
+      + 'style="width:42px;height:42px;border-radius:50%;border:2px solid ' + (sel ? '#22C55E' : '#E2E8F0') + ';background:' + (sel ? '#22C55E' : 'white') + ';color:' + (sel ? 'white' : '#374151') + ';font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;transition:all 0.15s;">'
+      + g + '</button>';
+  }).join('');
+}
+
+async function selectTargetGrade(grade, context, studentUserId) {
+  const pfx = 'tg-' + (studentUserId ? studentUserId.replace(/-/g,'') : 'self') + '-';
+  [4,5,6,7,8,9].forEach(function(g) {
+    const btn = document.getElementById(pfx + g);
+    if (!btn) return;
+    const sel = g === grade;
+    btn.style.background = sel ? '#22C55E' : 'white';
+    btn.style.color = sel ? 'white' : '#374151';
+    btn.style.borderColor = sel ? '#22C55E' : '#E2E8F0';
+  });
+  const token = STATE.user?.token;
+  const userId = context === 'student' ? STATE.user?.id : studentUserId;
+  if (!token || !userId) return;
+  if (context === 'student') {
+    STATE.user.target_grade = grade;
+    LS.set('demo_user', STATE.user);
+  }
+  if (context === 'parent' && STATE._parentChildProfile) {
+    STATE._parentChildProfile.target_grade = grade;
+  }
+  if (context === 'teacher') {
+    const s = (STATE.teacherStudents || []).find(function(s) { return s.user_id === studentUserId; });
+    if (s) s.target_grade = grade;
+  }
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + userId, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token,
+                 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ target_grade: grade })
+    });
+    showToast('Target grade set: Grade ' + grade + ' 🎯');
+  } catch(e) { showToast('Could not save — try again'); }
+}
+
+function getRotatingPingMessage(childName, targetGrade) {
+  const name = (childName || '').split(' ')[0] || 'there';
+  const grade = targetGrade || 'your target grade';
+  const msgs = [
+    'Hey ' + name + '! Your teacher sent you a nudge 👋 Just 10 minutes now could secure that Grade ' + grade + ' 🎯',
+    name + ', your science cards are waiting! Your teacher believes you can hit Grade ' + grade + ' — but only if you show up today 💪',
+    'Quick reminder from your teacher, ' + name + '! Grade ' + grade + ' doesn\'t happen by accident — 10 minutes of science today makes it real 🔥',
+    name + '! Students who do their cards consistently go up a whole grade. You are closer than you think 🚀 Complete your cards today!',
+    'Hey ' + name + ', your teacher is watching your progress! Complete your science cards today — Grade ' + grade + ' is within reach and beyond 🎯'
+  ];
+  return msgs[Math.floor(Math.random() * msgs.length)];
+}
+
+function getTutorSystem() {
+  const tg = STATE.user?.target_grade;
+  const extra = tg
+    ? '\n\nSTUDENT CONTEXT: This student is targeting Grade ' + tg + ' in their GCSEs. Reference this naturally and encouragingly — e.g. "That\'s exactly the kind of thing that comes up in Grade ' + tg + ' questions!" Treat Grade ' + tg + ' as a floor, not a ceiling — always imply they can go higher.'
+    : '';
+  return TUTOR_SYSTEM + extra;
+}
+
 const TUTOR_SYSTEM = `You are ScienceSpark AI — a GCSE science tutor for students aged 11-16. You are warm, encouraging and feel like a brilliant teacher who actually makes science click.
 
 HOW YOU EXPLAIN THINGS (always follow this structure):
@@ -14225,7 +14294,7 @@ async function loadUserPaidStatus() {
   if (!user?.token || !user?.id) return;
   try {
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     const profiles = res.ok ? await res.json() : [];
@@ -14243,6 +14312,7 @@ async function loadUserPaidStatus() {
       STATE.user.phys_frequency = p.phys_frequency || 'daily';
       STATE.user.schedule_locked = p.schedule_locked || false;
       STATE.user.locked_topics   = Array.isArray(p.locked_topics) ? p.locked_topics : [];
+      if (p.target_grade != null) STATE.user.target_grade = p.target_grade;
       LS.set('demo_user', STATE.user);
     }
   } catch(e) {}
@@ -14936,6 +15006,20 @@ ${renderNavBar('home')}
         <div style="display:flex;gap:6px;">${dayDots}</div>
       </div>
     </div>`}
+    <div style="background:white;border-radius:14px;border:1px solid #FED7AA;margin-bottom:12px;overflow:hidden;">
+      <button onclick="const b=document.getElementById('streak-why-body');const a=document.getElementById('streak-why-arrow');if(b){const open=b.style.display!=='none';b.style.display=open?'none':'block';a.textContent=open?'▼':'▲';}" style="width:100%;padding:14px 16px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:inherit;text-align:left;">
+        <span style="font-size:14px;font-weight:800;color:#92400E;">Why your streak matters 🔥</span>
+        <span id="streak-why-arrow" style="font-size:12px;color:#F97316;font-weight:800;">▼</span>
+      </button>
+      <div id="streak-why-body" style="display:none;padding:0 16px 16px;">
+        <div style="font-size:13px;font-weight:700;color:#374151;line-height:1.7;">
+          <div style="margin-bottom:6px;">📚 10 cards per day × 200 school days = <strong>2,000 card reviews</strong></div>
+          <div style="margin-bottom:6px;">✅ That is the entire AQA spec covered multiple times over</div>
+          <div style="margin-bottom:6px;">❌ Miss 50 days = 500 missed reviews = gaps in knowledge = lost marks</div>
+          <div style="margin-top:10px;padding:10px 12px;background:#FFF7ED;border-radius:10px;border-left:3px solid #F97316;font-size:13px;font-weight:800;color:#92400E;">Your streak is not just a number — it is your exam grade building day by day 📈</div>
+        </div>
+      </div>
+    </div>
     <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">TODAY'S SESSION</div>
     <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;">
       <div>
@@ -16777,7 +16861,7 @@ async function sendTutorMessage(message) {
       body: JSON.stringify({
         model: CONFIG.CLAUDE_MODEL,
         max_tokens: 600,
-        system: TUTOR_SYSTEM,
+        system: getTutorSystem(),
         messages,
       })
     });
@@ -17037,6 +17121,16 @@ ${renderNavBar('profile')}
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="font-size:22px;font-weight:900;font-family:monospace;letter-spacing:0.1em;color:var(--ss-blue);">${parentCode}</div>
         <button class="btn btn-outline btn-sm" onclick="copyParentCode('${parentCode}')">Copy Message</button>
+      </div>
+    </div>
+
+
+    <!-- Target Grade -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🎯 My Target Grade</div>
+      <div style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:14px;">Hit your target and we'll push you higher 🚀</div>
+      <div style="display:flex;gap:8px;justify-content:space-between;">
+        ${buildTargetGradeButtons(user.target_grade || null, 'student', null)}
       </div>
     </div>
 
@@ -17685,7 +17779,7 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
       : 'class_code=in.(' + classCodes.map(c => encodeURIComponent(c)).join(',') + ')';
 
     const pRes = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?' + codeParam + '&role=eq.student&select=user_id,display_name,tier,streak,xp,locked_topics,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?' + codeParam + '&role=eq.student&select=user_id,display_name,tier,streak,xp,locked_topics,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,target_grade',
       { headers }
     );
     const profiles = pRes.ok ? await pRes.json() : [];
@@ -17732,6 +17826,7 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
         chem_freq: p.chem_frequency || 'daily',
         phys_freq: p.phys_frequency || 'daily',
         schedule_locked: p.schedule_locked || false,
+        target_grade: p.target_grade ?? null,
       };
     });
   } catch(e) {
@@ -17867,7 +17962,10 @@ async function showTeacherDashboard(selectedClass) {
             <div style="width:${s.accuracy}%;height:100%;background:${ragColor(s.accuracy)};border-radius:6px;"></div>
           </div>
           <div style="text-align:center;font-size:13px;font-weight:900;color:${ragColor(s.accuracy)};">${s.accuracy}% accuracy</div>
-          <button onclick="event.stopPropagation();showStudentHistory('${s.user_id}')" style="width:100%;margin-top:12px;padding:8px 0;border-radius:8px;border:1.5px solid #E2E8F0;background:white;color:#374151;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">📖 View History</button>
+          <div style="display:flex;gap:6px;margin-top:12px;">
+            <button onclick="event.stopPropagation();showStudentHistory('${s.user_id}')" style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #E2E8F0;background:white;color:#374151;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">📖 History</button>
+            <button onclick="event.stopPropagation();showStudentDetail('${s.name}','${s.user_id}')" style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #4F46E5;background:#EEF2FF;color:#4F46E5;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⚙️ Settings</button>
+          </div>
           <div id="${safeId}" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid #F1F5F9;">
             ${topicEntries.length > 0 ? topicEntries.map(([topic,td]) =>
               `<div style="margin-bottom:9px;">
@@ -18331,6 +18429,14 @@ function showStudentDetail(name, studentUserId) {
           <button class="btn btn-outline btn-sm">Copy Parent Invite</button>
         </div>
       </div>
+      ${studentUserId ? `
+      <div class="card" style="padding:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">🎯 TARGET GRADE</div>
+        <div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:10px;">Set this student's target grade — never a ceiling, always a launchpad.</div>
+        <div style="display:flex;gap:6px;">
+          ${buildTargetGradeButtons((STATE.teacherStudents||[]).find(s=>s.user_id===studentUserId)?.target_grade||null,'teacher',studentUserId)}
+        </div>
+      </div>` : ''}
       ${studentUserId ? `
       <div class="card" style="padding:12px;">
         <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">🔔 NOTIFICATIONS</div>
@@ -19070,7 +19176,7 @@ async function loadUserPaidStatus() {
   if (!user?.token || !user?.id) return;
   try {
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     const profiles = res.ok ? await res.json() : [];
@@ -19088,6 +19194,7 @@ async function loadUserPaidStatus() {
       STATE.user.phys_frequency = p.phys_frequency || 'daily';
       STATE.user.schedule_locked = p.schedule_locked || false;
       STATE.user.locked_topics   = Array.isArray(p.locked_topics) ? p.locked_topics : [];
+      if (p.target_grade != null) STATE.user.target_grade = p.target_grade;
       LS.set('demo_user', STATE.user);
     }
   } catch(e) {}
@@ -19781,6 +19888,20 @@ ${renderNavBar('home')}
         <div style="display:flex;gap:6px;">${dayDots}</div>
       </div>
     </div>`}
+    <div style="background:white;border-radius:14px;border:1px solid #FED7AA;margin-bottom:12px;overflow:hidden;">
+      <button onclick="const b=document.getElementById('streak-why-body');const a=document.getElementById('streak-why-arrow');if(b){const open=b.style.display!=='none';b.style.display=open?'none':'block';a.textContent=open?'▼':'▲';}" style="width:100%;padding:14px 16px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:inherit;text-align:left;">
+        <span style="font-size:14px;font-weight:800;color:#92400E;">Why your streak matters 🔥</span>
+        <span id="streak-why-arrow" style="font-size:12px;color:#F97316;font-weight:800;">▼</span>
+      </button>
+      <div id="streak-why-body" style="display:none;padding:0 16px 16px;">
+        <div style="font-size:13px;font-weight:700;color:#374151;line-height:1.7;">
+          <div style="margin-bottom:6px;">📚 10 cards per day × 200 school days = <strong>2,000 card reviews</strong></div>
+          <div style="margin-bottom:6px;">✅ That is the entire AQA spec covered multiple times over</div>
+          <div style="margin-bottom:6px;">❌ Miss 50 days = 500 missed reviews = gaps in knowledge = lost marks</div>
+          <div style="margin-top:10px;padding:10px 12px;background:#FFF7ED;border-radius:10px;border-left:3px solid #F97316;font-size:13px;font-weight:800;color:#92400E;">Your streak is not just a number — it is your exam grade building day by day 📈</div>
+        </div>
+      </div>
+    </div>
     <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">TODAY'S SESSION</div>
     <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;">
       <div>
@@ -21700,7 +21821,7 @@ async function sendTutorMessage(message) {
       body: JSON.stringify({
         model: CONFIG.CLAUDE_MODEL,
         max_tokens: 600,
-        system: TUTOR_SYSTEM,
+        system: getTutorSystem(),
         messages,
       })
     });
@@ -21960,6 +22081,16 @@ ${renderNavBar('profile')}
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="font-size:22px;font-weight:900;font-family:monospace;letter-spacing:0.1em;color:var(--ss-blue);">${parentCode}</div>
         <button class="btn btn-outline btn-sm" onclick="copyParentCode('${parentCode}')">Copy Message</button>
+      </div>
+    </div>
+
+
+    <!-- Target Grade -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🎯 My Target Grade</div>
+      <div style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:14px;">Hit your target and we'll push you higher 🚀</div>
+      <div style="display:flex;gap:8px;justify-content:space-between;">
+        ${buildTargetGradeButtons(user.target_grade || null, 'student', null)}
       </div>
     </div>
 
@@ -22608,7 +22739,7 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
       : 'class_code=in.(' + classCodes.map(c => encodeURIComponent(c)).join(',') + ')';
 
     const pRes = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?' + codeParam + '&role=eq.student&select=user_id,display_name,tier,streak,xp,locked_topics,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?' + codeParam + '&role=eq.student&select=user_id,display_name,tier,streak,xp,locked_topics,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,target_grade',
       { headers }
     );
     const profiles = pRes.ok ? await pRes.json() : [];
@@ -22655,6 +22786,7 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
         chem_freq: p.chem_frequency || 'daily',
         phys_freq: p.phys_frequency || 'daily',
         schedule_locked: p.schedule_locked || false,
+        target_grade: p.target_grade ?? null,
       };
     });
   } catch(e) {
@@ -22790,7 +22922,10 @@ async function showTeacherDashboard(selectedClass) {
             <div style="width:${s.accuracy}%;height:100%;background:${ragColor(s.accuracy)};border-radius:6px;"></div>
           </div>
           <div style="text-align:center;font-size:13px;font-weight:900;color:${ragColor(s.accuracy)};">${s.accuracy}% accuracy</div>
-          <button onclick="event.stopPropagation();showStudentHistory('${s.user_id}')" style="width:100%;margin-top:12px;padding:8px 0;border-radius:8px;border:1.5px solid #E2E8F0;background:white;color:#374151;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">📖 View History</button>
+          <div style="display:flex;gap:6px;margin-top:12px;">
+            <button onclick="event.stopPropagation();showStudentHistory('${s.user_id}')" style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #E2E8F0;background:white;color:#374151;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">📖 History</button>
+            <button onclick="event.stopPropagation();showStudentDetail('${s.name}','${s.user_id}')" style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #4F46E5;background:#EEF2FF;color:#4F46E5;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⚙️ Settings</button>
+          </div>
           <div id="${safeId}" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid #F1F5F9;">
             ${topicEntries.length > 0 ? topicEntries.map(([topic,td]) =>
               `<div style="margin-bottom:9px;">
@@ -23254,6 +23389,14 @@ function showStudentDetail(name, studentUserId) {
           <button class="btn btn-outline btn-sm">Copy Parent Invite</button>
         </div>
       </div>
+      ${studentUserId ? `
+      <div class="card" style="padding:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">🎯 TARGET GRADE</div>
+        <div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:10px;">Set this student's target grade — never a ceiling, always a launchpad.</div>
+        <div style="display:flex;gap:6px;">
+          ${buildTargetGradeButtons((STATE.teacherStudents||[]).find(s=>s.user_id===studentUserId)?.target_grade||null,'teacher',studentUserId)}
+        </div>
+      </div>` : ''}
       ${studentUserId ? `
       <div class="card" style="padding:12px;">
         <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">🔔 NOTIFICATIONS</div>
@@ -23833,7 +23976,7 @@ async function showParentPortal() {
 
   if (linkedStudentId) {
     try {
-      const cUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + linkedStudentId + '&select=user_id,display_name,streak,xp,level,tier,year_group,exam_board,parent_code,locked_topics,schedule_locked';
+      const cUrl = CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + linkedStudentId + '&select=user_id,display_name,streak,xp,level,tier,year_group,exam_board,parent_code,locked_topics,schedule_locked,target_grade';
       console.log('[ParentPortal] fetching child profile:', cUrl);
       const cRes = await fetch(cUrl, { headers });
       const cProfiles = cRes.ok ? await cRes.json() : [];
@@ -23843,6 +23986,7 @@ async function showParentPortal() {
         child = {
           name: cp.display_name || 'Your Child',
           streak: cp.streak || 0,
+          target_grade: cp.target_grade ?? null,
           xp: cp.xp || 0,
           level: cp.level || Math.floor((cp.xp || 0) / 200) + 1,
           tier: cp.tier || '',
@@ -24217,7 +24361,10 @@ function showPingComposer(childUserId, childName) {
     <div class="modal-title">📨 Ping ${childName}</div>
     <div style="margin-bottom:12px;">
       <label style="font-size:12px;font-weight:800;color:#64748B;display:block;margin-bottom:6px;">MESSAGE</label>
-      <textarea id="ping-message" rows="3" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:14px;font-family:inherit;resize:none;outline:none;box-sizing:border-box;">Time to do your ScienceSpark cards! 🧠</textarea>
+      <textarea id="ping-message" rows="3" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:14px;font-family:inherit;resize:none;outline:none;box-sizing:border-box;">${getRotatingPingMessage(childName, STATE._parentChildProfile?.target_grade || null)}</textarea>
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+        <button onclick="document.getElementById('ping-message').value=getRotatingPingMessage('${childName}',STATE._parentChildProfile?.target_grade||null)" style="padding:4px 10px;border-radius:8px;border:1px solid #E2E8F0;background:white;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:#64748B;">🔄 New message</button>
+      </div>
     </div>
     <div style="margin-bottom:20px;">
       <label style="font-size:12px;font-weight:800;color:#64748B;display:block;margin-bottom:6px;">DEADLINE (OPTIONAL)</label>
@@ -24415,6 +24562,19 @@ function buildParentProfileTabHTML(user, children, activeChildId) {
      + 'style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:18px;text-align:center;letter-spacing:3px;font-weight:800;font-family:inherit;box-sizing:border-box;margin-bottom:10px;outline:none;" />';
   h += '<button onclick="addLinkedChild()" style="width:100%;padding:12px;border-radius:10px;border:none;background:#4F46E5;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">Link Child →</button>';
   h += '</div>';
+
+  // ── Child target grade setter ──
+  const childForGrade = STATE._parentChildProfile;
+  const childGradeId  = childForGrade?.user_id || STATE.parentActiveChildId;
+  const childGradeFirstName = childForGrade?.name ? childForGrade.name.split(' ')[0] : 'your child';
+  if (childGradeId) {
+    const curGrade = childForGrade?.target_grade ?? null;
+    h += '<div style="background:white;border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid #E2E8F0;box-shadow:0 1px 6px rgba(0,0,0,.06);">';
+    h += '<div style="font-size:11px;font-weight:800;color:#64748B;letter-spacing:.08em;margin-bottom:10px;">TARGET GRADE</div>';
+    h += '<div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:12px;line-height:1.5;">Set ' + childGradeFirstName + '\'s target grade. Hit the target and we\'ll push higher 🚀</div>';
+    h += '<div style="display:flex;gap:8px;">' + buildTargetGradeButtons(curGrade, 'parent', childGradeId) + '</div>';
+    h += '</div>';
+  }
 
   // ── Notifications section ──
   const notifChildName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
@@ -25209,7 +25369,7 @@ async function sendAIChat() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 600,
-        system: TUTOR_SYSTEM,
+        system: getTutorSystem(),
         messages: [{ role: 'user', content: message }]
       })
     });
@@ -25260,7 +25420,7 @@ async function sendAITabChat() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 600,
-        system: TUTOR_SYSTEM,
+        system: getTutorSystem(),
         messages: [{ role: 'user', content: message }]
       })
     });
