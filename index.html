@@ -14206,6 +14206,7 @@ async function afterLogin(startScreen) {
       }, 600);
     }
     setTimeout(requestPushPermission, 1500);
+    setTimeout(loadStudentReminderPrefs, 2000);
   }
   else if (STATE.role === 'teacher') showTeacherDashboard();
   else { showParentPortal(); setTimeout(requestPushPermission, 1500); }
@@ -14331,10 +14332,10 @@ async function requestPushPermission() {
   showModal(`
     <div class="modal-handle"></div>
     <div style="text-align:center;padding:8px 0;">
-      <div style="font-size:40px;margin-bottom:12px;">📚</div>
-      <div class="modal-title">Stay on track!</div>
-      <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;">Get reminders when it's time to study 📚 — we'll only ping you when it matters.</p>
-      <button class="btn btn-primary btn-full" style="margin-top:20px;" onclick="closeModal();doRequestPushPermission()">Allow Notifications</button>
+      <div style="font-size:40px;margin-bottom:12px;">🔥</div>
+      <div class="modal-title">Keep your streak alive!</div>
+      <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;">Get daily reminders to complete your cards and keep your streak! 🔥 We'll remind you at 7pm if you haven't done them yet.</p>
+      <button class="btn btn-primary btn-full" style="margin-top:20px;" onclick="closeModal();doRequestPushPermission()">Allow Notifications 🔔</button>
       <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Not now</button>
     </div>
   `);
@@ -14374,6 +14375,148 @@ function urlBase64ToUint8Array(base64String) {
   const rawData = atob(base64);
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
+
+// ── Student daily reminder helpers ───────────────────────────────────────────
+
+function getTotalRemainingCards() {
+  return ['Biology', 'Chemistry', 'Physics']
+    .reduce((sum, s) => sum + getRemainingCards(s), 0);
+}
+
+async function fireStudentCompletionNotification() {
+  if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
+  const name = (STATE.user?.display_name || STATE.user?.name || '').split(' ')[0] || 'there';
+  const streak = STATE.user?.streak || 0;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('Daily cards complete! 🎉', {
+      body: 'Great work ' + name + ' — streak maintained! 🔥'
+        + (streak > 1 ? ' (' + streak + ' days in a row)' : ''),
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200, 100, 400],
+      tag: 'ss-complete',
+      data: { url: window.location.origin + '/' }
+    });
+  } catch(e) {}
+}
+
+function checkAndFireCompletionNotification() {
+  if (STATE.role !== 'student') return;
+  if (STATE._completionNotifFiredToday) return;
+  const subjects = ['Biology', 'Chemistry', 'Physics'];
+  const active = subjects.filter(s => getSubjectLimit(s) > 0);
+  if (active.length === 0) return;
+  if (active.every(s => getRemainingCards(s) === 0)) {
+    STATE._completionNotifFiredToday = true;
+    fireStudentCompletionNotification();
+  }
+}
+
+async function checkAndFireStudentReminder() {
+  if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
+  if (getTotalRemainingCards() <= 0) return;
+  const name = (STATE.user?.display_name || STATE.user?.name || '').split(' ')[0] || 'there';
+  const remaining = getTotalRemainingCards();
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification("Don't forget your daily cards, " + name + '! 📚', {
+      body: 'You have ' + remaining + ' card' + (remaining !== 1 ? 's' : '') + ' left today. Keep your streak going! 🔥',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
+      tag: 'ss-reminder',
+      data: { url: window.location.origin + '/' }
+    });
+  } catch(e) {}
+}
+
+function scheduleStudentDailyReminder(reminderHour) {
+  if (STATE._reminderTimeout) { clearTimeout(STATE._reminderTimeout); STATE._reminderTimeout = null; }
+  const now = new Date();
+  const fire = new Date(now);
+  fire.setHours(reminderHour, 0, 0, 0);
+  if (fire <= now) return; // already past today's reminder time
+  const delay = fire.getTime() - now.getTime();
+  STATE._reminderTimeout = setTimeout(async () => {
+    if (STATE.user && STATE.role === 'student') await checkAndFireStudentReminder();
+  }, delay);
+}
+
+async function loadStudentReminderPrefs() {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  try {
+    const res = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id
+        + '&select=reminder_hour,notif_daily_reminder,notif_reminder_locked',
+      { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    const prefs = rows[0] || {};
+    const reminderHour = prefs.reminder_hour ?? 19;
+    const notifOn = prefs.notif_daily_reminder !== false;
+    const locked = !!prefs.notif_reminder_locked;
+    STATE.user.reminderHour = reminderHour;
+    STATE.user.notifReminderLocked = locked;
+    if (notifOn && Notification.permission === 'granted') {
+      scheduleStudentDailyReminder(reminderHour);
+    }
+  } catch(e) {}
+}
+
+async function saveStudentReminderHour(hour) {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token,
+                 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ reminder_hour: hour })
+    });
+    STATE.user.reminderHour = hour;
+    scheduleStudentDailyReminder(hour);
+    showToast('Reminder set for ' + (hour > 12 ? hour - 12 : hour) + ':00 ' + (hour >= 12 ? 'pm' : 'am'));
+    refreshNotifSection('student', 'student-notif-section', null);
+  } catch(e) { showToast('Could not save — please try again'); }
+}
+
+async function setStudentReminderLock(studentUserId, locked, sectionId) {
+  const user = STATE.user;
+  if (!user?.token) return;
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + studentUserId, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token,
+                 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ notif_reminder_locked: locked })
+    });
+    if (res.ok) {
+      showToast(locked ? 'Reminders locked on for this student' : 'Reminder lock removed');
+      if (sectionId) {
+        const sec = document.getElementById(sectionId);
+        if (sec) sec.innerHTML = '<div style="font-size:12px;color:#64748B;font-weight:600;padding:8px 0;">Saved ✓</div>';
+      }
+    }
+  } catch(e) { showToast('Could not save — please try again'); }
+}
+
+async function setStudentReminderHourByParentOrTeacher(studentUserId, hour, sectionId) {
+  const user = STATE.user;
+  if (!user?.token) return;
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + studentUserId, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token,
+                 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ reminder_hour: hour })
+    });
+    if (res.ok) showToast('Reminder time updated');
+  } catch(e) { showToast('Could not save'); }
+}
+
 
 // ============================================================
 // STUDENT HOME SCREEN
@@ -16259,6 +16402,7 @@ async function submitApplyAnswer() {
 function endSession() {
   if (STATE._timerInterval) clearInterval(STATE._timerInterval);
   LS.del('mid_session');
+  checkAndFireCompletionNotification();
   showHome();
 }
 
@@ -18111,7 +18255,8 @@ function toggleClassAI(el) {
   thumb?.classList.toggle('on');
 }
 
-function showStudentDetail(name) {
+function showStudentDetail(name, studentUserId) {
+  const lockId = 'notif-lock-row-' + (studentUserId || 'unknown');
   showModal(`
     <div class="modal-handle"></div>
     <div class="modal-title">👤 ${name}</div>
@@ -18126,6 +18271,25 @@ function showStudentDetail(name) {
           <button class="btn btn-outline btn-sm">Copy Parent Invite</button>
         </div>
       </div>
+      ${studentUserId ? `
+      <div class="card" style="padding:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">🔔 NOTIFICATIONS</div>
+        <div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:10px;line-height:1.5;">Lock daily reminders ON so this student cannot disable them.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:700;flex:1;">Lock reminders on</span>
+            <button onclick="setStudentReminderLock('${studentUserId}', true, '${lockId}')" class="btn btn-outline btn-sm" style="font-size:11px;">Lock ON 🔒</button>
+            <button onclick="setStudentReminderLock('${studentUserId}', false, '${lockId}')" class="btn btn-ghost btn-sm" style="font-size:11px;">Unlock</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:700;flex:1;">Reminder time</span>
+            <select onchange="setStudentReminderHourByParentOrTeacher('${studentUserId}', parseInt(this.value))" style="padding:6px 10px;border-radius:8px;border:1px solid #E2E8F0;font-size:12px;font-weight:700;font-family:inherit;">
+              ${[7,8,9,16,17,18,19,20,21].map(h => `<option value="${h}">` + (h < 12 ? h + 'am' : h === 12 ? '12pm' : (h-12) + 'pm') + `</option>`).join('')}
+            </select>
+          </div>
+          <div id="${lockId}" style="font-size:11px;color:#16A34A;font-weight:700;"></div>
+        </div>
+      </div>` : ''}
       <button class="btn btn-ghost btn-full" onclick="closeModal()">Close</button>
     </div>
   `);
@@ -18827,6 +18991,7 @@ async function afterLogin(startScreen) {
       }, 600);
     }
     setTimeout(requestPushPermission, 1500);
+    setTimeout(loadStudentReminderPrefs, 2000);
   }
   else if (STATE.role === 'teacher') showTeacherDashboard();
   else { showParentPortal(); setTimeout(requestPushPermission, 1500); }
@@ -18952,10 +19117,10 @@ async function requestPushPermission() {
   showModal(`
     <div class="modal-handle"></div>
     <div style="text-align:center;padding:8px 0;">
-      <div style="font-size:40px;margin-bottom:12px;">📚</div>
-      <div class="modal-title">Stay on track!</div>
-      <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;">Get reminders when it's time to study 📚 — we'll only ping you when it matters.</p>
-      <button class="btn btn-primary btn-full" style="margin-top:20px;" onclick="closeModal();doRequestPushPermission()">Allow Notifications</button>
+      <div style="font-size:40px;margin-bottom:12px;">🔥</div>
+      <div class="modal-title">Keep your streak alive!</div>
+      <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;">Get daily reminders to complete your cards and keep your streak! 🔥 We'll remind you at 7pm if you haven't done them yet.</p>
+      <button class="btn btn-primary btn-full" style="margin-top:20px;" onclick="closeModal();doRequestPushPermission()">Allow Notifications 🔔</button>
       <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Not now</button>
     </div>
   `);
@@ -18995,6 +19160,148 @@ function urlBase64ToUint8Array(base64String) {
   const rawData = atob(base64);
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
+
+// ── Student daily reminder helpers ───────────────────────────────────────────
+
+function getTotalRemainingCards() {
+  return ['Biology', 'Chemistry', 'Physics']
+    .reduce((sum, s) => sum + getRemainingCards(s), 0);
+}
+
+async function fireStudentCompletionNotification() {
+  if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
+  const name = (STATE.user?.display_name || STATE.user?.name || '').split(' ')[0] || 'there';
+  const streak = STATE.user?.streak || 0;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('Daily cards complete! 🎉', {
+      body: 'Great work ' + name + ' — streak maintained! 🔥'
+        + (streak > 1 ? ' (' + streak + ' days in a row)' : ''),
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200, 100, 400],
+      tag: 'ss-complete',
+      data: { url: window.location.origin + '/' }
+    });
+  } catch(e) {}
+}
+
+function checkAndFireCompletionNotification() {
+  if (STATE.role !== 'student') return;
+  if (STATE._completionNotifFiredToday) return;
+  const subjects = ['Biology', 'Chemistry', 'Physics'];
+  const active = subjects.filter(s => getSubjectLimit(s) > 0);
+  if (active.length === 0) return;
+  if (active.every(s => getRemainingCards(s) === 0)) {
+    STATE._completionNotifFiredToday = true;
+    fireStudentCompletionNotification();
+  }
+}
+
+async function checkAndFireStudentReminder() {
+  if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
+  if (getTotalRemainingCards() <= 0) return;
+  const name = (STATE.user?.display_name || STATE.user?.name || '').split(' ')[0] || 'there';
+  const remaining = getTotalRemainingCards();
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification("Don't forget your daily cards, " + name + '! 📚', {
+      body: 'You have ' + remaining + ' card' + (remaining !== 1 ? 's' : '') + ' left today. Keep your streak going! 🔥',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
+      tag: 'ss-reminder',
+      data: { url: window.location.origin + '/' }
+    });
+  } catch(e) {}
+}
+
+function scheduleStudentDailyReminder(reminderHour) {
+  if (STATE._reminderTimeout) { clearTimeout(STATE._reminderTimeout); STATE._reminderTimeout = null; }
+  const now = new Date();
+  const fire = new Date(now);
+  fire.setHours(reminderHour, 0, 0, 0);
+  if (fire <= now) return; // already past today's reminder time
+  const delay = fire.getTime() - now.getTime();
+  STATE._reminderTimeout = setTimeout(async () => {
+    if (STATE.user && STATE.role === 'student') await checkAndFireStudentReminder();
+  }, delay);
+}
+
+async function loadStudentReminderPrefs() {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  try {
+    const res = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id
+        + '&select=reminder_hour,notif_daily_reminder,notif_reminder_locked',
+      { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    const prefs = rows[0] || {};
+    const reminderHour = prefs.reminder_hour ?? 19;
+    const notifOn = prefs.notif_daily_reminder !== false;
+    const locked = !!prefs.notif_reminder_locked;
+    STATE.user.reminderHour = reminderHour;
+    STATE.user.notifReminderLocked = locked;
+    if (notifOn && Notification.permission === 'granted') {
+      scheduleStudentDailyReminder(reminderHour);
+    }
+  } catch(e) {}
+}
+
+async function saveStudentReminderHour(hour) {
+  const user = STATE.user;
+  if (!user?.token || !user?.id) return;
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token,
+                 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ reminder_hour: hour })
+    });
+    STATE.user.reminderHour = hour;
+    scheduleStudentDailyReminder(hour);
+    showToast('Reminder set for ' + (hour > 12 ? hour - 12 : hour) + ':00 ' + (hour >= 12 ? 'pm' : 'am'));
+    refreshNotifSection('student', 'student-notif-section', null);
+  } catch(e) { showToast('Could not save — please try again'); }
+}
+
+async function setStudentReminderLock(studentUserId, locked, sectionId) {
+  const user = STATE.user;
+  if (!user?.token) return;
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + studentUserId, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token,
+                 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ notif_reminder_locked: locked })
+    });
+    if (res.ok) {
+      showToast(locked ? 'Reminders locked on for this student' : 'Reminder lock removed');
+      if (sectionId) {
+        const sec = document.getElementById(sectionId);
+        if (sec) sec.innerHTML = '<div style="font-size:12px;color:#64748B;font-weight:600;padding:8px 0;">Saved ✓</div>';
+      }
+    }
+  } catch(e) { showToast('Could not save — please try again'); }
+}
+
+async function setStudentReminderHourByParentOrTeacher(studentUserId, hour, sectionId) {
+  const user = STATE.user;
+  if (!user?.token) return;
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + studentUserId, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token,
+                 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ reminder_hour: hour })
+    });
+    if (res.ok) showToast('Reminder time updated');
+  } catch(e) { showToast('Could not save'); }
+}
+
 
 // ============================================================
 // STUDENT HOME SCREEN
@@ -20958,6 +21265,7 @@ async function submitApplyAnswer() {
 function endSession() {
   if (STATE._timerInterval) clearInterval(STATE._timerInterval);
   LS.del('mid_session');
+  checkAndFireCompletionNotification();
   showHome();
 }
 
@@ -22810,7 +23118,8 @@ function toggleClassAI(el) {
   thumb?.classList.toggle('on');
 }
 
-function showStudentDetail(name) {
+function showStudentDetail(name, studentUserId) {
+  const lockId = 'notif-lock-row-' + (studentUserId || 'unknown');
   showModal(`
     <div class="modal-handle"></div>
     <div class="modal-title">👤 ${name}</div>
@@ -22825,6 +23134,25 @@ function showStudentDetail(name) {
           <button class="btn btn-outline btn-sm">Copy Parent Invite</button>
         </div>
       </div>
+      ${studentUserId ? `
+      <div class="card" style="padding:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">🔔 NOTIFICATIONS</div>
+        <div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:10px;line-height:1.5;">Lock daily reminders ON so this student cannot disable them.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:700;flex:1;">Lock reminders on</span>
+            <button onclick="setStudentReminderLock('${studentUserId}', true, '${lockId}')" class="btn btn-outline btn-sm" style="font-size:11px;">Lock ON 🔒</button>
+            <button onclick="setStudentReminderLock('${studentUserId}', false, '${lockId}')" class="btn btn-ghost btn-sm" style="font-size:11px;">Unlock</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:700;flex:1;">Reminder time</span>
+            <select onchange="setStudentReminderHourByParentOrTeacher('${studentUserId}', parseInt(this.value))" style="padding:6px 10px;border-radius:8px;border:1px solid #E2E8F0;font-size:12px;font-weight:700;font-family:inherit;">
+              ${[7,8,9,16,17,18,19,20,21].map(h => `<option value="${h}">` + (h < 12 ? h + 'am' : h === 12 ? '12pm' : (h-12) + 'pm') + `</option>`).join('')}
+            </select>
+          </div>
+          <div id="${lockId}" style="font-size:11px;color:#16A34A;font-weight:700;"></div>
+        </div>
+      </div>` : ''}
       <button class="btn btn-ghost btn-full" onclick="closeModal()">Close</button>
     </div>
   `);
@@ -23972,6 +24300,35 @@ function buildParentProfileTabHTML(user, children, activeChildId) {
   const notifChildName = STATE._parentChildProfile?.name ? STATE._parentChildProfile.name.split(' ')[0] : null;
   h += '<div id="parent-notif-section">' + buildNotifSectionHTML('parent', notifChildName) + '</div>';
 
+  // -- Child reminder controls (parent sets reminder time and can lock it) --
+  const childId = STATE._parentChildProfile?.user_id || STATE.parentActiveChildId;
+  const childFirstName = notifChildName || 'your child';
+  if (childId) {
+    const rHours = [7,8,9,16,17,18,19,20,21];
+    const fmtH = hr => hr < 12 ? hr + 'am' : hr === 12 ? '12pm' : (hr-12) + 'pm';
+    const safeChildId = JSON.stringify(String(childId).replace(/'/g,''));
+    const statusId = 'parent-child-notif-status';
+    const opts = rHours.map(hr => `<option value="${hr}">${fmtH(hr)}</option>`).join('');
+    h += `<div style="background:white;border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid #E2E8F0;box-shadow:0 1px 6px rgba(0,0,0,.06);">
+      <div style="font-size:11px;font-weight:800;color:#64748B;letter-spacing:.08em;margin-bottom:12px;">DAILY REMINDER CONTROLS</div>
+      <div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:12px;line-height:1.5;">Set when ${childFirstName} gets their daily card reminder, or lock it so they cannot disable it.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;font-weight:700;flex:1;">Reminder time</span>
+          <select onchange="setStudentReminderHourByParentOrTeacher(${safeChildId}, parseInt(this.value))"
+            style="padding:8px 12px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:13px;font-weight:700;font-family:inherit;">${opts}</select>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="setStudentReminderLock(${safeChildId}, true, '${statusId}')"
+            style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E2E8F0;background:#EEF2FF;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;color:#4F46E5;">Lock ON 🔒</button>
+          <button onclick="setStudentReminderLock(${safeChildId}, false, '${statusId}')"
+            style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E2E8F0;background:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;color:#64748B;">Unlock 🔓</button>
+        </div>
+        <div id="${statusId}" style="font-size:11px;color:#16A34A;font-weight:700;margin-top:4px;"></div>
+      </div>
+    </div>`;
+  }
+
   // ── Collapsible Account Details ──
   h += '<div style="' + cardStyle + '">';
   h += '<div onclick="toggleParentAccountDetails()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;">';
@@ -24130,8 +24487,34 @@ function buildNotifSectionHTML(context, childName, hasPushSub, dailyTipsOn, stud
         h += buildNotifToggleRow('Study alerts for ' + cName, 'An evening nudge if ' + cName + ' hasn\'t studied yet', sOn,
           "toggleNotifPref('parent','notif_study_alerts'," + sOn + ",'parent-notif-section','" + safeCName + "')");
       } else {
-        h += buildNotifToggleRow('Study reminders', 'Daily prompt to review your flashcards', true);
-        h += buildNotifToggleRow('Streak alerts', 'A warning before you lose your study streak', false);
+        const isLocked = (typeof STATE !== 'undefined' && STATE.user?.notifReminderLocked);
+        const curHour = (typeof STATE !== 'undefined' && STATE.user?.reminderHour != null)
+          ? STATE.user.reminderHour : 19;
+        const fmtHour = h => (h === 0 ? '12am' : h < 12 ? h + 'am' : h === 12 ? '12pm' : (h-12) + 'pm');
+        const remLabel = 'Daily card reminder at ' + fmtHour(curHour);
+        const remDesc  = isLocked
+          ? '🔒 Set by your teacher or parent — cannot be changed'
+          : 'Tap to change the reminder time';
+        h += buildNotifToggleRow(remLabel, remDesc, true, isLocked ? '' : '');
+        // Reminder time picker (only shown when not locked)
+        if (!isLocked) {
+          const hours = [7,8,9,16,17,18,19,20,21];
+          h += '<div style="margin-top:12px;">';
+          h += '<div style="font-size:11px;font-weight:800;color:#64748B;margin-bottom:8px;">REMINDER TIME</div>';
+          h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+          hours.forEach(hr => {
+            const sel = hr === curHour;
+            h += '<button onclick="saveStudentReminderHour(' + hr + ')" '
+              + 'style="padding:6px 12px;border-radius:20px;border:1.5px solid '
+              + (sel ? '#4F46E5' : '#E2E8F0') + ';background:'
+              + (sel ? '#EEF2FF' : 'white') + ';color:'
+              + (sel ? '#4F46E5' : '#64748B') + ';font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">'
+              + fmtHour(hr) + '</button>';
+          });
+          h += '</div>';
+          h += '</div>';
+        }
+        h += buildNotifToggleRow('Streak alerts', 'A warning before you lose your study streak', false, '', true);
       }
       h += '</div>';
     }
@@ -24178,7 +24561,7 @@ async function refreshNotifSection(context, sectionId, childName) {
   if (user?.token && user?.id) {
     try {
       const res = await fetch(
-        CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=push_subscription,notif_daily_tips,notif_study_alerts',
+        CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=push_subscription,notif_daily_tips,notif_study_alerts,reminder_hour,notif_reminder_locked',
         { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
       );
       if (res.ok) {
@@ -24186,6 +24569,10 @@ async function refreshNotifSection(context, sectionId, childName) {
         hasPushSub     = !!(rows[0]?.push_subscription);
         dailyTipsOn    = rows[0]?.notif_daily_tips !== false;
         studyAlertsOn  = rows[0]?.notif_study_alerts !== false;
+        if (STATE.user && rows[0]) {
+          STATE.user.reminderHour = rows[0].reminder_hour ?? 19;
+          STATE.user.notifReminderLocked = !!rows[0].notif_reminder_locked;
+        }
       }
     } catch(_) {}
   }
@@ -24284,6 +24671,10 @@ async function enableStudentNotifications() {
 async function disableStudentNotifications() {
   const user = STATE.user;
   if (!user?.token || !user?.id) return;
+  if (user.notifReminderLocked) {
+    showToast('Reminders have been enabled by your teacher or parent and cannot be turned off');
+    return;
+  }
   try {
     await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
       method: 'PATCH',
