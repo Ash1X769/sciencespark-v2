@@ -1828,6 +1828,105 @@ textarea.input { resize: vertical; min-height: 100px; }
 /* ── Student Revision Spark ────────────────────────────────────────────────── */
 .spark-screen { min-height: 100vh; background: #F0FDF4; padding-bottom: 100px; }
 .spark-hdr { background: linear-gradient(135deg,#16A34A,#15803D); padding: 22px 20px 18px; color: white; display: flex; align-items: center; gap: 12px; }
+
+  /* ─── DEEP DIVE / AQA EXAM PAPER ─── */
+  .aqa-paper {
+    background: white;
+    border: 2px solid #1a1a1a;
+    border-radius: 4px;
+    padding: 20px;
+    position: relative;
+    font-family: inherit;
+  }
+  .aqa-paper-header {
+    border-bottom: 3px solid #1a1a1a;
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+  }
+  .aqa-question-block {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .aqa-q-num {
+    font-size: 16px;
+    font-weight: 900;
+    color: #1a1a1a;
+    white-space: nowrap;
+    padding-top: 2px;
+    min-width: 36px;
+  }
+  .aqa-q-text {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.6;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+  }
+  .aqa-marks-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: #333;
+    text-align: right;
+  }
+  .aqa-answer-area {
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    padding: 8px 12px;
+    min-height: 120px;
+    background: #FAFAFA;
+    margin: 8px 0;
+  }
+  .aqa-textarea {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    border-radius: 0;
+    resize: vertical;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .aqa-mark-scheme {
+    background: #F0FDF4;
+    border: 1.5px solid #4ADE80;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+  }
+  .aqa-ms-header {
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #15803D;
+    margin-bottom: 8px;
+  }
+  .aqa-ms-body {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.6;
+  }
+  /* Gap input for Fill the Gaps */
+  .gap-input {
+    display: inline-block;
+    border: none;
+    border-bottom: 2px solid var(--ss-blue);
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+    padding: 2px 4px;
+    min-width: 60px;
+    vertical-align: baseline;
+    transition: border-color 0.2s;
+  }
+  .gap-input.correct { border-color: var(--ss-green); background: #F0FDF4; }
+  .gap-input.wrong { border-color: var(--ss-red); background: #FFF0F0; }
+  .keyword-chip:active { background: #BBF7D0 !important; transform: scale(0.95); }
+
 </style>
 </head>
 <body>
@@ -14681,7 +14780,7 @@ function showUpgradeModal(reason) {
       <div class="modal-title" style="font-size:19px;">ScienceSpark Premium</div>
       <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;margin:10px 0;">${reason}</p>
       <div style="background:#F8FAFC;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:left;">
-        ${['✅ Unlimited cards — all 3 subjects','✅ AI marking on every answer','✅ Full Learning Sessions','✅ Unlimited AI Tutor','✅ Parent progress portal'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
+        ${['✅ Unlimited cards — all 3 subjects','✅ AI marking on every answer','✅ Deep Dive Sessions','✅ Unlimited AI Tutor','✅ Parent progress portal'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
       </div>
       <button class="btn btn-primary btn-full btn-lg" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);font-size:15px;" onclick="closeModal();startCheckout()">Upgrade — £12.99/month →</button>
       <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Maybe later</button>
@@ -15384,12 +15483,13 @@ ${renderNavBar('home')}
         📚 Start ${primary ? primary.subj : 'Today'} — ${primary ? primary.due : totalDue} cards
       </button>
     </div>
-    <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="startFullSession()">
-      <div>
-        <div style="font-size:14px;font-weight:800;">📖 Full Learning Session</div>
-        <div style="font-size:12px;color:#64748B;font-weight:600;">Learn, practise and apply. 5–20 minutes.</div>
+    <div onclick="startFullSession()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
+      <div style="font-size:32px;">🌊</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:900;color:white;">Deep Dive</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:600;">Read, practise, brain dump & exam — 5–60 min</div>
       </div>
-      <div style="font-size:20px;">→</div>
+      <div style="font-size:20px;color:rgba(255,255,255,0.7);">→</div>
     </div>
     <div onclick="showRevisionSparkFeed()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
       <div style="font-size:32px;">⚡</div>
@@ -15795,11 +15895,15 @@ function recordAndAdvance(cardId, grade) {
           } else if (STATE.sessionPhase === 'embed') {
             if (STATE._timerInterval) clearInterval(STATE._timerInterval);
             showTransition('embed-to-apply');
+          } else if (STATE.sessionPhase === 'deepDive' && STATE.deepDiveCurrentPhase === 'cards') {
+            showTransition('cards-to-exam');
           } else {
             endSession();
           }
         } else {
           if (STATE.sessionPhase === 'embed') {
+            renderEmbedCard();
+          } else if (STATE.sessionPhase === 'deepDive' && STATE.deepDiveCurrentPhase === 'cards') {
             renderEmbedCard();
           } else {
             renderFlashcard();
@@ -15826,9 +15930,11 @@ function flipCard() {
 }
 
 function selfGrade(cardId, grade) {
+  // In Deep Dive: good(2) and easy(3) silently downgraded to hard(1) for SRS
+  const srsGrade = STATE.sessionPhase === 'deepDive' ? Math.min(grade, 1) : grade;
   playGradeSound(grade);
   if (grade === 3) launchConfetti();
-  recordGrade(cardId, grade);
+  recordGrade(cardId, srsGrade);
   if (grade === 0 || grade === 1) {
     const msgs = [
       "This one's being stubborn! 💪 We'll keep coming back to it until you've got it",
@@ -16356,18 +16462,22 @@ function recordGrade(cardId, grade, aiGraded) {
 
   const card = STATE.cardQueue[STATE.currentCardIndex];
   const isQR = STATE.sessionPhase === 'quickRevision';
+  const isDD = STATE.sessionPhase === 'deepDive';
 
-  if (!isQR) {
+  if (!isQR && !isDD) {
     // Only new cards count toward the daily new-card limit
     if (wasNew && card?.subject) {
       if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
       STATE.todayDone[card.subject].add(cardId);
     }
     incrementCardCount();
-  } else {
+  } else if (isQR) {
     // Track result for quick revision end summary
     if (!STATE._quickRevisionResults) STATE._quickRevisionResults = [];
     STATE._quickRevisionResults.push({ cardId, grade, q: card?.q || card?.question });
+  } else if (isDD) {
+    // Deep Dive: track cards studied, no daily limit update
+    if (STATE.deepDiveResults) STATE.deepDiveResults.cardsStudied = (STATE.deepDiveResults.cardsStudied || 0) + 1;
   }
 
   // Record history (always — quick revision still writes to study_history)
@@ -16388,11 +16498,15 @@ function nextCard() {
     } else if (STATE.sessionPhase === 'embed') {
       if (STATE._timerInterval) clearInterval(STATE._timerInterval);
       showTransition('embed-to-apply');
+    } else if (STATE.sessionPhase === 'deepDive' && STATE.deepDiveCurrentPhase === 'cards') {
+      showTransition('cards-to-exam');
     } else {
       showSessionEnd();
     }
   } else {
     if (STATE.sessionPhase === 'embed') {
+      renderEmbedCard();
+    } else if (STATE.sessionPhase === 'deepDive' && STATE.deepDiveCurrentPhase === 'cards') {
       renderEmbedCard();
     } else {
       renderFlashcard();
@@ -16405,64 +16519,83 @@ function nextCard() {
 // ============================================================
 function startFullSession() {
   if (!STATE.user?.is_paid) {
-    showUpgradeModal('Full Learning Sessions are a Premium feature 📚 Upgrade to unlock timed sessions with embed, practise, and apply phases — £12.99/month');
+    showUpgradeModal('Deep Dive is a Premium feature 🌊 Unlock 6-phase timed study sessions with Read, MCQ, Fill the Gaps, Brain Dump, Flashcards & Exam — £12.99/month');
     return;
   }
-  const html = `
-<div class="screen" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
-  <div class="top-bar">
-    <button class="btn btn-ghost btn-sm" onclick="showHome()">← Back</button>
-    <div style="font-size:17px;font-weight:800;">Full Learning Session</div>
-    <div></div>
-  </div>
-
-  <div style="flex:1;padding:32px 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;">
-    <div style="font-size:64px;">⏱️</div>
-    <div style="text-align:center;">
-      <div style="font-size:24px;font-weight:900;margin-bottom:8px;">Choose your session length</div>
-      <div style="font-size:15px;color:var(--text-secondary);font-weight:600;">Pick how long you want to study for</div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:320px;">
-      ${[5,10,15,20].map(mins => `
-        <button class="btn btn-outline btn-lg" onclick="launchSession(${mins})" style="font-size:20px;font-weight:900;padding:24px;">
-          ${mins}<span style="font-size:14px;font-weight:700;"> min</span>
-        </button>
-      `).join('')}
-    </div>
-  </div>
-</div>`;
-  render(html);
+  showDeepDivePicker();
 }
 
-function launchSession(minutes) {
+function launchSession(subject, depthMode, topicKey, minutes) {
   STATE.sessionDuration = minutes;
-  STATE.sessionPhase = 'learn';
-  STATE.cardQueue = getDueCards(STATE.user);
+  STATE.sessionPhase = 'deepDive';
+  STATE.deepDiveCurrentPhase = 'read';
+  STATE.deepDiveSubject = subject;
+  STATE.deepDiveTopic = topicKey;
+  STATE.deepDiveResults = { mcqScore: null, mcqTotal: 0, gapScore: null, gapTotal: 0, brainDumpFacts: null, examScore: null, examTotal: 0, cardsStudied: 0 };
+  const locked = (STATE.user?.locked_topics || []).map(t => t.toUpperCase());
+  if (depthMode === 'due') {
+    const allDue = getDueCards(STATE.user);
+    STATE.cardQueue = subject === 'all' ? allDue : allDue.filter(c => c.subject === subject);
+  } else if (depthMode === 'topic') {
+    STATE.cardQueue = SAMPLE_CARDS.filter(c =>
+      (subject === 'all' || c.subject === subject) &&
+      c.topic.toUpperCase() === topicKey.toUpperCase() &&
+      !locked.includes(c.topic.toUpperCase()) &&
+      !(c.subtopic && locked.includes(c.subtopic.toUpperCase()))
+    );
+  } else if (depthMode === 'subtopic') {
+    STATE.cardQueue = SAMPLE_CARDS.filter(c =>
+      (subject === 'all' || c.subject === subject) &&
+      (c.subtopic || '').toUpperCase() === topicKey.toUpperCase() &&
+      !locked.includes(c.topic.toUpperCase()) &&
+      !(c.subtopic && locked.includes(c.subtopic.toUpperCase()))
+    );
+  } else {
+    STATE.cardQueue = getDueCards(STATE.user).filter(c => subject === 'all' || c.subject === subject);
+  }
   STATE.currentCardIndex = 0;
   STATE.cardsDone = [];
   STATE.sessionStartTime = Date.now();
   STATE.sessionTimer = minutes * 60;
+  if (STATE.cardQueue.length === 0) {
+    render(`<div class="screen" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
+  <div class="top-bar">
+    <button class="btn btn-ghost btn-sm" onclick="showHome()">← Home</button>
+    <div style="font-size:17px;font-weight:800;">🌊 Deep Dive</div>
+    <div></div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:20px;">
+    <div style="font-size:64px;">🎉</div>
+    <div style="font-size:22px;font-weight:900;">No cards found!</div>
+    <div style="font-size:15px;color:var(--text-secondary);font-weight:600;max-width:300px;">${depthMode === 'due' ? 'No cards are due right now. Try choosing a specific topic or come back tomorrow!' : 'No cards found for this selection — try a different topic.'}</div>
+    <button class="btn btn-primary btn-lg" onclick="showDeepDivePicker()">← Try a Different Topic</button>
+    <button class="btn btn-outline btn-lg" onclick="showHome()">Home</button>
+  </div>
+</div>`);
+    return;
+  }
+  startSessionTimerTick();
   renderLearnPhase();
 }
 
 function renderSessionHeader(phase) {
   const timeLeft = STATE.sessionTimer;
   const warn = timeLeft < 60;
-  const phases = ['learn','embed','apply'];
-  const phaseLabels = { learn: 'Learn', embed: 'Embed', apply: 'Apply' };
-  const phaseIcons = { learn: '📖', embed: '✏️', apply: '🎯' };
-
+  const phases = ['read','mcq','gaps','dump','cards','exam'];
+  const phaseIcons = { read:'📖', mcq:'✅', gaps:'✍️', dump:'🧠', cards:'🎴', exam:'📝' };
+  const idx = phases.indexOf(phase);
   return `
-<div class="phase-bar">
-  ${phases.map(p => `
-    <div class="phase-item ${p === phase ? 'active' : phases.indexOf(p) < phases.indexOf(phase) ? 'done' : ''}">
-      <div class="phase-dot">${phases.indexOf(p) < phases.indexOf(phase) ? '✓' : phaseIcons[p]}</div>
-      ${phaseLabels[p]}
+<div class="phase-bar" style="overflow-x:auto;padding:6px 0;">
+  <div style="display:flex;align-items:center;gap:0;padding:0 10px;min-width:max-content;">
+    ${phases.map((p,i) => `
+      <div class="phase-item ${p === phase ? 'active' : i < idx ? 'done' : ''}" style="min-width:32px;padding:0 4px;font-size:10px;text-align:center;">
+        <div class="phase-dot" style="font-size:14px;">${i < idx ? '✓' : phaseIcons[p]}</div>
+      </div>
+      ${i < phases.length-1 ? `<div style="width:10px;height:2px;background:${i < idx ? 'var(--ss-green)' : '#E2E8F0'};border-radius:1px;flex-shrink:0;"></div>` : ''}
+    `).join('')}
+    <div style="padding:0 10px;margin-left:6px;">
+      <div class="timer-badge ${warn ? 'warning' : ''}" id="session-timer">${formatTime(timeLeft)}</div>
     </div>
-  `).join('')}
-  <div style="display:flex;align-items:center;padding:0 12px;">
-    <div class="timer-badge ${warn ? 'warning' : ''}" id="session-timer">${formatTime(timeLeft)}</div>
   </div>
 </div>`;
 }
@@ -16484,80 +16617,107 @@ function startSessionTimerTick() {
 }
 
 function renderLearnPhase() {
-  STATE.sessionPhase = 'learn';
-  const card = STATE.cardQueue[0];
-  const ko = card ? KNOWLEDGE_ORGANISERS[card.topic] : null;
+  STATE.sessionPhase = 'deepDive';
+  STATE.deepDiveCurrentPhase = 'read';
+  if (STATE._readTimer) { clearInterval(STATE._readTimer); STATE._readTimer = null; }
+
+  if (!STATE.cardQueue || STATE.cardQueue.length === 0) {
+    render(`<div class="screen" style="background:white;"><div class="top-bar"><button class="btn btn-ghost btn-sm" onclick="endSession()">✕</button><div style="font-size:16px;font-weight:800;">🌊 Deep Dive</div><div></div></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:20px;"><div style="font-size:64px;">🎉</div><div style="font-size:22px;font-weight:900;">No cards due right now!</div><div style="font-size:15px;color:var(--text-secondary);font-weight:600;">You're all caught up. Try a specific topic or come back tomorrow.</div><button class="btn btn-primary btn-lg" onclick="showDeepDivePicker()">Choose a Topic</button><button class="btn btn-outline btn-lg" onclick="endSession()">Home</button></div></div>`);
+    return;
+  }
+
+  const subColor = subjectColor(STATE.cardQueue[0]?.subject);
+  const topicName = STATE.cardQueue[0]?.topic_name || STATE.cardQueue[0]?.topic || 'Science';
+  const locks = STATE.user?.deep_dive_locks || {};
+
+  // Build dynamic KO grouped by subtopic_name
+  const groups = {};
+  const groupOrder = [];
+  STATE.cardQueue.forEach(card => {
+    const stName = card.subtopic_name || card.topic_name || 'Key Concepts';
+    if (!groups[stName]) { groups[stName] = []; groupOrder.push(stName); }
+    groups[stName].push(card);
+  });
+
+  const koHTML = groupOrder.map(stName => `
+    <div style="margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:${subColor};margin-bottom:10px;padding-bottom:5px;border-bottom:2px solid ${subColor}33;">${stName}</div>
+      ${groups[stName].map(card => {
+        const qText = bold(card.q || '');
+        const aBullets = Array.isArray(card.a) ? card.a : [(card.a || '').toString()];
+        return `<div style="margin-bottom:10px;background:#F8FAFC;border-radius:10px;padding:12px;border-left:3px solid ${subColor}44;">
+          <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:5px;line-height:1.4;">${qText}</div>
+          <ul style="margin:0;padding-left:16px;">${aBullets.map(b => `<li style="font-size:13px;font-weight:600;color:#475569;line-height:1.5;margin-bottom:2px;">${bold(b)}</li>`).join('')}</ul>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
 
   const html = `
 <div class="screen" id="screen-session">
   <div class="top-bar">
     <button class="btn btn-ghost btn-sm" onclick="endSession()">✕</button>
-    <div style="font-size:16px;font-weight:800;">Phase 1 — Learn</div>
+    <div style="font-size:16px;font-weight:800;">📖 Read & Learn</div>
     <div></div>
   </div>
-  ${renderSessionHeader('learn')}
-
-  <div style="flex:1;overflow-y:auto;padding:20px 20px 100px;">
-    ${ko ? `
-      ${ko.is_mock ? `<div class="placeholder-notice">⚠️ Placeholder content — real Knowledge Organiser coming soon</div><br>` : ''}
-      <div style="font-size:20px;font-weight:900;margin-bottom:4px;">${ko.topic}</div>
-      <div style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:16px;">Read through, then do the quiz below</div>
-
-      <div class="ko-topic-block">
-        <div class="ko-topic-header" style="background:${subjectColor(card?.subject)};">
-          ${ko.topic}
-        </div>
-        ${ko.pairs.map(p => `
-          <div class="ko-item">
-            <div class="ko-item-q">${bold(p.q)}</div>
-            <div class="ko-item-a">${bold(p.a)}</div>
-          </div>
-        `).join('')}
-      </div>
-    ` : '<div class="loading-screen"><div class="spinner"></div><div>Loading content...</div></div>'}
-
+  ${renderSessionHeader('read')}
+  <div style="flex:1;overflow-y:auto;padding:16px 20px 150px;">
+    <div style="font-size:18px;font-weight:900;margin-bottom:3px;color:${subColor};">${topicName}</div>
+    <div style="font-size:12px;color:var(--text-secondary);font-weight:600;margin-bottom:18px;">Read carefully — you'll be quizzed on this! 🧠</div>
+    ${koHTML}
   </div>
-
-  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:16px 20px;">
-    <button class="btn btn-primary btn-full btn-lg" id="continue-btn" onclick="showFullSessionMCQ()" disabled style="opacity:0.5;">
-      Continue to Quick Check →
-    </button>
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
+    <div style="height:4px;background:#E2E8F0;border-radius:2px;margin-bottom:10px;overflow:hidden;">
+      <div id="read-progress-bar" style="height:100%;background:var(--ss-green);border-radius:2px;width:0%;transition:width 1s linear;"></div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost btn-sm" onclick="endSession()" style="flex:0 0 auto;padding:8px 12px;">✕</button>
+      ${locks.phase1_locked ? '' : `<button class="btn btn-outline btn-sm" onclick="skipToDeepDiveCards()" style="flex:1;">Skip to Flashcards →</button>`}
+      <button class="btn btn-primary btn-sm" id="continue-btn" onclick="showFullSessionMCQ()" disabled style="opacity:0.5;flex:1;">Continue to Quiz →</button>
+    </div>
   </div>
 </div>`;
 
   render(html);
-  startSessionTimerTick();
 
-  // Enable continue after a delay (encourage reading)
-  setTimeout(() => {
-    const btn = document.getElementById('continue-btn');
-    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
-  }, 8000);
+  // 30-second read progress bar + enable continue
+  let elapsed = 0;
+  STATE._readTimer = setInterval(() => {
+    elapsed++;
+    const pct = Math.min(100, Math.round((elapsed / 30) * 100));
+    const bar = document.getElementById('read-progress-bar');
+    if (bar) bar.style.width = pct + '%';
+    if (elapsed >= 30) {
+      clearInterval(STATE._readTimer);
+      STATE._readTimer = null;
+      const btn = document.getElementById('continue-btn');
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    }
+  }, 1000);
 }
 
 function showFullSessionMCQ() {
-  const card = STATE.cardQueue[STATE.currentCardIndex];
-  const ko = card ? KNOWLEDGE_ORGANISERS[card.topic] : null;
+  STATE.deepDiveCurrentPhase = 'mcq';
+  if (STATE._readTimer) { clearInterval(STATE._readTimer); STATE._readTimer = null; }
+  const locks = STATE.user?.deep_dive_locks || {};
 
   const html = `
-<div class="screen" id="screen-session-mcq" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
+<div class="screen" id="screen-session-mcq">
   <div class="top-bar">
     <button class="btn btn-ghost btn-sm" onclick="showFullSessionLearn()">← Back</button>
-    <div style="font-size:17px;font-weight:800;">Quick Check</div>
-    <div></div>
+    <div style="font-size:17px;font-weight:800;">Quick Check ✅</div>
+    <button class="btn btn-ghost btn-sm" onclick="endSession()">✕</button>
   </div>
-
-  <div style="flex:1;overflow-y:auto;padding:20px 20px 100px;">
-    <div style="font-size:14px;color:var(--text-secondary);font-weight:600;margin-bottom:20px;">Answer these questions to check you understood the key ideas.</div>
-    <div id="mcq-container">
-      ${renderMCQs()}
+  ${renderSessionHeader('mcq')}
+  <div style="flex:1;overflow-y:auto;padding:20px 20px 140px;">
+    <div style="font-size:14px;color:var(--text-secondary);font-weight:600;margin-bottom:20px;">How much did you take in? Answer these four questions! 🧠</div>
+    <div id="mcq-container">${renderMCQs()}</div>
+  </div>
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost btn-sm" onclick="endSession()" style="flex:0 0 auto;padding:8px 12px;">✕</button>
+      ${locks.phase2_locked ? '' : `<button class="btn btn-outline btn-sm" onclick="showTransition('mcq-to-gaps')" style="flex:1;">Skip →</button>`}
+      <button class="btn btn-primary btn-sm" id="mcq-continue-btn" onclick="showTransition('mcq-to-gaps')" disabled style="opacity:0.5;flex:1;">Continue →</button>
     </div>
-  </div>
-
-  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:16px 20px;">
-    <button class="btn btn-primary btn-full btn-lg" id="mcq-continue-btn" onclick="showTransition('learn-to-embed')" disabled style="opacity:0.5;">
-      Continue to Practice →
-    </button>
   </div>
 </div>`;
 
@@ -16627,29 +16787,63 @@ function checkAllMCQsDone() {
     if (btn) {
       btn.disabled = false;
       btn.style.opacity = '1';
-      btn.textContent = states.every(s => s.wasCorrect) ? '🎉 All correct! Continue →' : 'Continue →';
+      const score = states.filter(s => s.wasCorrect).length;
+      btn.textContent = score === states.length ? '🎉 All correct! Continue →' : 'Continue →';
+    }
+    if (STATE.deepDiveResults) {
+      const score = states.filter(s => s.wasCorrect).length;
+      STATE.deepDiveResults.mcqScore = score;
+      STATE.deepDiveResults.mcqTotal = states.length;
     }
   }
 }
 
 function showTransition(type) {
-  if (STATE._timerInterval) clearInterval(STATE._timerInterval);
   const configs = {
+    'mcq-to-gaps': {
+      emoji: '✍️', title: 'Great reading!',
+      sub: "Now fill in the gaps from memory...",
+      next: () => showDeepDiveFillGaps(),
+      phase: 'mcq'
+    },
+    'gaps-to-dump': {
+      emoji: '🧠', title: 'Brilliant!',
+      sub: "Now dump everything you know onto the page...",
+      next: () => showDeepDiveBrainDump(),
+      phase: 'gaps'
+    },
+    'dump-to-cards': {
+      emoji: '🎴', title: 'Amazing brain dump!',
+      sub: "Now the flashcards to lock it all in...",
+      next: () => renderEmbedPhase(),
+      phase: 'dump'
+    },
+    'cards-to-exam': {
+      emoji: '📝', title: "You're almost there!",
+      sub: "One last exam question — show what you know!",
+      next: () => renderApplyPhase(),
+      phase: 'cards'
+    },
     'learn-to-embed': {
       emoji: '✨', title: 'Nice work!',
       sub: "Now let's see how much you remember...",
-      next: () => renderEmbedPhase()
+      next: () => renderEmbedPhase(),
+      phase: 'learn'
     },
     'embed-to-apply': {
       emoji: '🚀', title: 'Brilliant!',
       sub: "Time to put it all together...",
-      next: () => renderApplyPhase()
+      next: () => renderApplyPhase(),
+      phase: 'embed'
     }
   };
-  const config = configs[type] || configs['learn-to-embed'];
+  const config = configs[type] || configs['mcq-to-gaps'];
 
   render(`
 <div class="screen">
+  <div style="position:absolute;top:12px;right:16px;z-index:10;">
+    <button class="btn btn-ghost btn-sm" onclick="endSession()" style="color:#94A3B8;">✕ Exit</button>
+  </div>
   <div class="transition-screen">
     <div class="transition-emoji">${config.emoji}</div>
     <div class="transition-title">${config.title}</div>
@@ -16660,14 +16854,15 @@ function showTransition(type) {
 }
 
 function renderEmbedPhase() {
-  STATE.sessionPhase = 'embed';
+  STATE.sessionPhase = 'deepDive';
+  STATE.deepDiveCurrentPhase = 'cards';
   STATE.currentCardIndex = 0;
   renderEmbedCard();
 }
 
 function renderEmbedCard() {
   const card = STATE.cardQueue[STATE.currentCardIndex];
-  if (!card) { showTransition('embed-to-apply'); return; }
+  if (!card) { showTransition('cards-to-exam'); return; }
 
   const total = STATE.cardQueue.length;
   const current = STATE.currentCardIndex;
@@ -16700,7 +16895,12 @@ function renderEmbedCard() {
 
   const html = `
 <div class="screen" id="screen-embed">
-  ${renderSessionHeader('embed')}
+  <div class="top-bar">
+    <button class="btn btn-ghost btn-sm" onclick="endSession()">✕ Exit</button>
+    <div style="font-size:14px;font-weight:800;">🎴 Flashcards (${STATE.currentCardIndex + 1}/${STATE.cardQueue.length})</div>
+    <div></div>
+  </div>
+  ${renderSessionHeader('cards')}
 
   <div class="flashcard-area">
     <div class="card" style="padding:20px;">
@@ -16749,7 +16949,6 @@ function renderEmbedCard() {
 
   document.getElementById('app').innerHTML = html;
   STATE.examOpen = false;
-  startSessionTimerTick();
 }
 
 async function submitEmbedAnswer() {
@@ -16802,92 +17001,113 @@ function nextEmbedCard() {
 }
 
 function renderApplyPhase() {
-  STATE.sessionPhase = 'apply';
-  const card = STATE.cardQueue[0];
+  STATE.sessionPhase = 'deepDive';
+  STATE.deepDiveCurrentPhase = 'exam';
 
-  const examQ = card ? {
-    question: card.exam_q || `Explain the concept of ${card.topic_name} and give an example. [3 marks]`,
-    marks: 3,
-    markScheme: card.mark_scheme || 'Award marks for relevant scientific content, clarity and use of terminology.'
-  } : null;
+  // Pick card with an exam question, fallback to first card
+  const card = STATE.cardQueue.find(c => c.exam_q) || STATE.cardQueue[0];
+  const examQText = card ? (card.exam_q || `Explain the key concepts of ${card.topic_name || card.topic}. Use scientific terminology. [3 marks]`) : '';
+  const examMarks = card ? (parseInt(card.examMarks) || 3) : 3;
+  const markScheme = card ? (card.examA || card.mark_scheme || 'Award marks for relevant scientific content and accurate use of terminology.') : '';
+  const topicName = card?.topic_name || card?.topic || 'Science';
+  const subjectLabel = card?.subject || '';
+
+  // Build ruled lines for answer area
+  const ruledLines = Array.from({length: Math.max(6, examMarks * 2)}, (_,i) =>
+    `<div style="border-bottom:1px solid #999;height:28px;margin-bottom:0;"></div>`).join('');
 
   const html = `
 <div class="screen" id="screen-apply">
   <div class="top-bar">
     <button class="btn btn-ghost btn-sm" onclick="endSession()">✕</button>
-    <div style="font-size:16px;font-weight:800;">Phase 3 — Apply</div>
-    <div class="timer-badge" id="session-timer">${formatTime(STATE.sessionTimer)}</div>
+    <div style="font-size:16px;font-weight:800;">📝 Exam Question</div>
+    <div></div>
   </div>
-  ${renderSessionHeader('apply')}
+  ${renderSessionHeader('exam')}
 
-  <div style="flex:1;overflow-y:auto;padding:20px 20px 120px;">
-    <div style="margin-bottom:16px;">
-      <div style="font-size:20px;font-weight:900;margin-bottom:4px;">Exam Question</div>
-      <div style="font-size:13px;color:var(--text-secondary);font-weight:600;">Based on what you've studied today</div>
-    </div>
+  <div style="flex:1;overflow-y:auto;padding:16px 16px 140px;">
+    <!-- AQA Exam Paper Styling -->
+    <div class="aqa-paper">
+      <div class="aqa-paper-header">
+        <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:#333;">AQA Style Question — ${subjectLabel}</div>
+        <div style="font-size:11px;color:#555;font-weight:600;">${topicName}</div>
+      </div>
 
-    ${examQ ? `
-    <div class="card" style="border-left:4px solid var(--ss-orange);margin-bottom:20px;">
-      <div style="font-size:15px;font-weight:700;line-height:1.5;">${examQ.question}</div>
-      <div style="margin-top:8px;font-size:13px;font-weight:700;color:var(--text-secondary);">[${examQ.marks} marks]</div>
-    </div>
+      <div class="aqa-question-block">
+        <div class="aqa-q-num">0 1</div>
+        <div style="flex:1;">
+          <div class="aqa-q-text">${bold(examQText)}</div>
+          <div class="aqa-marks-label">[${examMarks} mark${examMarks !== 1 ? 's' : ''}]</div>
+        </div>
+      </div>
 
-    <div id="apply-input-area">
-      <label class="label">Your Answer</label>
-      <textarea id="apply-answer" class="input" placeholder="Write your full answer here — use scientific terminology and be specific..." rows="6"></textarea>
-      <button class="btn btn-primary btn-full btn-lg" style="margin-top:12px;" onclick="submitApplyAnswer()">Submit for Marking →</button>
-    </div>
+      <div id="apply-input-area">
+        <div class="aqa-answer-area">
+          ${ruledLines}
+        </div>
+        <textarea id="apply-answer" class="input aqa-textarea" placeholder="Write your answer here using key scientific terms..." rows="${Math.max(4, examMarks * 2)}" style="margin-top:10px;"></textarea>
+        <button class="btn btn-primary btn-full" style="margin-top:10px;" onclick="submitApplyAnswer()">Submit for Marking →</button>
+      </div>
 
-    <div id="apply-result" class="hidden" style="margin-top:20px;display:flex;flex-direction:column;gap:16px;">
-      <div id="apply-marks-display"></div>
-      <div id="apply-feedback-display"></div>
-      <button class="btn btn-primary btn-full btn-lg" onclick="showSessionEnd()">Finish Session 🎉</button>
+      <div id="apply-result" class="hidden" style="margin-top:16px;">
+        <div id="apply-marks-display"></div>
+        <div id="apply-feedback-display" style="margin-top:12px;"></div>
+
+        <!-- AQA Mark Scheme -->
+        <div class="aqa-mark-scheme" id="apply-ms-reveal" style="display:none;">
+          <div class="aqa-ms-header">AQA Mark Scheme</div>
+          <div class="aqa-ms-body">${fmtMs(markScheme)}</div>
+        </div>
+
+        <button class="btn btn-primary btn-full btn-lg" style="margin-top:16px;" onclick="showSessionEnd()">Finish Deep Dive 🎉</button>
+      </div>
     </div>
-    ` : '<div class="loading-screen"><div class="spinner"></div><div>Loading question...</div></div>'}
+    <div style="text-align:right;font-size:11px;color:#999;margin-top:12px;padding-right:8px;">Turn over ►</div>
   </div>
 </div>`;
 
   render(html);
-  startSessionTimerTick();
 }
 
 async function submitApplyAnswer() {
-  const card = STATE.cardQueue[0];
+  const card = STATE.cardQueue.find(c => c.exam_q) || STATE.cardQueue[0];
   const answer = document.getElementById('apply-answer')?.value?.trim();
   if (!answer) { showToast('Please write your answer'); return; }
 
   const btn = document.querySelector('#apply-input-area .btn');
   if (btn) { btn.textContent = 'Marking...'; btn.disabled = true; }
 
-  const result = await markExamAnswer(
-    card.exam_q || `Explain ${card.topic_name}`,
-    card.mark_scheme || 'Award marks for scientific accuracy and clarity.',
-    answer,
-    3
-  );
+  const examQ = card?.exam_q || `Explain ${card?.topic_name || 'this topic'}`;
+  const ms = card?.examA || card?.mark_scheme || 'Award marks for scientific accuracy and clarity.';
+  const marks = parseInt(card?.examMarks) || 3;
+
+  const result = await markExamAnswer(examQ, ms, answer, marks);
 
   document.getElementById('apply-input-area')?.classList.add('hidden');
   const resultDiv = document.getElementById('apply-result');
   if (resultDiv) {
     resultDiv.classList.remove('hidden');
-    resultDiv.style.display = 'flex';
+    resultDiv.style.display = 'block';
     const pct = Math.round((result.marks / result.total) * 100);
     const color = pct >= 80 ? 'var(--ss-green)' : pct >= 50 ? 'var(--ss-blue)' : 'var(--ss-orange)';
     document.getElementById('apply-marks-display').innerHTML = `
-      <div class="card" style="text-align:center;border-top:4px solid ${color};">
-        <div style="font-size:40px;font-weight:900;color:${color};">${result.marks}/${result.total}</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text-secondary);margin-top:4px;">marks</div>
+      <div class="aqa-score-block" style="text-align:center;background:#F8FAFC;border:2px solid ${color};border-radius:12px;padding:16px;">
+        <div style="font-size:36px;font-weight:900;color:${color};">${result.marks}/${result.total}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-top:2px;">marks awarded</div>
       </div>`;
-
     document.getElementById('apply-feedback-display').innerHTML = `
       <div class="card">
-        <div style="font-size:14px;font-weight:800;margin-bottom:8px;">Examiner Feedback</div>
-        <p style="font-size:14px;line-height:1.6;color:var(--text);font-weight:600;">${result.feedback}</p>
-        <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
-          <div class="pill pill-green" style="width:fit-content;">✓ ${result.strengths}</div>
-          <div class="pill pill-orange" style="width:fit-content;">→ ${result.improve}</div>
-        </div>
+        <div style="font-size:13px;font-weight:800;margin-bottom:6px;">Examiner Feedback</div>
+        <p style="font-size:13px;line-height:1.6;color:var(--text);font-weight:600;">${result.feedback || ''}</p>
+        ${result.strengths ? `<div style="margin-top:8px;"><span class="pill pill-green">✓ ${result.strengths}</span></div>` : ''}
+        ${result.improve ? `<div style="margin-top:6px;"><span class="pill pill-orange">→ ${result.improve}</span></div>` : ''}
       </div>`;
+    const msEl = document.getElementById('apply-ms-reveal');
+    if (msEl) msEl.style.display = 'block';
+    if (STATE.deepDiveResults) {
+      STATE.deepDiveResults.examScore = result.marks;
+      STATE.deepDiveResults.examTotal = result.total;
+    }
   }
   if (STATE._timerInterval) clearInterval(STATE._timerInterval);
 }
@@ -16904,7 +17124,12 @@ function endSession() {
 // ============================================================
 function showSessionEnd() {
   if (STATE._timerInterval) clearInterval(STATE._timerInterval);
-  LS.del('mid_session'); // clean session complete — no need to resume
+  if (STATE._readTimer) { clearInterval(STATE._readTimer); STATE._readTimer = null; }
+  LS.del('mid_session');
+  if (STATE.sessionPhase === 'deepDive') {
+    showDeepDiveEnd();
+    return;
+  }
   const xpEarned = CONFIG.XP_PER_SESSION;
   if (STATE.user) {
     const oldLevel = Math.floor((STATE.user.xp || 0) / CONFIG.XP_PER_LEVEL) + 1;
@@ -18856,10 +19081,31 @@ function showStudentDetail(name, studentUserId) {
         <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">📨 NOTIFICATION LOG</div>
         <div id="notif-log-${studentUserId.replace(/-/g,'')}" style="font-size:12px;color:#64748B;">Loading…</div>
       </div>` : ''}
+      ${studentUserId ? `
+      <div class="card" style="padding:12px;margin-top:10px;">
+        <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:#8B5CF6;margin-bottom:10px;">🌊 DEEP DIVE — LESSON MODE</div>
+        <div style="font-size:12px;color:var(--text-secondary);font-weight:600;margin-bottom:10px;">Lock phases so students can't skip them.</div>
+        ${['phase1_locked','phase2_locked','phase3_locked','phase4_locked','phase5_locked'].map((field,i) => {
+          const phaseLabels = ['Phase 1: Read & Learn','Phase 2: MCQ + Fill Gaps','Phase 3: Brain Dump','Phase 4: Flashcards','Phase 5: Exam Question'];
+          const ddLocks = (STATE._studentDeepDiveLocks || {})[studentUserId] || {};
+          const isLocked = !!ddLocks[field];
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F1F5F9;">
+            <div style="font-size:12px;font-weight:700;">${phaseLabels[i]}</div>
+            <button onclick="toggleDeepDiveLock('${studentUserId}','${field}',${!isLocked})" style="background:${isLocked ? '#DC2626' : '#E2E8F0'};color:${isLocked ? 'white' : '#64748B'};border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">${isLocked ? '🔒 Locked' : '🔓 Skip OK'}</button>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
+      ${studentUserId ? `
+      <div class="card" style="padding:12px;margin-top:10px;">
+        <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:#8B5CF6;margin-bottom:10px;">📓 BRAIN DUMPS</div>
+        <div id="brain-dumps-${studentUserId.replace(/-/g,'')}" style="font-size:13px;color:var(--text-secondary);">Loading…</div>
+      </div>` : ''}
       <button class="btn btn-ghost btn-full" onclick="closeModal()">Close</button>
     </div>
   `);
   if (studentUserId) loadStudentNotifLog(studentUserId);
+  if (studentUserId) loadStudentBrainDumps(studentUserId);
+  if (studentUserId) loadStudentDeepDiveLocks(studentUserId);
 }
 
 // ============================================================
@@ -19640,7 +19886,7 @@ function showUpgradeModal(reason) {
       <div class="modal-title" style="font-size:19px;">ScienceSpark Premium</div>
       <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;margin:10px 0;">${reason}</p>
       <div style="background:#F8FAFC;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:left;">
-        ${['✅ Unlimited cards — all 3 subjects','✅ AI marking on every answer','✅ Full Learning Sessions','✅ Unlimited AI Tutor','✅ Parent progress portal'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
+        ${['✅ Unlimited cards — all 3 subjects','✅ AI marking on every answer','✅ Deep Dive Sessions','✅ Unlimited AI Tutor','✅ Parent progress portal'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
       </div>
       <button class="btn btn-primary btn-full btn-lg" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);font-size:15px;" onclick="closeModal();startCheckout()">Upgrade — £12.99/month →</button>
       <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Maybe later</button>
@@ -20343,12 +20589,13 @@ ${renderNavBar('home')}
         📚 Start ${primary ? primary.subj : 'Today'} — ${primary ? primary.due : totalDue} cards
       </button>
     </div>
-    <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="startFullSession()">
-      <div>
-        <div style="font-size:14px;font-weight:800;">📖 Full Learning Session</div>
-        <div style="font-size:12px;color:#64748B;font-weight:600;">Learn, practise and apply. 5–20 minutes.</div>
+    <div onclick="startFullSession()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
+      <div style="font-size:32px;">🌊</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:900;color:white;">Deep Dive</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:600;">Read, practise, brain dump & exam — 5–60 min</div>
       </div>
-      <div style="font-size:20px;">→</div>
+      <div style="font-size:20px;color:rgba(255,255,255,0.7);">→</div>
     </div>
     <div onclick="showRevisionSparkFeed()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
       <div style="font-size:32px;">⚡</div>
@@ -20754,11 +21001,15 @@ function recordAndAdvance(cardId, grade) {
           } else if (STATE.sessionPhase === 'embed') {
             if (STATE._timerInterval) clearInterval(STATE._timerInterval);
             showTransition('embed-to-apply');
+          } else if (STATE.sessionPhase === 'deepDive' && STATE.deepDiveCurrentPhase === 'cards') {
+            showTransition('cards-to-exam');
           } else {
             endSession();
           }
         } else {
           if (STATE.sessionPhase === 'embed') {
+            renderEmbedCard();
+          } else if (STATE.sessionPhase === 'deepDive' && STATE.deepDiveCurrentPhase === 'cards') {
             renderEmbedCard();
           } else {
             renderFlashcard();
@@ -20785,9 +21036,11 @@ function flipCard() {
 }
 
 function selfGrade(cardId, grade) {
+  // In Deep Dive: good(2) and easy(3) silently downgraded to hard(1) for SRS
+  const srsGrade = STATE.sessionPhase === 'deepDive' ? Math.min(grade, 1) : grade;
   playGradeSound(grade);
   if (grade === 3) launchConfetti();
-  recordGrade(cardId, grade);
+  recordGrade(cardId, srsGrade);
   if (grade === 0 || grade === 1) {
     const msgs = [
       "This one's being stubborn! 💪 We'll keep coming back to it until you've got it",
@@ -21395,18 +21648,22 @@ function recordGrade(cardId, grade, aiGraded) {
 
   const card = STATE.cardQueue[STATE.currentCardIndex];
   const isQR = STATE.sessionPhase === 'quickRevision';
+  const isDD = STATE.sessionPhase === 'deepDive';
 
-  if (!isQR) {
+  if (!isQR && !isDD) {
     // Only new cards count toward the daily new-card limit
     if (wasNew && card?.subject) {
       if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
       STATE.todayDone[card.subject].add(cardId);
     }
     incrementCardCount();
-  } else {
+  } else if (isQR) {
     // Track result for quick revision end summary
     if (!STATE._quickRevisionResults) STATE._quickRevisionResults = [];
     STATE._quickRevisionResults.push({ cardId, grade, q: card?.q || card?.question });
+  } else if (isDD) {
+    // Deep Dive: track cards studied, no daily limit update
+    if (STATE.deepDiveResults) STATE.deepDiveResults.cardsStudied = (STATE.deepDiveResults.cardsStudied || 0) + 1;
   }
 
   // Record history (always — quick revision still writes to study_history)
@@ -21427,11 +21684,15 @@ function nextCard() {
     } else if (STATE.sessionPhase === 'embed') {
       if (STATE._timerInterval) clearInterval(STATE._timerInterval);
       showTransition('embed-to-apply');
+    } else if (STATE.sessionPhase === 'deepDive' && STATE.deepDiveCurrentPhase === 'cards') {
+      showTransition('cards-to-exam');
     } else {
       showSessionEnd();
     }
   } else {
     if (STATE.sessionPhase === 'embed') {
+      renderEmbedCard();
+    } else if (STATE.sessionPhase === 'deepDive' && STATE.deepDiveCurrentPhase === 'cards') {
       renderEmbedCard();
     } else {
       renderFlashcard();
@@ -21444,64 +21705,83 @@ function nextCard() {
 // ============================================================
 function startFullSession() {
   if (!STATE.user?.is_paid) {
-    showUpgradeModal('Full Learning Sessions are a Premium feature 📚 Upgrade to unlock timed sessions with embed, practise, and apply phases — £12.99/month');
+    showUpgradeModal('Deep Dive is a Premium feature 🌊 Unlock 6-phase timed study sessions with Read, MCQ, Fill the Gaps, Brain Dump, Flashcards & Exam — £12.99/month');
     return;
   }
-  const html = `
-<div class="screen" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
-  <div class="top-bar">
-    <button class="btn btn-ghost btn-sm" onclick="showHome()">← Back</button>
-    <div style="font-size:17px;font-weight:800;">Full Learning Session</div>
-    <div></div>
-  </div>
-
-  <div style="flex:1;padding:32px 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;">
-    <div style="font-size:64px;">⏱️</div>
-    <div style="text-align:center;">
-      <div style="font-size:24px;font-weight:900;margin-bottom:8px;">Choose your session length</div>
-      <div style="font-size:15px;color:var(--text-secondary);font-weight:600;">Pick how long you want to study for</div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:320px;">
-      ${[5,10,15,20].map(mins => `
-        <button class="btn btn-outline btn-lg" onclick="launchSession(${mins})" style="font-size:20px;font-weight:900;padding:24px;">
-          ${mins}<span style="font-size:14px;font-weight:700;"> min</span>
-        </button>
-      `).join('')}
-    </div>
-  </div>
-</div>`;
-  render(html);
+  showDeepDivePicker();
 }
 
-function launchSession(minutes) {
+function launchSession(subject, depthMode, topicKey, minutes) {
   STATE.sessionDuration = minutes;
-  STATE.sessionPhase = 'learn';
-  STATE.cardQueue = getDueCards(STATE.user);
+  STATE.sessionPhase = 'deepDive';
+  STATE.deepDiveCurrentPhase = 'read';
+  STATE.deepDiveSubject = subject;
+  STATE.deepDiveTopic = topicKey;
+  STATE.deepDiveResults = { mcqScore: null, mcqTotal: 0, gapScore: null, gapTotal: 0, brainDumpFacts: null, examScore: null, examTotal: 0, cardsStudied: 0 };
+  const locked = (STATE.user?.locked_topics || []).map(t => t.toUpperCase());
+  if (depthMode === 'due') {
+    const allDue = getDueCards(STATE.user);
+    STATE.cardQueue = subject === 'all' ? allDue : allDue.filter(c => c.subject === subject);
+  } else if (depthMode === 'topic') {
+    STATE.cardQueue = SAMPLE_CARDS.filter(c =>
+      (subject === 'all' || c.subject === subject) &&
+      c.topic.toUpperCase() === topicKey.toUpperCase() &&
+      !locked.includes(c.topic.toUpperCase()) &&
+      !(c.subtopic && locked.includes(c.subtopic.toUpperCase()))
+    );
+  } else if (depthMode === 'subtopic') {
+    STATE.cardQueue = SAMPLE_CARDS.filter(c =>
+      (subject === 'all' || c.subject === subject) &&
+      (c.subtopic || '').toUpperCase() === topicKey.toUpperCase() &&
+      !locked.includes(c.topic.toUpperCase()) &&
+      !(c.subtopic && locked.includes(c.subtopic.toUpperCase()))
+    );
+  } else {
+    STATE.cardQueue = getDueCards(STATE.user).filter(c => subject === 'all' || c.subject === subject);
+  }
   STATE.currentCardIndex = 0;
   STATE.cardsDone = [];
   STATE.sessionStartTime = Date.now();
   STATE.sessionTimer = minutes * 60;
+  if (STATE.cardQueue.length === 0) {
+    render(`<div class="screen" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
+  <div class="top-bar">
+    <button class="btn btn-ghost btn-sm" onclick="showHome()">← Home</button>
+    <div style="font-size:17px;font-weight:800;">🌊 Deep Dive</div>
+    <div></div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:20px;">
+    <div style="font-size:64px;">🎉</div>
+    <div style="font-size:22px;font-weight:900;">No cards found!</div>
+    <div style="font-size:15px;color:var(--text-secondary);font-weight:600;max-width:300px;">${depthMode === 'due' ? 'No cards are due right now. Try choosing a specific topic or come back tomorrow!' : 'No cards found for this selection — try a different topic.'}</div>
+    <button class="btn btn-primary btn-lg" onclick="showDeepDivePicker()">← Try a Different Topic</button>
+    <button class="btn btn-outline btn-lg" onclick="showHome()">Home</button>
+  </div>
+</div>`);
+    return;
+  }
+  startSessionTimerTick();
   renderLearnPhase();
 }
 
 function renderSessionHeader(phase) {
   const timeLeft = STATE.sessionTimer;
   const warn = timeLeft < 60;
-  const phases = ['learn','embed','apply'];
-  const phaseLabels = { learn: 'Learn', embed: 'Embed', apply: 'Apply' };
-  const phaseIcons = { learn: '📖', embed: '✏️', apply: '🎯' };
-
+  const phases = ['read','mcq','gaps','dump','cards','exam'];
+  const phaseIcons = { read:'📖', mcq:'✅', gaps:'✍️', dump:'🧠', cards:'🎴', exam:'📝' };
+  const idx = phases.indexOf(phase);
   return `
-<div class="phase-bar">
-  ${phases.map(p => `
-    <div class="phase-item ${p === phase ? 'active' : phases.indexOf(p) < phases.indexOf(phase) ? 'done' : ''}">
-      <div class="phase-dot">${phases.indexOf(p) < phases.indexOf(phase) ? '✓' : phaseIcons[p]}</div>
-      ${phaseLabels[p]}
+<div class="phase-bar" style="overflow-x:auto;padding:6px 0;">
+  <div style="display:flex;align-items:center;gap:0;padding:0 10px;min-width:max-content;">
+    ${phases.map((p,i) => `
+      <div class="phase-item ${p === phase ? 'active' : i < idx ? 'done' : ''}" style="min-width:32px;padding:0 4px;font-size:10px;text-align:center;">
+        <div class="phase-dot" style="font-size:14px;">${i < idx ? '✓' : phaseIcons[p]}</div>
+      </div>
+      ${i < phases.length-1 ? `<div style="width:10px;height:2px;background:${i < idx ? 'var(--ss-green)' : '#E2E8F0'};border-radius:1px;flex-shrink:0;"></div>` : ''}
+    `).join('')}
+    <div style="padding:0 10px;margin-left:6px;">
+      <div class="timer-badge ${warn ? 'warning' : ''}" id="session-timer">${formatTime(timeLeft)}</div>
     </div>
-  `).join('')}
-  <div style="display:flex;align-items:center;padding:0 12px;">
-    <div class="timer-badge ${warn ? 'warning' : ''}" id="session-timer">${formatTime(timeLeft)}</div>
   </div>
 </div>`;
 }
@@ -21523,80 +21803,107 @@ function startSessionTimerTick() {
 }
 
 function renderLearnPhase() {
-  STATE.sessionPhase = 'learn';
-  const card = STATE.cardQueue[0];
-  const ko = card ? KNOWLEDGE_ORGANISERS[card.topic] : null;
+  STATE.sessionPhase = 'deepDive';
+  STATE.deepDiveCurrentPhase = 'read';
+  if (STATE._readTimer) { clearInterval(STATE._readTimer); STATE._readTimer = null; }
+
+  if (!STATE.cardQueue || STATE.cardQueue.length === 0) {
+    render(`<div class="screen" style="background:white;"><div class="top-bar"><button class="btn btn-ghost btn-sm" onclick="endSession()">✕</button><div style="font-size:16px;font-weight:800;">🌊 Deep Dive</div><div></div></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:20px;"><div style="font-size:64px;">🎉</div><div style="font-size:22px;font-weight:900;">No cards due right now!</div><div style="font-size:15px;color:var(--text-secondary);font-weight:600;">You're all caught up. Try a specific topic or come back tomorrow.</div><button class="btn btn-primary btn-lg" onclick="showDeepDivePicker()">Choose a Topic</button><button class="btn btn-outline btn-lg" onclick="endSession()">Home</button></div></div>`);
+    return;
+  }
+
+  const subColor = subjectColor(STATE.cardQueue[0]?.subject);
+  const topicName = STATE.cardQueue[0]?.topic_name || STATE.cardQueue[0]?.topic || 'Science';
+  const locks = STATE.user?.deep_dive_locks || {};
+
+  // Build dynamic KO grouped by subtopic_name
+  const groups = {};
+  const groupOrder = [];
+  STATE.cardQueue.forEach(card => {
+    const stName = card.subtopic_name || card.topic_name || 'Key Concepts';
+    if (!groups[stName]) { groups[stName] = []; groupOrder.push(stName); }
+    groups[stName].push(card);
+  });
+
+  const koHTML = groupOrder.map(stName => `
+    <div style="margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:${subColor};margin-bottom:10px;padding-bottom:5px;border-bottom:2px solid ${subColor}33;">${stName}</div>
+      ${groups[stName].map(card => {
+        const qText = bold(card.q || '');
+        const aBullets = Array.isArray(card.a) ? card.a : [(card.a || '').toString()];
+        return `<div style="margin-bottom:10px;background:#F8FAFC;border-radius:10px;padding:12px;border-left:3px solid ${subColor}44;">
+          <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:5px;line-height:1.4;">${qText}</div>
+          <ul style="margin:0;padding-left:16px;">${aBullets.map(b => `<li style="font-size:13px;font-weight:600;color:#475569;line-height:1.5;margin-bottom:2px;">${bold(b)}</li>`).join('')}</ul>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
 
   const html = `
 <div class="screen" id="screen-session">
   <div class="top-bar">
     <button class="btn btn-ghost btn-sm" onclick="endSession()">✕</button>
-    <div style="font-size:16px;font-weight:800;">Phase 1 — Learn</div>
+    <div style="font-size:16px;font-weight:800;">📖 Read & Learn</div>
     <div></div>
   </div>
-  ${renderSessionHeader('learn')}
-
-  <div style="flex:1;overflow-y:auto;padding:20px 20px 100px;">
-    ${ko ? `
-      ${ko.is_mock ? `<div class="placeholder-notice">⚠️ Placeholder content — real Knowledge Organiser coming soon</div><br>` : ''}
-      <div style="font-size:20px;font-weight:900;margin-bottom:4px;">${ko.topic}</div>
-      <div style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:16px;">Read through, then do the quiz below</div>
-
-      <div class="ko-topic-block">
-        <div class="ko-topic-header" style="background:${subjectColor(card?.subject)};">
-          ${ko.topic}
-        </div>
-        ${ko.pairs.map(p => `
-          <div class="ko-item">
-            <div class="ko-item-q">${bold(p.q)}</div>
-            <div class="ko-item-a">${bold(p.a)}</div>
-          </div>
-        `).join('')}
-      </div>
-    ` : '<div class="loading-screen"><div class="spinner"></div><div>Loading content...</div></div>'}
-
+  ${renderSessionHeader('read')}
+  <div style="flex:1;overflow-y:auto;padding:16px 20px 150px;">
+    <div style="font-size:18px;font-weight:900;margin-bottom:3px;color:${subColor};">${topicName}</div>
+    <div style="font-size:12px;color:var(--text-secondary);font-weight:600;margin-bottom:18px;">Read carefully — you'll be quizzed on this! 🧠</div>
+    ${koHTML}
   </div>
-
-  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:16px 20px;">
-    <button class="btn btn-primary btn-full btn-lg" id="continue-btn" onclick="showFullSessionMCQ()" disabled style="opacity:0.5;">
-      Continue to Quick Check →
-    </button>
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
+    <div style="height:4px;background:#E2E8F0;border-radius:2px;margin-bottom:10px;overflow:hidden;">
+      <div id="read-progress-bar" style="height:100%;background:var(--ss-green);border-radius:2px;width:0%;transition:width 1s linear;"></div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost btn-sm" onclick="endSession()" style="flex:0 0 auto;padding:8px 12px;">✕</button>
+      ${locks.phase1_locked ? '' : `<button class="btn btn-outline btn-sm" onclick="skipToDeepDiveCards()" style="flex:1;">Skip to Flashcards →</button>`}
+      <button class="btn btn-primary btn-sm" id="continue-btn" onclick="showFullSessionMCQ()" disabled style="opacity:0.5;flex:1;">Continue to Quiz →</button>
+    </div>
   </div>
 </div>`;
 
   render(html);
-  startSessionTimerTick();
 
-  // Enable continue after a delay (encourage reading)
-  setTimeout(() => {
-    const btn = document.getElementById('continue-btn');
-    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
-  }, 8000);
+  // 30-second read progress bar + enable continue
+  let elapsed = 0;
+  STATE._readTimer = setInterval(() => {
+    elapsed++;
+    const pct = Math.min(100, Math.round((elapsed / 30) * 100));
+    const bar = document.getElementById('read-progress-bar');
+    if (bar) bar.style.width = pct + '%';
+    if (elapsed >= 30) {
+      clearInterval(STATE._readTimer);
+      STATE._readTimer = null;
+      const btn = document.getElementById('continue-btn');
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    }
+  }, 1000);
 }
 
 function showFullSessionMCQ() {
-  const card = STATE.cardQueue[STATE.currentCardIndex];
-  const ko = card ? KNOWLEDGE_ORGANISERS[card.topic] : null;
+  STATE.deepDiveCurrentPhase = 'mcq';
+  if (STATE._readTimer) { clearInterval(STATE._readTimer); STATE._readTimer = null; }
+  const locks = STATE.user?.deep_dive_locks || {};
 
   const html = `
-<div class="screen" id="screen-session-mcq" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
+<div class="screen" id="screen-session-mcq">
   <div class="top-bar">
     <button class="btn btn-ghost btn-sm" onclick="showFullSessionLearn()">← Back</button>
-    <div style="font-size:17px;font-weight:800;">Quick Check</div>
-    <div></div>
+    <div style="font-size:17px;font-weight:800;">Quick Check ✅</div>
+    <button class="btn btn-ghost btn-sm" onclick="endSession()">✕</button>
   </div>
-
-  <div style="flex:1;overflow-y:auto;padding:20px 20px 100px;">
-    <div style="font-size:14px;color:var(--text-secondary);font-weight:600;margin-bottom:20px;">Answer these questions to check you understood the key ideas.</div>
-    <div id="mcq-container">
-      ${renderMCQs()}
+  ${renderSessionHeader('mcq')}
+  <div style="flex:1;overflow-y:auto;padding:20px 20px 140px;">
+    <div style="font-size:14px;color:var(--text-secondary);font-weight:600;margin-bottom:20px;">How much did you take in? Answer these four questions! 🧠</div>
+    <div id="mcq-container">${renderMCQs()}</div>
+  </div>
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost btn-sm" onclick="endSession()" style="flex:0 0 auto;padding:8px 12px;">✕</button>
+      ${locks.phase2_locked ? '' : `<button class="btn btn-outline btn-sm" onclick="showTransition('mcq-to-gaps')" style="flex:1;">Skip →</button>`}
+      <button class="btn btn-primary btn-sm" id="mcq-continue-btn" onclick="showTransition('mcq-to-gaps')" disabled style="opacity:0.5;flex:1;">Continue →</button>
     </div>
-  </div>
-
-  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:16px 20px;">
-    <button class="btn btn-primary btn-full btn-lg" id="mcq-continue-btn" onclick="showTransition('learn-to-embed')" disabled style="opacity:0.5;">
-      Continue to Practice →
-    </button>
   </div>
 </div>`;
 
@@ -21664,29 +21971,63 @@ function checkAllMCQsDone() {
     if (btn) {
       btn.disabled = false;
       btn.style.opacity = '1';
-      btn.textContent = states.every(s => s.wasCorrect) ? '🎉 All correct! Continue →' : 'Continue →';
+      const score = states.filter(s => s.wasCorrect).length;
+      btn.textContent = score === states.length ? '🎉 All correct! Continue →' : 'Continue →';
+    }
+    if (STATE.deepDiveResults) {
+      const score = states.filter(s => s.wasCorrect).length;
+      STATE.deepDiveResults.mcqScore = score;
+      STATE.deepDiveResults.mcqTotal = states.length;
     }
   }
 }
 
 function showTransition(type) {
-  if (STATE._timerInterval) clearInterval(STATE._timerInterval);
   const configs = {
+    'mcq-to-gaps': {
+      emoji: '✍️', title: 'Great reading!',
+      sub: "Now fill in the gaps from memory...",
+      next: () => showDeepDiveFillGaps(),
+      phase: 'mcq'
+    },
+    'gaps-to-dump': {
+      emoji: '🧠', title: 'Brilliant!',
+      sub: "Now dump everything you know onto the page...",
+      next: () => showDeepDiveBrainDump(),
+      phase: 'gaps'
+    },
+    'dump-to-cards': {
+      emoji: '🎴', title: 'Amazing brain dump!',
+      sub: "Now the flashcards to lock it all in...",
+      next: () => renderEmbedPhase(),
+      phase: 'dump'
+    },
+    'cards-to-exam': {
+      emoji: '📝', title: "You're almost there!",
+      sub: "One last exam question — show what you know!",
+      next: () => renderApplyPhase(),
+      phase: 'cards'
+    },
     'learn-to-embed': {
       emoji: '✨', title: 'Nice work!',
       sub: "Now let's see how much you remember...",
-      next: () => renderEmbedPhase()
+      next: () => renderEmbedPhase(),
+      phase: 'learn'
     },
     'embed-to-apply': {
       emoji: '🚀', title: 'Brilliant!',
       sub: "Time to put it all together...",
-      next: () => renderApplyPhase()
+      next: () => renderApplyPhase(),
+      phase: 'embed'
     }
   };
-  const config = configs[type] || configs['learn-to-embed'];
+  const config = configs[type] || configs['mcq-to-gaps'];
 
   render(`
 <div class="screen">
+  <div style="position:absolute;top:12px;right:16px;z-index:10;">
+    <button class="btn btn-ghost btn-sm" onclick="endSession()" style="color:#94A3B8;">✕ Exit</button>
+  </div>
   <div class="transition-screen">
     <div class="transition-emoji">${config.emoji}</div>
     <div class="transition-title">${config.title}</div>
@@ -21697,14 +22038,15 @@ function showTransition(type) {
 }
 
 function renderEmbedPhase() {
-  STATE.sessionPhase = 'embed';
+  STATE.sessionPhase = 'deepDive';
+  STATE.deepDiveCurrentPhase = 'cards';
   STATE.currentCardIndex = 0;
   renderEmbedCard();
 }
 
 function renderEmbedCard() {
   const card = STATE.cardQueue[STATE.currentCardIndex];
-  if (!card) { showTransition('embed-to-apply'); return; }
+  if (!card) { showTransition('cards-to-exam'); return; }
 
   const total = STATE.cardQueue.length;
   const current = STATE.currentCardIndex;
@@ -21737,7 +22079,12 @@ function renderEmbedCard() {
 
   const html = `
 <div class="screen" id="screen-embed">
-  ${renderSessionHeader('embed')}
+  <div class="top-bar">
+    <button class="btn btn-ghost btn-sm" onclick="endSession()">✕ Exit</button>
+    <div style="font-size:14px;font-weight:800;">🎴 Flashcards (${STATE.currentCardIndex + 1}/${STATE.cardQueue.length})</div>
+    <div></div>
+  </div>
+  ${renderSessionHeader('cards')}
 
   <div class="flashcard-area">
     <div class="card" style="padding:20px;">
@@ -21786,7 +22133,6 @@ function renderEmbedCard() {
 
   document.getElementById('app').innerHTML = html;
   STATE.examOpen = false;
-  startSessionTimerTick();
 }
 
 async function submitEmbedAnswer() {
@@ -21839,92 +22185,113 @@ function nextEmbedCard() {
 }
 
 function renderApplyPhase() {
-  STATE.sessionPhase = 'apply';
-  const card = STATE.cardQueue[0];
+  STATE.sessionPhase = 'deepDive';
+  STATE.deepDiveCurrentPhase = 'exam';
 
-  const examQ = card ? {
-    question: card.exam_q || `Explain the concept of ${card.topic_name} and give an example. [3 marks]`,
-    marks: 3,
-    markScheme: card.mark_scheme || 'Award marks for relevant scientific content, clarity and use of terminology.'
-  } : null;
+  // Pick card with an exam question, fallback to first card
+  const card = STATE.cardQueue.find(c => c.exam_q) || STATE.cardQueue[0];
+  const examQText = card ? (card.exam_q || `Explain the key concepts of ${card.topic_name || card.topic}. Use scientific terminology. [3 marks]`) : '';
+  const examMarks = card ? (parseInt(card.examMarks) || 3) : 3;
+  const markScheme = card ? (card.examA || card.mark_scheme || 'Award marks for relevant scientific content and accurate use of terminology.') : '';
+  const topicName = card?.topic_name || card?.topic || 'Science';
+  const subjectLabel = card?.subject || '';
+
+  // Build ruled lines for answer area
+  const ruledLines = Array.from({length: Math.max(6, examMarks * 2)}, (_,i) =>
+    `<div style="border-bottom:1px solid #999;height:28px;margin-bottom:0;"></div>`).join('');
 
   const html = `
 <div class="screen" id="screen-apply">
   <div class="top-bar">
     <button class="btn btn-ghost btn-sm" onclick="endSession()">✕</button>
-    <div style="font-size:16px;font-weight:800;">Phase 3 — Apply</div>
-    <div class="timer-badge" id="session-timer">${formatTime(STATE.sessionTimer)}</div>
+    <div style="font-size:16px;font-weight:800;">📝 Exam Question</div>
+    <div></div>
   </div>
-  ${renderSessionHeader('apply')}
+  ${renderSessionHeader('exam')}
 
-  <div style="flex:1;overflow-y:auto;padding:20px 20px 120px;">
-    <div style="margin-bottom:16px;">
-      <div style="font-size:20px;font-weight:900;margin-bottom:4px;">Exam Question</div>
-      <div style="font-size:13px;color:var(--text-secondary);font-weight:600;">Based on what you've studied today</div>
-    </div>
+  <div style="flex:1;overflow-y:auto;padding:16px 16px 140px;">
+    <!-- AQA Exam Paper Styling -->
+    <div class="aqa-paper">
+      <div class="aqa-paper-header">
+        <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:#333;">AQA Style Question — ${subjectLabel}</div>
+        <div style="font-size:11px;color:#555;font-weight:600;">${topicName}</div>
+      </div>
 
-    ${examQ ? `
-    <div class="card" style="border-left:4px solid var(--ss-orange);margin-bottom:20px;">
-      <div style="font-size:15px;font-weight:700;line-height:1.5;">${examQ.question}</div>
-      <div style="margin-top:8px;font-size:13px;font-weight:700;color:var(--text-secondary);">[${examQ.marks} marks]</div>
-    </div>
+      <div class="aqa-question-block">
+        <div class="aqa-q-num">0 1</div>
+        <div style="flex:1;">
+          <div class="aqa-q-text">${bold(examQText)}</div>
+          <div class="aqa-marks-label">[${examMarks} mark${examMarks !== 1 ? 's' : ''}]</div>
+        </div>
+      </div>
 
-    <div id="apply-input-area">
-      <label class="label">Your Answer</label>
-      <textarea id="apply-answer" class="input" placeholder="Write your full answer here — use scientific terminology and be specific..." rows="6"></textarea>
-      <button class="btn btn-primary btn-full btn-lg" style="margin-top:12px;" onclick="submitApplyAnswer()">Submit for Marking →</button>
-    </div>
+      <div id="apply-input-area">
+        <div class="aqa-answer-area">
+          ${ruledLines}
+        </div>
+        <textarea id="apply-answer" class="input aqa-textarea" placeholder="Write your answer here using key scientific terms..." rows="${Math.max(4, examMarks * 2)}" style="margin-top:10px;"></textarea>
+        <button class="btn btn-primary btn-full" style="margin-top:10px;" onclick="submitApplyAnswer()">Submit for Marking →</button>
+      </div>
 
-    <div id="apply-result" class="hidden" style="margin-top:20px;display:flex;flex-direction:column;gap:16px;">
-      <div id="apply-marks-display"></div>
-      <div id="apply-feedback-display"></div>
-      <button class="btn btn-primary btn-full btn-lg" onclick="showSessionEnd()">Finish Session 🎉</button>
+      <div id="apply-result" class="hidden" style="margin-top:16px;">
+        <div id="apply-marks-display"></div>
+        <div id="apply-feedback-display" style="margin-top:12px;"></div>
+
+        <!-- AQA Mark Scheme -->
+        <div class="aqa-mark-scheme" id="apply-ms-reveal" style="display:none;">
+          <div class="aqa-ms-header">AQA Mark Scheme</div>
+          <div class="aqa-ms-body">${fmtMs(markScheme)}</div>
+        </div>
+
+        <button class="btn btn-primary btn-full btn-lg" style="margin-top:16px;" onclick="showSessionEnd()">Finish Deep Dive 🎉</button>
+      </div>
     </div>
-    ` : '<div class="loading-screen"><div class="spinner"></div><div>Loading question...</div></div>'}
+    <div style="text-align:right;font-size:11px;color:#999;margin-top:12px;padding-right:8px;">Turn over ►</div>
   </div>
 </div>`;
 
   render(html);
-  startSessionTimerTick();
 }
 
 async function submitApplyAnswer() {
-  const card = STATE.cardQueue[0];
+  const card = STATE.cardQueue.find(c => c.exam_q) || STATE.cardQueue[0];
   const answer = document.getElementById('apply-answer')?.value?.trim();
   if (!answer) { showToast('Please write your answer'); return; }
 
   const btn = document.querySelector('#apply-input-area .btn');
   if (btn) { btn.textContent = 'Marking...'; btn.disabled = true; }
 
-  const result = await markExamAnswer(
-    card.exam_q || `Explain ${card.topic_name}`,
-    card.mark_scheme || 'Award marks for scientific accuracy and clarity.',
-    answer,
-    3
-  );
+  const examQ = card?.exam_q || `Explain ${card?.topic_name || 'this topic'}`;
+  const ms = card?.examA || card?.mark_scheme || 'Award marks for scientific accuracy and clarity.';
+  const marks = parseInt(card?.examMarks) || 3;
+
+  const result = await markExamAnswer(examQ, ms, answer, marks);
 
   document.getElementById('apply-input-area')?.classList.add('hidden');
   const resultDiv = document.getElementById('apply-result');
   if (resultDiv) {
     resultDiv.classList.remove('hidden');
-    resultDiv.style.display = 'flex';
+    resultDiv.style.display = 'block';
     const pct = Math.round((result.marks / result.total) * 100);
     const color = pct >= 80 ? 'var(--ss-green)' : pct >= 50 ? 'var(--ss-blue)' : 'var(--ss-orange)';
     document.getElementById('apply-marks-display').innerHTML = `
-      <div class="card" style="text-align:center;border-top:4px solid ${color};">
-        <div style="font-size:40px;font-weight:900;color:${color};">${result.marks}/${result.total}</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text-secondary);margin-top:4px;">marks</div>
+      <div class="aqa-score-block" style="text-align:center;background:#F8FAFC;border:2px solid ${color};border-radius:12px;padding:16px;">
+        <div style="font-size:36px;font-weight:900;color:${color};">${result.marks}/${result.total}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-top:2px;">marks awarded</div>
       </div>`;
-
     document.getElementById('apply-feedback-display').innerHTML = `
       <div class="card">
-        <div style="font-size:14px;font-weight:800;margin-bottom:8px;">Examiner Feedback</div>
-        <p style="font-size:14px;line-height:1.6;color:var(--text);font-weight:600;">${result.feedback}</p>
-        <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
-          <div class="pill pill-green" style="width:fit-content;">✓ ${result.strengths}</div>
-          <div class="pill pill-orange" style="width:fit-content;">→ ${result.improve}</div>
-        </div>
+        <div style="font-size:13px;font-weight:800;margin-bottom:6px;">Examiner Feedback</div>
+        <p style="font-size:13px;line-height:1.6;color:var(--text);font-weight:600;">${result.feedback || ''}</p>
+        ${result.strengths ? `<div style="margin-top:8px;"><span class="pill pill-green">✓ ${result.strengths}</span></div>` : ''}
+        ${result.improve ? `<div style="margin-top:6px;"><span class="pill pill-orange">→ ${result.improve}</span></div>` : ''}
       </div>`;
+    const msEl = document.getElementById('apply-ms-reveal');
+    if (msEl) msEl.style.display = 'block';
+    if (STATE.deepDiveResults) {
+      STATE.deepDiveResults.examScore = result.marks;
+      STATE.deepDiveResults.examTotal = result.total;
+    }
   }
   if (STATE._timerInterval) clearInterval(STATE._timerInterval);
 }
@@ -21941,7 +22308,12 @@ function endSession() {
 // ============================================================
 function showSessionEnd() {
   if (STATE._timerInterval) clearInterval(STATE._timerInterval);
-  LS.del('mid_session'); // clean session complete — no need to resume
+  if (STATE._readTimer) { clearInterval(STATE._readTimer); STATE._readTimer = null; }
+  LS.del('mid_session');
+  if (STATE.sessionPhase === 'deepDive') {
+    showDeepDiveEnd();
+    return;
+  }
   const xpEarned = CONFIG.XP_PER_SESSION;
   if (STATE.user) {
     const oldLevel = Math.floor((STATE.user.xp || 0) / CONFIG.XP_PER_LEVEL) + 1;
@@ -23893,10 +24265,31 @@ function showStudentDetail(name, studentUserId) {
         <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">📨 NOTIFICATION LOG</div>
         <div id="notif-log-${studentUserId.replace(/-/g,'')}" style="font-size:12px;color:#64748B;">Loading…</div>
       </div>` : ''}
+      ${studentUserId ? `
+      <div class="card" style="padding:12px;margin-top:10px;">
+        <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:#8B5CF6;margin-bottom:10px;">🌊 DEEP DIVE — LESSON MODE</div>
+        <div style="font-size:12px;color:var(--text-secondary);font-weight:600;margin-bottom:10px;">Lock phases so students can't skip them.</div>
+        ${['phase1_locked','phase2_locked','phase3_locked','phase4_locked','phase5_locked'].map((field,i) => {
+          const phaseLabels = ['Phase 1: Read & Learn','Phase 2: MCQ + Fill Gaps','Phase 3: Brain Dump','Phase 4: Flashcards','Phase 5: Exam Question'];
+          const ddLocks = (STATE._studentDeepDiveLocks || {})[studentUserId] || {};
+          const isLocked = !!ddLocks[field];
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F1F5F9;">
+            <div style="font-size:12px;font-weight:700;">${phaseLabels[i]}</div>
+            <button onclick="toggleDeepDiveLock('${studentUserId}','${field}',${!isLocked})" style="background:${isLocked ? '#DC2626' : '#E2E8F0'};color:${isLocked ? 'white' : '#64748B'};border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">${isLocked ? '🔒 Locked' : '🔓 Skip OK'}</button>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
+      ${studentUserId ? `
+      <div class="card" style="padding:12px;margin-top:10px;">
+        <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:#8B5CF6;margin-bottom:10px;">📓 BRAIN DUMPS</div>
+        <div id="brain-dumps-${studentUserId.replace(/-/g,'')}" style="font-size:13px;color:var(--text-secondary);">Loading…</div>
+      </div>` : ''}
       <button class="btn btn-ghost btn-full" onclick="closeModal()">Close</button>
     </div>
   `);
   if (studentUserId) loadStudentNotifLog(studentUserId);
+  if (studentUserId) loadStudentBrainDumps(studentUserId);
+  if (studentUserId) loadStudentDeepDiveLocks(studentUserId);
 }
 
 
@@ -26002,6 +26395,505 @@ async function triggerInstallPrompt() {
 }
 
 window.addEventListener('appinstalled', () => dismissInstallBanner());
+
+
+
+// ============================================================
+// DEEP DIVE — SINGLETON HELPER FUNCTIONS
+// ============================================================
+
+function showFullSessionLearn() {
+  renderLearnPhase();
+}
+
+function skipToDeepDiveCards() {
+  STATE.deepDiveCurrentPhase = 'cards';
+  renderEmbedPhase();
+}
+
+// ─── TOPIC PICKER (3-step wizard) ───────────────────────────
+
+function showDeepDivePicker() {
+  render(`
+<div class="screen" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
+  <div class="top-bar">
+    <button class="btn btn-ghost btn-sm" onclick="showHome()">← Back</button>
+    <div style="font-size:17px;font-weight:800;">🌊 Deep Dive</div>
+    <div></div>
+  </div>
+  <div style="flex:1;padding:28px 24px;display:flex;flex-direction:column;gap:20px;">
+    <div>
+      <div style="font-size:22px;font-weight:900;margin-bottom:6px;">What do you want to study?</div>
+      <div style="font-size:14px;color:var(--text-secondary);font-weight:600;">Choose a subject to begin your Deep Dive</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${[
+        { emoji:'🌿', label:'Biology', value:'Biology', color:'#16A34A' },
+        { emoji:'⚗️', label:'Chemistry', value:'Chemistry', color:'#7C3AED' },
+        { emoji:'⚡', label:'Physics', value:'Physics', color:'#0284C7' },
+        { emoji:'📚', label:'All three subjects', value:'all', color:'#0F172A' }
+      ].map(s => `
+        <button onclick="showDeepDiveDepthPicker('${s.value}')" style="background:white;border:2px solid ${s.color}22;border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left;transition:border-color 0.2s;" onmouseover="this.style.borderColor='${s.color}'" onmouseout="this.style.borderColor='${s.color}22'">
+          <span style="font-size:28px;">${s.emoji}</span>
+          <div>
+            <div style="font-size:16px;font-weight:900;color:${s.color};">${s.label}</div>
+          </div>
+        </button>
+      `).join('')}
+    </div>
+  </div>
+</div>`);
+}
+
+function showDeepDiveDepthPicker(subject) {
+  render(`
+<div class="screen" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
+  <div class="top-bar">
+    <button class="btn btn-ghost btn-sm" onclick="showDeepDivePicker()">← Back</button>
+    <div style="font-size:17px;font-weight:800;">🌊 Deep Dive</div>
+    <div></div>
+  </div>
+  <div style="flex:1;padding:28px 24px;display:flex;flex-direction:column;gap:20px;">
+    <div>
+      <div style="font-size:22px;font-weight:900;margin-bottom:6px;">What to study?</div>
+      <div style="font-size:14px;color:var(--text-secondary);font-weight:600;">How should we pick the cards?</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button onclick="showDeepDiveTimePicker('${subject}','due',null)" style="background:#F0FDF4;border:2px solid #4ADE80;border-radius:14px;padding:16px 20px;text-align:left;cursor:pointer;">
+        <div style="font-size:16px;font-weight:900;color:#15803D;margin-bottom:3px;">📅 Today's cards</div>
+        <div style="font-size:13px;color:#4B5563;font-weight:600;">Your due cards — what SRS says you need today</div>
+      </button>
+      <button onclick="showDeepDiveTopicPicker('${subject}','topic')" style="background:#EFF6FF;border:2px solid #93C5FD;border-radius:14px;padding:16px 20px;text-align:left;cursor:pointer;">
+        <div style="font-size:16px;font-weight:900;color:#1D4ED8;margin-bottom:3px;">📚 Choose a topic</div>
+        <div style="font-size:13px;color:#4B5563;font-weight:600;">E.g. B3 Infection and Response, C5 Energy Changes</div>
+      </button>
+      <button onclick="showDeepDiveTopicPicker('${subject}','subtopic')" style="background:#FDF4FF;border:2px solid #D8B4FE;border-radius:14px;padding:16px 20px;text-align:left;cursor:pointer;">
+        <div style="font-size:16px;font-weight:900;color:#7C3AED;margin-bottom:3px;">🔬 Choose a subtopic</div>
+        <div style="font-size:13px;color:#4B5563;font-weight:600;">Drill into one specific concept</div>
+      </button>
+    </div>
+  </div>
+</div>`);
+}
+
+function showDeepDiveTopicPicker(subject, mode) {
+  const locked = (STATE.user?.locked_topics || []).map(t => t.toUpperCase());
+  // Build list of available topics/subtopics
+  const allCards = subject === 'all' ? SAMPLE_CARDS : SAMPLE_CARDS.filter(c => c.subject === subject);
+  let items = [];
+  if (mode === 'topic') {
+    const seen = new Set();
+    allCards.forEach(c => {
+      const key = c.topic.toUpperCase();
+      if (!seen.has(key) && !locked.includes(key)) {
+        seen.add(key);
+        items.push({ key: c.topic, label: c.topic + ' — ' + (c.topic_name || c.topic), subject: c.subject });
+      }
+    });
+  } else {
+    const seen = new Set();
+    allCards.forEach(c => {
+      const key = (c.subtopic || '').toUpperCase();
+      if (key && !seen.has(key) && !locked.includes(key) && !locked.includes(c.topic.toUpperCase())) {
+        seen.add(key);
+        items.push({ key: c.subtopic, label: (c.subtopic || '') + ' — ' + (c.subtopic_name || c.subtopic), subject: c.subject });
+      }
+    });
+  }
+
+  render(`
+<div class="screen" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
+  <div class="top-bar">
+    <button class="btn btn-ghost btn-sm" onclick="showDeepDiveDepthPicker('${subject}')">← Back</button>
+    <div style="font-size:17px;font-weight:800;">${mode === 'topic' ? 'Choose a Topic' : 'Choose a Subtopic'}</div>
+    <div></div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:16px 20px 40px;">
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      ${items.map(item => `
+        <button onclick="showDeepDiveTimePicker('${subject}','${mode}','${item.key.replace(/'/g,"\'")}')" style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:12px;padding:14px 16px;text-align:left;cursor:pointer;font-size:14px;font-weight:700;color:var(--text);">
+          ${item.label}
+        </button>
+      `).join('')}
+    </div>
+  </div>
+</div>`);
+}
+
+function showDeepDiveTimePicker(subject, depthMode, topicKey) {
+  render(`
+<div class="screen" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
+  <div class="top-bar">
+    <button class="btn btn-ghost btn-sm" onclick="showDeepDiveDepthPicker('${subject}')">← Back</button>
+    <div style="font-size:17px;font-weight:800;">How long? ⏱️</div>
+    <div></div>
+  </div>
+  <div style="flex:1;padding:32px 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;">
+    <div style="text-align:center;">
+      <div style="font-size:24px;font-weight:900;margin-bottom:8px;">Choose your session length</div>
+      <div style="font-size:14px;color:var(--text-secondary);font-weight:600;">Longer = more phases covered</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:360px;">
+      ${[5,10,20,30,45,60].map(mins => `
+        <button class="btn btn-outline btn-lg" onclick="launchSession('${subject}','${depthMode}',${topicKey ? "'" + (topicKey+'').replace(/'/g,"\'") + "'" : 'null'},${mins})" style="font-size:18px;font-weight:900;padding:20px;">
+          ${mins}<span style="font-size:12px;font-weight:700;display:block;">min</span>
+        </button>
+      `).join('')}
+    </div>
+  </div>
+</div>`);
+}
+
+// ─── PHASE 2.2: FILL THE GAPS ───────────────────────────────
+
+function showDeepDiveFillGaps() {
+  STATE.deepDiveCurrentPhase = 'gaps';
+  const locks = STATE.user?.deep_dive_locks || {};
+  const targetGrade = STATE.user?.target_grade || 5;
+  const showKWDefault = targetGrade <= 4;
+  const kwLocked = !!locks.keywords_locked;
+
+  // Build gap items from cardQueue
+  let gapItems = [];
+  let allKeyTerms = [];
+  STATE.cardQueue.forEach((card, ci) => {
+    const aBullets = Array.isArray(card.a) ? card.a : [(card.a||'').toString()];
+    let inputCount = 0;
+    let processed = aBullets.join('. ').replace(/\*\*([^*]+)\*\*/g, (m, term) => {
+      const id = 'gap-' + ci + '-' + inputCount++;
+      const w = Math.max(70, Math.min(180, term.length * 9));
+      allKeyTerms.push(term);
+      return '<input type="text" id="' + id + '" class="gap-input" data-answer="' + term.toLowerCase().trim().replace(/"/g,'&quot;') + '" placeholder="' + '_'.repeat(Math.min(term.length,8)) + '" style="width:' + w + 'px;" oninput="checkGapAnswer(this)">';
+    });
+    // Strip remaining ** from visible text
+    processed = processed.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    gapItems.push({ q: bold(card.q||''), text: processed });
+  });
+  const shuffled = [...new Set(allKeyTerms)].sort(() => Math.random() - 0.5);
+  if (STATE.deepDiveResults) { STATE.deepDiveResults.gapTotal = allKeyTerms.length; }
+
+  const html = `
+<div class="screen" id="screen-gaps">
+  <div class="top-bar">
+    <button class="btn btn-ghost btn-sm" onclick="showFullSessionMCQ()">← Back</button>
+    <div style="font-size:16px;font-weight:800;">Fill the Gaps ✍️</div>
+    <button class="btn btn-ghost btn-sm" onclick="endSession()">✕</button>
+  </div>
+  ${renderSessionHeader('gaps')}
+  <div style="flex:1;overflow-y:auto;padding:16px 20px 160px;">
+    <div style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:10px;">Fill in the missing key terms from memory. Use the word bank below if you need help!</div>
+    ${!kwLocked ? `
+    <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:12px;font-weight:800;color:#1D4ED8;">Word bank</div>
+        <div style="font-size:11px;color:#3B82F6;font-weight:600;">${targetGrade <= 4 ? '💡 Shown to help you' : targetGrade <= 6 ? 'Try without first!' : '🎯 Challenge — no words needed!'}</div>
+      </div>
+      <button onclick="toggleKeywordBank()" id="kw-toggle-btn" style="background:${showKWDefault ? '#3B82F6' : '#E2E8F0'};color:${showKWDefault ? 'white' : '#64748B'};border:none;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">${showKWDefault ? 'On' : 'Off'}</button>
+    </div>` : ''}
+    <div id="keyword-bank" style="${(showKWDefault && !kwLocked) ? '' : 'display:none;'}background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;color:#15803D;margin-bottom:8px;">Key Terms (random order — tap to copy)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">${shuffled.map(t => `<span class="keyword-chip" onclick="copyKeyword(this,'${t.replace(/'/g,"\'")}',event)" style="background:white;border:1.5px solid #4ADE80;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;user-select:none;">${t}</span>`).join('')}</div>
+    </div>
+    <div id="gaps-score-bar" style="display:none;background:#F8FAFC;border-radius:10px;padding:12px;margin-bottom:12px;text-align:center;"></div>
+    ${gapItems.map((item,i) => `
+    <div style="margin-bottom:16px;background:#FAFAFA;border-radius:12px;padding:14px;">
+      <div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin-bottom:6px;">Q: ${item.q}</div>
+      <div style="font-size:14px;font-weight:600;line-height:2.2;color:var(--text);">${item.text}</div>
+    </div>`).join('')}
+  </div>
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost btn-sm" onclick="endSession()" style="flex:0 0 auto;padding:8px 12px;">✕</button>
+      <button class="btn btn-outline btn-sm" onclick="checkAllGaps()" style="flex:1;">Check Answers</button>
+      ${locks.phase2_locked ? '' : `<button class="btn btn-outline btn-sm" onclick="showTransition('gaps-to-dump')" style="flex:1;">Skip →</button>`}
+      <button class="btn btn-primary btn-sm" id="gaps-continue-btn" onclick="showTransition('gaps-to-dump')" style="flex:1;">Continue →</button>
+    </div>
+  </div>
+</div>`;
+
+  render(html);
+}
+
+function toggleKeywordBank() {
+  const bank = document.getElementById('keyword-bank');
+  const btn = document.getElementById('kw-toggle-btn');
+  if (!bank || !btn) return;
+  const showing = bank.style.display !== 'none';
+  bank.style.display = showing ? 'none' : '';
+  btn.textContent = showing ? 'Off' : 'On';
+  btn.style.background = showing ? '#E2E8F0' : '#3B82F6';
+  btn.style.color = showing ? '#64748B' : 'white';
+}
+
+function copyKeyword(el, term, ev) {
+  // Flash chip + show toast
+  el.style.background = '#BBF7D0';
+  setTimeout(() => { el.style.background = 'white'; }, 600);
+  // Try clipboard
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(term).then(() => showToast('Copied: ' + term)).catch(() => showToast(term));
+  } else {
+    showToast(term);
+  }
+}
+
+function checkGapAnswer(input) {
+  const given = input.value.toLowerCase().trim();
+  const correct = (input.dataset.answer || '').toLowerCase().trim();
+  if (!given) { input.classList.remove('correct','wrong'); return; }
+  if (given === correct || correct.startsWith(given) || given.startsWith(correct.slice(0,4))) {
+    input.classList.add('correct'); input.classList.remove('wrong');
+  } else {
+    input.classList.add('wrong'); input.classList.remove('correct');
+  }
+}
+
+function checkAllGaps() {
+  const inputs = document.querySelectorAll('.gap-input');
+  let correct = 0;
+  inputs.forEach(inp => {
+    const given = inp.value.toLowerCase().trim();
+    const answer = (inp.dataset.answer || '').toLowerCase().trim();
+    if (given === answer || (answer.length > 3 && given.length > 2 && answer.startsWith(given.slice(0,4)))) {
+      inp.classList.add('correct'); inp.classList.remove('wrong'); correct++;
+    } else if (given) {
+      inp.classList.add('wrong'); inp.classList.remove('correct');
+    }
+  });
+  const total = inputs.length;
+  const bar = document.getElementById('gaps-score-bar');
+  if (bar) {
+    bar.style.display = 'block';
+    const pct = total > 0 ? Math.round((correct/total)*100) : 0;
+    const color = pct >= 80 ? 'var(--ss-green)' : pct >= 50 ? 'var(--ss-blue)' : 'var(--ss-orange)';
+    bar.innerHTML = `<span style="font-size:18px;font-weight:900;color:${color};">${correct}/${total}</span> <span style="font-size:13px;font-weight:700;color:var(--text-secondary);">blanks correct${pct >= 80 ? ' 🎉' : pct >= 50 ? ' — keep going!' : ' — check the word bank!'}</span>`;
+  }
+  if (STATE.deepDiveResults) { STATE.deepDiveResults.gapScore = correct; }
+}
+
+// ─── PHASE 3: BRAIN DUMP ────────────────────────────────────
+
+function showDeepDiveBrainDump() {
+  STATE.deepDiveCurrentPhase = 'dump';
+  const locks = STATE.user?.deep_dive_locks || {};
+  const topicName = STATE.cardQueue[0]?.topic_name || STATE.cardQueue[0]?.topic || 'Science';
+  const today = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+
+  const html = `
+<div class="screen" id="screen-dump">
+  <div class="top-bar">
+    <button class="btn btn-ghost btn-sm" onclick="showDeepDiveFillGaps()">← Back</button>
+    <div style="font-size:16px;font-weight:800;">Brain Dump 🧠</div>
+    <button class="btn btn-ghost btn-sm" onclick="endSession()">✕</button>
+  </div>
+  ${renderSessionHeader('dump')}
+  <div style="flex:1;overflow-y:auto;padding:16px 20px 160px;">
+    <div style="margin-bottom:14px;">
+      <div style="font-size:18px;font-weight:900;margin-bottom:2px;">Brain Dump — ${topicName}</div>
+      <div style="font-size:12px;color:var(--text-secondary);font-weight:600;">${today}</div>
+    </div>
+    <div style="background:#FFFBF0;border:1px solid #FDE68A;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600;color:#92400E;">
+      💡 Write everything you can remember — no peeking! The AI will check what you got right.
+    </div>
+    <textarea id="brain-dump-text" class="input" placeholder="Write everything you can remember about ${topicName}. Don't look back — just dump it all out! Bullet points, sentences, anything... 🧠" rows="12" style="resize:vertical;line-height:1.8;font-size:14px;" oninput="updateWordCount(this)"></textarea>
+    <div id="word-count" style="font-size:12px;color:var(--text-secondary);font-weight:600;text-align:right;margin-top:4px;">0 words</div>
+    <div id="dump-result" style="display:none;margin-top:16px;"></div>
+  </div>
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost btn-sm" onclick="endSession()" style="flex:0 0 auto;padding:8px 12px;">✕</button>
+      ${locks.phase3_locked ? '' : `<button class="btn btn-outline btn-sm" onclick="showTransition('dump-to-cards')" style="flex:1;">Skip →</button>`}
+      <button class="btn btn-primary btn-sm" id="submit-dump-btn" onclick="submitBrainDump()" style="flex:2;">Submit & Continue →</button>
+    </div>
+  </div>
+</div>`;
+
+  render(html);
+}
+
+function updateWordCount(el) {
+  const wc = document.getElementById('word-count');
+  if (!wc) return;
+  const words = el.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+  wc.textContent = words + ' word' + (words !== 1 ? 's' : '');
+  wc.style.color = words > 50 ? 'var(--ss-green)' : words > 20 ? 'var(--ss-blue)' : 'var(--text-secondary)';
+}
+
+async function submitBrainDump() {
+  const text = document.getElementById('brain-dump-text')?.value?.trim();
+  if (!text || text.length < 10) { showToast('Write something first! 🧠'); return; }
+
+  const btn = document.getElementById('submit-dump-btn');
+  if (btn) { btn.textContent = 'Marking...'; btn.disabled = true; }
+
+  // Build reference content from cardQueue
+  const referenceContent = STATE.cardQueue.map(c => {
+    const ans = Array.isArray(c.a) ? c.a.join('; ') : (c.a||'');
+    return (c.q||'') + ': ' + ans;
+  }).join(' | ');
+
+  let result = { facts_covered: [], facts_missed: [], score: 0, total: STATE.cardQueue.length, feedback: '' };
+  try {
+    const aiResult = await gradeAnswer(
+      'Brain dump: student wrote everything they remember about ' + (STATE.cardQueue[0]?.topic_name || 'this topic') + '. Reference content: ' + referenceContent.slice(0, 800),
+      referenceContent,
+      text,
+      0
+    );
+    const score = Math.round((STATE.cardQueue.length * (aiResult.grade === 'easy' ? 0.9 : aiResult.grade === 'good' ? 0.7 : aiResult.grade === 'hard' ? 0.5 : 0.3)));
+    result.score = score;
+    result.feedback = aiResult.feedback || 'Good effort!';
+  } catch(e) {
+    result.feedback = 'Could not mark right now — but great effort! Move on to flashcards.';
+  }
+
+  if (STATE.deepDiveResults) { STATE.deepDiveResults.brainDumpScore = result.score; }
+
+  // Save to study_notes in Supabase
+  if (STATE.user?.id && STATE.user?.token) {
+    const note = {
+      date: new Date().toISOString(),
+      topic: STATE.cardQueue[0]?.topic || '',
+      topic_name: STATE.cardQueue[0]?.topic_name || '',
+      brain_dump_text: text,
+      ai_feedback: result.feedback,
+      score: result.score,
+      total: result.total
+    };
+    try {
+      const existing = STATE.user.study_notes || [];
+      existing.push(note);
+      await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?id=eq.' + STATE.user.id, {
+        method: 'PATCH',
+        headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + STATE.user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ study_notes: existing })
+      });
+      STATE.user.study_notes = existing;
+    } catch(e) {}
+  }
+
+  // Show result
+  const resultDiv = document.getElementById('dump-result');
+  if (resultDiv) {
+    resultDiv.style.display = 'block';
+    const pct = result.total > 0 ? Math.round((result.score/result.total)*100) : 50;
+    const color = pct >= 70 ? 'var(--ss-green)' : pct >= 40 ? 'var(--ss-blue)' : 'var(--ss-orange)';
+    resultDiv.innerHTML = `
+      <div class="card" style="border-top:4px solid ${color};">
+        <div style="font-size:13px;font-weight:800;margin-bottom:8px;">🧠 AI Feedback</div>
+        <div style="font-size:14px;font-weight:600;line-height:1.6;color:var(--text);">${result.feedback}</div>
+        <div style="margin-top:12px;font-size:13px;color:var(--text-secondary);font-weight:600;">Great effort! Your brain dump has been saved to My Notes 📓</div>
+      </div>`;
+  }
+  if (btn) { btn.textContent = 'Continue to Flashcards →'; btn.disabled = false; btn.onclick = () => showTransition('dump-to-cards'); }
+}
+
+// ─── DEEP DIVE SESSION END ───────────────────────────────────
+
+function showDeepDiveEnd() {
+  const xpEarned = CONFIG.XP_PER_SESSION;
+  if (STATE.user) {
+    STATE.user.xp = (STATE.user.xp || 0) + xpEarned;
+    LS.set('demo_user', STATE.user);
+  }
+  const r = STATE.deepDiveResults || {};
+  const topicName = STATE.cardQueue[0]?.topic_name || STATE.cardQueue[0]?.topic || 'Science';
+
+  const statRow = (label, val, color) => val !== null && val !== undefined ? `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #F1F5F9;">
+      <div style="font-size:14px;font-weight:700;color:var(--text);">${label}</div>
+      <div style="font-size:16px;font-weight:900;color:${color};">${val}</div>
+    </div>` : '';
+
+  render(`
+<div class="screen">
+  <div style="flex:1;overflow-y:auto;padding:24px 20px 100px;">
+    <div class="end-hero">
+      <div class="end-emoji">🌊</div>
+      <div class="end-title">Deep Dive Complete!</div>
+      <div class="end-sub">Great work studying ${topicName} — because you had the KO and AI Tutor to help, these cards will come back soon for independent practice. That's when the real learning locks in! 🧠🔥</div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);margin-bottom:10px;">Your Session Results</div>
+      ${statRow('📖 Topic', topicName, 'var(--ss-blue)')}
+      ${statRow('🎴 Cards studied', r.cardsStudied || STATE.cardQueue?.length || 0, 'var(--ss-blue)')}
+      ${r.mcqScore !== null && r.mcqScore !== undefined ? statRow('✅ Quick Check', r.mcqScore + '/' + (r.mcqTotal||4) + ' correct', r.mcqScore >= r.mcqTotal * 0.75 ? 'var(--ss-green)' : 'var(--ss-orange)') : ''}
+      ${r.gapScore !== null && r.gapScore !== undefined ? statRow('✍️ Fill the Gaps', r.gapScore + '/' + (r.gapTotal||'?') + ' correct', r.gapScore >= (r.gapTotal||1) * 0.75 ? 'var(--ss-green)' : 'var(--ss-orange)') : ''}
+      ${r.examScore !== null && r.examScore !== undefined ? statRow('📝 Exam Question', r.examScore + '/' + (r.examTotal||3) + ' marks', r.examScore >= (r.examTotal||3) * 0.75 ? 'var(--ss-green)' : 'var(--ss-orange)') : ''}
+      ${statRow('+XP earned', '+' + xpEarned, 'var(--ss-green)')}
+    </div>
+
+    <div class="card" style="margin-bottom:16px;border-left:4px solid var(--ss-green);">
+      <div style="font-size:14px;font-weight:800;margin-bottom:6px;">🔄 What happens next?</div>
+      <p style="font-size:13px;color:var(--text-secondary);font-weight:600;line-height:1.5;">Because you had the Knowledge Organiser and AI Tutor helping you, today's cards are set to come back soon for <strong>independent practice</strong> — that's when the real learning gets locked in! 🔒</p>
+    </div>
+
+    <button class="btn btn-primary btn-full btn-lg" onclick="showHome()" style="margin-bottom:10px;">Back to Home 🏠</button>
+    <button class="btn btn-outline btn-full" onclick="showDeepDivePicker()">Start Another Deep Dive 🌊</button>
+  </div>
+</div>`);
+}
+
+// ─── TEACHER: DEEP DIVE PHASE LOCKS ─────────────────────────
+
+async function loadStudentDeepDiveLocks(studentUserId) {
+  if (!STATE.user?.token) return;
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?id=eq.' + studentUserId + '&select=deep_dive_locks', {
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + STATE.user.token }
+    });
+    const data = await res.json();
+    if (data && data[0]) {
+      if (!STATE._studentDeepDiveLocks) STATE._studentDeepDiveLocks = {};
+      STATE._studentDeepDiveLocks[studentUserId] = data[0].deep_dive_locks || {};
+    }
+  } catch(e) {}
+}
+
+async function toggleDeepDiveLock(studentUserId, field, newValue) {
+  if (!STATE.user?.token) { showToast('Not authorised'); return; }
+  if (!STATE._studentDeepDiveLocks) STATE._studentDeepDiveLocks = {};
+  const current = STATE._studentDeepDiveLocks[studentUserId] || {};
+  current[field] = newValue;
+  STATE._studentDeepDiveLocks[studentUserId] = current;
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?id=eq.' + studentUserId, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + STATE.user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ deep_dive_locks: current })
+    });
+    showToast(field.replace('_',' ') + ' ' + (newValue ? 'locked' : 'unlocked'));
+    showStudentDetail(STATE._lastStudentName || '', studentUserId);
+  } catch(e) { showToast('Could not save — try again'); }
+}
+
+async function loadStudentBrainDumps(studentUserId) {
+  const el = document.getElementById('brain-dumps-' + studentUserId.replace(/-/g,''));
+  if (!el || !STATE.user?.token) return;
+  try {
+    const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?id=eq.' + studentUserId + '&select=study_notes', {
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + STATE.user.token }
+    });
+    const data = await res.json();
+    const notes = (data && data[0]?.study_notes) || [];
+    if (!notes.length) { el.innerHTML = '<span style="color:var(--text-secondary);font-size:13px;">No brain dumps yet.</span>'; return; }
+    el.innerHTML = notes.slice(-5).reverse().map(n => `
+      <div style="background:#F8FAFC;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin-bottom:4px;">${n.topic_name || n.topic} — ${n.date ? new Date(n.date).toLocaleDateString('en-GB') : ''}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.4;">${(n.brain_dump_text||'').slice(0,200)}${(n.brain_dump_text||'').length > 200 ? '…' : ''}</div>
+        ${n.ai_feedback ? `<div style="font-size:12px;color:#64748B;margin-top:6px;font-style:italic;">${n.ai_feedback}</div>` : ''}
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<span style="font-size:13px;color:var(--text-secondary);">Could not load.</span>'; }
+}
+
+// Save _lastStudentName so teacher portal can re-render after lock toggle
+const _origShowStudentDetail = showStudentDetail;
+showStudentDetail = function(name, studentUserId) {
+  STATE._lastStudentName = name;
+  return _origShowStudentDetail(name, studentUserId);
+};
+
 
 </script>
 
