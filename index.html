@@ -26527,7 +26527,7 @@ function showDeepDiveDepthPicker(subject) {
 function showDeepDiveTopicPicker(subject, mode) {
   const locked = (STATE.user?.locked_topics || []).map(t => t.toUpperCase());
   const allCards = subject === 'all' ? SAMPLE_CARDS : SAMPLE_CARDS.filter(c => c.subject === subject);
-  const modeKey = mode === 'topic' ? 'topics' : 'subtopics'; // plural = multi-select depthMode
+  const modeKey = mode === 'topic' ? 'topics' : 'subtopics';
   let items = [];
   if (mode === 'topic') {
     const seen = new Set();
@@ -26540,7 +26540,6 @@ function showDeepDiveTopicPicker(subject, mode) {
     });
   } else {
     const seen = new Set();
-    // Group by topic for visual structure
     allCards.forEach(c => {
       const key = (c.subtopic || '').toUpperCase();
       if (key && !seen.has(key) && !locked.includes(key) && !locked.includes(c.topic.toUpperCase())) {
@@ -26548,22 +26547,37 @@ function showDeepDiveTopicPicker(subject, mode) {
         items.push({ key: c.subtopic, label: (c.subtopic_name || c.subtopic), topic: c.topic, topic_name: c.topic_name });
       }
     });
-    // Sort by topic then subtopic
     items.sort((a, b) => a.topic.localeCompare(b.topic) || a.key.localeCompare(b.key));
   }
 
-  // Init selection state
+  // Store for card-count lookups and full-topic detection
   STATE._ddSelectedTopics = [];
-  STATE._ddPickerItems = items;
-  STATE._ddPickerSubject = subject;
-  STATE._ddPickerModeKey = modeKey;
+  STATE._ddPickerItems    = items;
+  STATE._ddPickerSubject  = subject;
+  STATE._ddPickerModeKey  = modeKey;
+  // Filtered card pool (subject + lock-aware) for accurate card counting
+  const lockedSet = new Set(locked);
+  STATE._ddAllPickerCards = allCards.filter(c =>
+    !lockedSet.has(c.topic.toUpperCase()) &&
+    !(c.subtopic && lockedSet.has(c.subtopic.toUpperCase()))
+  );
+  // Map parent-topic → its subtopic keys (for full-topic tip)
+  if (modeKey === 'subtopics') {
+    const byParent = {};
+    items.forEach(item => {
+      if (!byParent[item.topic]) byParent[item.topic] = [];
+      byParent[item.topic].push(item.key);
+    });
+    STATE._ddTopicsByParent = byParent;
+  } else {
+    STATE._ddTopicsByParent = null;
+  }
 
   const title = mode === 'topic' ? 'Choose Topics' : 'Choose Subtopics';
-  const hint = mode === 'topic'
+  const hint  = mode === 'topic'
     ? 'Select one or more topics to include in your Deep Dive'
     : 'Select one or more subtopics to drill into';
 
-  // Group subtopics by parent topic for display
   let listHTML = '';
   if (mode === 'subtopic') {
     const byTopic = {};
@@ -26598,100 +26612,110 @@ function showDeepDiveTopicPicker(subject, mode) {
     <div style="font-size:17px;font-weight:800;">${title}</div>
     <div></div>
   </div>
-  <div style="flex:1;overflow-y:auto;padding:14px 18px 140px;">
+  <div style="flex:1;overflow-y:auto;padding:14px 18px 220px;">
     <div style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:12px;">${hint}</div>
     <button onclick="selectAllDDTopics()" style="background:#EFF6FF;border:1.5px solid #93C5FD;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:800;color:#1D4ED8;cursor:pointer;margin-bottom:14px;width:100%;">
       ☑ Select All (${items.length})
     </button>
     ${listHTML}
   </div>
-  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:12px 18px 16px;">
-    <button id="dd-start-btn" onclick="showDeepDiveTimePicker('${subject}','${modeKey}',null)" disabled style="opacity:0.4;width:100%;background:linear-gradient(135deg,#16A34A,#15803D);color:white;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;">
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 18px 16px;">
+
+    <!-- Live guidance panel (hidden until selection) -->
+    <div id="dd-guidance-panel" style="display:none;margin-bottom:10px;">
+      <div id="dd-card-count" style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:5px;"></div>
+      <div id="dd-guidance-msg" style="font-size:12px;font-weight:700;padding:8px 10px;border-radius:8px;line-height:1.4;"></div>
+      <div id="dd-tip" style="display:none;font-size:12px;font-weight:600;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:8px 10px;margin-top:6px;line-height:1.4;">
+        💡 Tip: For the best results, try one subtopic at a time. Deep understanding beats surface coverage every time!
+      </div>
+      <div style="font-size:11px;color:#94A3B8;font-weight:600;text-align:center;margin-top:6px;">
+        Don't worry — you can exit any time and start a new session with different topics 😊
+      </div>
+    </div>
+
+    <button id="dd-start-btn" onclick="showDeepDiveTimePicker('${subject}','${modeKey}',null)" disabled
+      style="opacity:0.4;width:100%;background:linear-gradient(135deg,#16A34A,#15803D);color:white;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;">
       Start Deep Dive →
     </button>
-    <div id="dd-sel-count" style="text-align:center;font-size:12px;font-weight:700;color:var(--text-secondary);margin-top:6px;">Select at least 1 to begin</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;font-weight:600;margin-top:5px;">
+      You can exit at any time during your session
+    </div>
+    <div id="dd-sel-count" style="text-align:center;font-size:12px;font-weight:700;color:var(--text-secondary);margin-top:4px;">Select at least 1 to begin</div>
   </div>
 </div>`);
 }
-
 function toggleDDTopic(key, subject, modeKey) {
   const sel = STATE._ddSelectedTopics || [];
   const idx = sel.indexOf(key);
-  if (idx === -1) {
-    sel.push(key);
-  } else {
-    sel.splice(idx, 1);
-  }
+  if (idx === -1) { sel.push(key); } else { sel.splice(idx, 1); }
   STATE._ddSelectedTopics = sel;
 
-  // Update checkbox UI
   const safeKey = key.replace(/\./g, '-');
   const checkEl = document.getElementById('dd-check-' + safeKey);
-  const rowEl = document.getElementById('dd-item-' + safeKey);
+  const rowEl   = document.getElementById('dd-item-' + safeKey);
   const selected = sel.includes(key);
   if (checkEl) {
-    checkEl.textContent = selected ? '✓' : '';
-    checkEl.style.background = selected ? '#16A34A' : 'white';
+    checkEl.textContent   = selected ? '✓' : '';
+    checkEl.style.background  = selected ? '#16A34A' : 'white';
     checkEl.style.borderColor = selected ? '#16A34A' : '#CBD5E1';
     checkEl.style.color = 'white';
   }
   if (rowEl) {
     rowEl.style.borderColor = selected ? '#4ADE80' : '#E2E8F0';
-    rowEl.style.background = selected ? '#F0FDF4' : '#F8FAFC';
+    rowEl.style.background  = selected ? '#F0FDF4' : '#F8FAFC';
   }
 
-  // Update start button
-  const btn = document.getElementById('dd-start-btn');
-  const countEl = document.getElementById('dd-sel-count');
   const n = sel.length;
+  const btn     = document.getElementById('dd-start-btn');
+  const countEl = document.getElementById('dd-sel-count');
   if (btn) {
-    btn.disabled = n === 0;
+    btn.disabled      = n === 0;
     btn.style.opacity = n === 0 ? '0.4' : '1';
-    btn.textContent = n === 0 ? 'Start Deep Dive →' : `Start with ${n} ${n === 1 ? (modeKey === 'topics' ? 'topic' : 'subtopic') : (modeKey === 'topics' ? 'topics' : 'subtopics')} →`;
+    btn.textContent   = n === 0 ? 'Start Deep Dive →' : `Start with ${n} ${n === 1 ? (modeKey === 'topics' ? 'topic' : 'subtopic') : (modeKey === 'topics' ? 'topics' : 'subtopics')} →`;
   }
   if (countEl) {
-    countEl.textContent = n === 0 ? 'Select at least 1 to begin' : `${n} selected`;
-    countEl.style.color = n > 0 ? '#16A34A' : 'var(--text-secondary)';
+    countEl.textContent  = n === 0 ? 'Select at least 1 to begin' : `${n} selected`;
+    countEl.style.color  = n > 0 ? '#16A34A' : 'var(--text-secondary)';
   }
-}
 
+  updateDDGuidance();
+}
 function selectAllDDTopics() {
-  const items = STATE._ddPickerItems || [];
-  const subject = STATE._ddPickerSubject;
+  const items   = STATE._ddPickerItems || [];
   const modeKey = STATE._ddPickerModeKey;
   STATE._ddSelectedTopics = items.map(i => i.key);
 
-  // Update all checkboxes
   items.forEach(item => {
     const safeKey = item.key.replace(/\./g, '-');
     const checkEl = document.getElementById('dd-check-' + safeKey);
-    const rowEl = document.getElementById('dd-item-' + safeKey);
+    const rowEl   = document.getElementById('dd-item-' + safeKey);
     if (checkEl) {
-      checkEl.textContent = '✓';
-      checkEl.style.background = '#16A34A';
+      checkEl.textContent   = '✓';
+      checkEl.style.background  = '#16A34A';
       checkEl.style.borderColor = '#16A34A';
       checkEl.style.color = 'white';
     }
     if (rowEl) {
       rowEl.style.borderColor = '#4ADE80';
-      rowEl.style.background = '#F0FDF4';
+      rowEl.style.background  = '#F0FDF4';
     }
   });
 
-  const n = items.length;
+  const n   = items.length;
   const btn = document.getElementById('dd-start-btn');
   const countEl = document.getElementById('dd-sel-count');
   if (btn) {
-    btn.disabled = false;
+    btn.disabled      = false;
     btn.style.opacity = '1';
-    btn.textContent = `Start with ${n} ${n === 1 ? (modeKey === 'topics' ? 'topic' : 'subtopic') : (modeKey === 'topics' ? 'topics' : 'subtopics')} →`;
+    btn.textContent   = `Start with ${n} ${n === 1 ? (modeKey === 'topics' ? 'topic' : 'subtopic') : (modeKey === 'topics' ? 'topics' : 'subtopics')} →`;
   }
   if (countEl) {
     countEl.textContent = `${n} selected`;
     countEl.style.color = '#16A34A';
   }
-}
 
+  updateDDGuidance();
+}
 function showDeepDiveTimePicker(subject, depthMode, topicKey) {
   const isMulti = depthMode === 'topics' || depthMode === 'subtopics';
   const backFn = isMulti
@@ -27164,6 +27188,72 @@ function toggleKOSection(sectionId, arrowId) {
   const isOpen = sec.style.display !== 'none';
   sec.style.display = isOpen ? 'none' : 'block';
   if (arr) arr.style.transform = isOpen ? '' : 'rotate(90deg)';
+}
+
+
+// ─── DEEP DIVE PICKER — LIVE GUIDANCE ───────────────────────
+function updateDDGuidance() {
+  const sel     = STATE._ddSelectedTopics || [];
+  const modeKey = STATE._ddPickerModeKey || 'subtopics';
+  const pool    = STATE._ddAllPickerCards || [];
+  const n       = sel.length;
+
+  const panel    = document.getElementById('dd-guidance-panel');
+  const countEl  = document.getElementById('dd-card-count');
+  const msgEl    = document.getElementById('dd-guidance-msg');
+  const tipEl    = document.getElementById('dd-tip');
+  if (!panel) return;
+
+  if (n === 0) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+
+  // Card count
+  const selUpper = sel.map(k => k.toUpperCase());
+  let cardCount;
+  if (modeKey === 'subtopics') {
+    cardCount = pool.filter(c => selUpper.includes((c.subtopic || '').toUpperCase())).length;
+  } else {
+    cardCount = pool.filter(c => selUpper.includes(c.topic.toUpperCase())).length;
+  }
+  const estMins = cardCount * 2;
+  if (countEl) {
+    countEl.textContent = `${cardCount} card${cardCount !== 1 ? 's' : ''} selected — estimated ${estMins} min${estMins !== 1 ? 's' : ''} to complete all phases`;
+  }
+
+  // Colour-coded guidance
+  let bg, color, border, msg;
+  if (cardCount <= 15) {
+    bg = '#F0FDF4'; color = '#15803D'; border = '#86EFAC';
+    msg = 'Perfect size for a focused session! 🎯';
+  } else if (cardCount <= 30) {
+    bg = '#FFFBEB'; color = '#B45309'; border = '#FCD34D';
+    msg = 'Good session — you\'ll cover a lot! Consider splitting into two sessions if short on time ⏱️';
+  } else if (cardCount <= 50) {
+    bg = '#FFF7ED'; color = '#C2410C'; border = '#FDBA74';
+    msg = 'That\'s a lot to cover! We recommend choosing fewer subtopics for a more focused Deep Dive 🧠';
+  } else {
+    bg = '#FEF2F2'; color = '#B91C1C'; border = '#FCA5A5';
+    msg = 'This might be overwhelming — try selecting 2–3 subtopics for the best learning experience! Start small, go deep 🔥';
+  }
+  if (msgEl) {
+    msgEl.textContent    = msg;
+    msgEl.style.background  = bg;
+    msgEl.style.color       = color;
+    msgEl.style.border      = `1px solid ${border}`;
+  }
+
+  // Smart tip — show if any parent topic has ALL its subtopics selected
+  if (tipEl) {
+    let showTip = false;
+    if (modeKey === 'subtopics' && STATE._ddTopicsByParent) {
+      const byParent = STATE._ddTopicsByParent;
+      showTip = Object.keys(byParent).some(parentTopic => {
+        const allSubs = byParent[parentTopic];
+        return allSubs.length > 1 && allSubs.every(sub => sel.includes(sub));
+      });
+    }
+    tipEl.style.display = showTip ? 'block' : 'none';
+  }
 }
 
 </script>
