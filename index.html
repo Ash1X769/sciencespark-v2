@@ -13588,19 +13588,33 @@ Student's answer: ${studentAnswer}`;
 
 // ── Target grade helpers ─────────────────────────────────────────────────────
 
+function getGradeFramingMsg(grade) {
+  if (!grade) return '';
+  if (grade <= 3) return 'Every grade you gain from here is a win 💪';
+  if (grade <= 6) return 'This is your starting point — we will push you further! 🚀';
+  if (grade <= 8) return 'Grade ' + grade + ' is your floor, not your ceiling 🎯';
+  return 'The highest grade possible — let\'s make it happen! 🔥';
+}
+
 function buildTargetGradeButtons(currentGrade, context, studentUserId) {
   const pfx = 'tg-' + (studentUserId ? studentUserId.replace(/-/g,'') : 'self') + '-';
-  return [4,5,6,7,8,9].map(function(g) {
+  const framId = 'gf-' + (studentUserId ? studentUserId.replace(/-/g,'') : 'self');
+  const buttons = [1,2,3,4,5,6,7,8,9].map(function(g) {
     const sel = g === currentGrade;
+    const sz = g <= 3 ? '34px' : '42px';
+    const fs = g <= 3 ? '13px' : '16px';
     return '<button id="' + pfx + g + '" onclick="selectTargetGrade(' + g + ',\'' + context + '\',' + (studentUserId ? JSON.stringify(studentUserId) : 'null') + ')" '
-      + 'style="width:42px;height:42px;border-radius:50%;border:2px solid ' + (sel ? '#22C55E' : '#E2E8F0') + ';background:' + (sel ? '#22C55E' : 'white') + ';color:' + (sel ? 'white' : '#374151') + ';font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;transition:all 0.15s;">'
+      + 'style="width:' + sz + ';height:' + sz + ';border-radius:50%;border:2px solid ' + (sel ? '#22C55E' : '#E2E8F0') + ';background:' + (sel ? '#22C55E' : 'white') + ';color:' + (sel ? 'white' : '#374151') + ';font-size:' + fs + ';font-weight:900;cursor:pointer;font-family:inherit;transition:all 0.15s;">'
       + g + '</button>';
   }).join('');
+  const framMsg = getGradeFramingMsg(currentGrade);
+  const framDiv = '<div id="' + framId + '" style="font-size:12px;font-weight:700;color:#6366F1;margin-top:10px;padding:8px 12px;background:#EEF2FF;border-radius:8px;' + (framMsg ? '' : 'display:none;') + '">' + (framMsg || '') + '</div>';
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + buttons + '</div>' + framDiv;
 }
 
 async function selectTargetGrade(grade, context, studentUserId) {
   const pfx = 'tg-' + (studentUserId ? studentUserId.replace(/-/g,'') : 'self') + '-';
-  [4,5,6,7,8,9].forEach(function(g) {
+  [1,2,3,4,5,6,7,8,9].forEach(function(g) {
     const btn = document.getElementById(pfx + g);
     if (!btn) return;
     const sel = g === grade;
@@ -13630,6 +13644,13 @@ async function selectTargetGrade(grade, context, studentUserId) {
       body: JSON.stringify({ target_grade: grade })
     });
     showToast('Target grade set: Grade ' + grade + ' 🎯');
+    const framId = 'gf-' + (studentUserId ? studentUserId.replace(/-/g,'') : 'self');
+    const framEl = document.getElementById(framId);
+    if (framEl) {
+      const msg = getGradeFramingMsg(grade);
+      framEl.textContent = msg;
+      framEl.style.display = msg ? '' : 'none';
+    }
   } catch(e) { showToast('Could not save — try again'); }
 }
 
@@ -13647,12 +13668,315 @@ function getRotatingPingMessage(childName, targetGrade) {
 }
 
 function getTutorSystem() {
-  const tg = STATE.user?.target_grade;
-  const extra = tg
-    ? '\n\nSTUDENT CONTEXT: This student is targeting Grade ' + tg + ' in their GCSEs. Reference this naturally and encouragingly — e.g. "That\'s exactly the kind of thing that comes up in Grade ' + tg + ' questions!" Treat Grade ' + tg + ' as a floor, not a ceiling — always imply they can go higher.'
-    : '';
+  const u = STATE.user;
+  const tg = u?.target_grade;
+  const yg = u?.year_group ? parseInt(u.year_group) : null;
+  const dj = u?.dream_job;
+  const lt = u?.learner_type;
+  const lp = u?.learning_preference;
+  const sf = u?.science_feeling;
+  const ed = u?.exam_dates || {};
+  let extra = '';
+  if (tg) {
+    extra += '\n\nSTUDENT CONTEXT:';
+    extra += '\n- Target Grade: ' + tg + '. This is a floor, never a ceiling. Reference naturally: "That\'s Grade ' + tg + ' level thinking!" Encourage them to aim higher.';
+    if (yg) {
+      if (tg >= 9 && yg <= 9) extra += '\n- Ambitious young student aiming for Grade 9. High energy, challenge them, make the top grade feel achievable right now.';
+      else if (tg >= 9 && yg >= 10) extra += '\n- High achiever targeting Grade 9. Push depth: mechanisms not just facts, why mark schemes reward specific language, Higher-tier nuance.';
+      else if (tg <= 5 && yg >= 11) extra += '\n- Year ' + yg + ' student with a modest target. Keep language simple, confidence-building. Celebrate wins. Repetition and mnemonics over depth.';
+      else if (tg >= 7 && yg >= 9 && yg <= 10) extra += '\n- Strong student in Year ' + yg + '. Build on existing knowledge, challenge from Grade 6 to Grade 7+. Praise before adding complexity.';
+    }
+    if (tg < 7) extra += '\n- Even with a Grade ' + tg + ' target, always be ready to explain Grade 7-9 concepts if asked. Every student can access higher thinking.';
+  }
+  if (dj) extra += '\n- Dream career: "' + dj + '". Connect science content to this career where natural and motivating.';
+  if (lt) {
+    const ltMap = { visual: 'visual learner — use diagrams and spatial descriptions', steps: 'step-by-step thinker — give numbered sequences', big_picture: 'big-picture first learner — overview before detail', doing: 'learns by doing — use examples and worked questions' };
+    extra += '\n- Learner type: ' + (ltMap[lt] || lt) + '.';
+  }
+  if (lp) {
+    const lpMap = { punchy: 'short punchy answers — be concise', detailed: 'detailed explanations — go deep', analogies: 'analogies and examples — always use a comparison', exam_q: 'exam-style questions — frame responses as exam practice' };
+    extra += '\n- Learning preference: ' + (lpMap[lp] || lp) + '.';
+  }
+  if (sf) {
+    const sfTone = sf === 'love' ? 'LOVES science — be enthusiastic and expansive, share fascinating details'
+      : sf === 'ok' ? 'science is just OK for them — keep it relevant, focus on marks and outcomes'
+      : sf === 'hard' ? 'finds science HARD — be especially encouraging, break down every step, celebrate small wins, never make them feel stupid'
+      : sf === 'boring' ? 'finds science boring — hook with surprising facts, real-world relevance, and career connections'
+      : '';
+    if (sfTone) extra += '\n- Science feeling: Student ' + sfTone + '.';
+  }
+  const now = new Date();
+  const upcoming = Object.entries(ed)
+    .map(function([k,v]) { return { name: k, days: Math.round((new Date(v) - now) / 86400000) }; })
+    .filter(function(e) { return e.days >= 0 && e.days <= 60; })
+    .sort(function(a,b) { return a.days - b.days; });
+  if (upcoming.length > 0) {
+    const nxt = upcoming[0];
+    extra += '\n- UPCOMING EXAM: "' + nxt.name + '" in ' + nxt.days + ' day' + (nxt.days !== 1 ? 's' : '') + '. Emphasise exam readiness, key terms, common question types, and recall under pressure.';
+  }
   return TUTOR_SYSTEM + extra;
 }
+
+function getPersonalisationProgress() {
+  const u = STATE.user;
+  if (!u) return 0;
+  const fields = ['dream_job','salary_aspiration','study_blocker','learner_type','learning_preference','science_feeling','tutor_notes'];
+  const filled = fields.filter(function(f) { return u[f] != null && u[f] !== ''; }).length;
+  return Math.round((filled / fields.length) * 100);
+}
+
+async function savePersonalisationField(field, value) {
+  const token = STATE.user?.token;
+  const userId = STATE.user?.id;
+  if (!token || !userId) return;
+  STATE.user[field] = value;
+  LS.set('demo_user', STATE.user);
+  const container = document.getElementById('pf-' + field);
+  if (container) {
+    container.querySelectorAll('button[data-pf]').forEach(function(b) {
+      const active = b.dataset.pf === String(value);
+      b.style.background = active ? '#4F46E5' : 'white';
+      b.style.color = active ? 'white' : '#374151';
+      b.style.borderColor = active ? '#4F46E5' : '#E2E8F0';
+    });
+  }
+  const prog = document.getElementById('personalise-progress');
+  if (prog) prog.textContent = getPersonalisationProgress() + '% known about you by your AI Tutor';
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + userId, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token,
+                 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ [field]: value })
+    });
+  } catch(e) {}
+}
+
+async function saveParentField(field, value) {
+  const token = STATE.user?.token;
+  const userId = STATE.user?.id;
+  if (!token || !userId) return;
+  STATE.user[field] = value;
+  LS.set('demo_user', STATE.user);
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + userId, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token,
+                 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ [field]: value })
+    });
+    showToast('Saved ✅');
+  } catch(e) { showToast('Could not save'); }
+}
+
+function getAQAExamDefaults() {
+  const y = new Date().getFullYear();
+  return { 'Mock 1 (Nov)': y + '-11-14', 'Mock 2 (Mar)': (y + 1) + '-03-13', 'GCSE (May/Jun)': (y + 1) + '-06-06' };
+}
+
+async function saveExamDate(name, date) {
+  const token = STATE.user?.token;
+  const userId = STATE.user?.id;
+  if (!token || !userId) return;
+  const existing = STATE.user.exam_dates || {};
+  if (date) { existing[name] = date; } else { delete existing[name]; }
+  STATE.user.exam_dates = existing;
+  LS.set('demo_user', STATE.user);
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + userId, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token,
+                 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ exam_dates: existing })
+    });
+  } catch(e) {}
+}
+
+function buildPersonalisationSection(user) {
+  const u = user || STATE.user || {};
+  const q = function(label, field, opts) {
+    let s = '<div style="margin-bottom:16px;">';
+    s += '<div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px;">' + label + '</div>';
+    s += '<div id="pf-' + field + '" style="display:flex;flex-wrap:wrap;gap:6px;">';
+    opts.forEach(function(o) {
+      const active = String(u[field] || '') === String(o.v);
+      s += '<button data-pf="' + o.v + '" onclick="savePersonalisationField(\'' + field + '\',\'' + o.v + '\')" style="padding:6px 12px;border-radius:20px;border:1.5px solid ' + (active ? '#4F46E5' : '#E2E8F0') + ';background:' + (active ? '#4F46E5' : 'white') + ';color:' + (active ? 'white' : '#374151') + ';font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">' + o.l + '</button>';
+    });
+    s += '</div></div>';
+    return s;
+  };
+  let h = '';
+  h += q('What do you want to be? 🎯', 'dream_job', [
+    {v:'doctor',l:'🩺 Doctor'},{v:'scientist',l:'🔬 Scientist'},{v:'engineer',l:'⚙️ Engineer'},
+    {v:'teacher',l:'📚 Teacher'},{v:'business',l:'💼 Business'},{v:'creative',l:'🎨 Creative'},{v:'other',l:'✏️ Other'}
+  ]);
+  h += q('What kind of career are you aiming for? 💰', 'salary_aspiration', [
+    {v:'30k',l:'\xA330k+'},{v:'50k',l:'\xA350k+'},{v:'80k',l:'\xA380k+'},{v:'100k',l:'\xA3100k+'},{v:'impact',l:'💙 Make a difference'}
+  ]);
+  h += q('What gets in the way of studying? 🙈', 'study_blocker', [
+    {v:'distractions',l:'📱 Distractions'},{v:'notime',l:'⏰ No time'},{v:'boring',l:'😴 Feels boring'},
+    {v:'forget',l:'🧠 I forget'},{v:'stress',l:'😟 Exam stress'}
+  ]);
+  h += q('How do you learn best? 🧠', 'learner_type', [
+    {v:'visual',l:'🖼️ Visual'},{v:'steps',l:'📋 Step-by-step'},{v:'big_picture',l:'🔭 Big picture first'},{v:'doing',l:'💡 By doing'}
+  ]);
+  h += q('How do you like your AI Tutor to explain things? 💬', 'learning_preference', [
+    {v:'punchy',l:'⚡ Short & punchy'},{v:'detailed',l:'📖 Detailed'},{v:'analogies',l:'🔗 Analogies'},{v:'exam_q',l:'📝 Exam-style'}
+  ]);
+  h += q('How do you feel about science? 🧪', 'science_feeling', [
+    {v:'love',l:'❤️ Love it'},{v:'ok',l:'👍 It\'s ok'},{v:'hard',l:'😬 Find it hard'},{v:'boring',l:'😴 Find it boring'}
+  ]);
+  h += '<div style="margin-bottom:16px;">';
+  h += '<div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:6px;">Anything else for your AI Tutor to know? 📝</div>';
+  h += '<textarea id="pf-tutor_notes-input" placeholder="e.g. I have dyslexia, I love space, I hate memorising..." style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:13px;font-family:inherit;resize:vertical;min-height:60px;box-sizing:border-box;" onblur="if(this.value.trim())savePersonalisationField(\'tutor_notes\',this.value.trim())">' + (u.tutor_notes || '') + '</textarea>';
+  h += '</div>';
+  return h;
+}
+
+function buildExamDatesSection(user) {
+  const u = user || STATE.user || {};
+  const existing = u.exam_dates || {};
+  const defaults = getAQAExamDefaults();
+  let h = '<div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:10px;line-height:1.5;">Your AI Tutor uses these to focus as exams get closer. AQA defaults shown — edit to match your school.</div>';
+  // Show existing + AQA defaults merged
+  const all = Object.assign({}, defaults, existing);
+  Object.entries(all).forEach(function([name, date]) {
+    const isCustom = existing[name] && existing[name] !== defaults[name];
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
+    h += '<div style="flex:1;font-size:13px;font-weight:700;color:#374151;">' + name + '</div>';
+    h += '<input type="date" value="' + date + '" onchange="saveExamDate(\'' + name.replace(/'/g,"\\'") + '\',this.value)" style="padding:6px 10px;border-radius:8px;border:1.5px solid ' + (isCustom ? '#6366F1' : '#E2E8F0') + ';font-size:12px;font-family:inherit;">';
+    h += '</div>';
+  });
+  // Add custom date
+  h += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #F1F5F9;">';
+  h += '<div style="font-size:12px;font-weight:800;color:#64748B;margin-bottom:6px;">ADD CUSTOM DATE</div>';
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<input id="new-exam-name" type="text" placeholder="e.g. Topic test" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #E2E8F0;font-size:12px;font-family:inherit;">';
+  h += '<input id="new-exam-date" type="date" style="padding:8px;border-radius:8px;border:1.5px solid #E2E8F0;font-size:12px;font-family:inherit;">';
+  h += '<button onclick="const n=document.getElementById(\'new-exam-name\').value.trim();const d=document.getElementById(\'new-exam-date\').value;if(n&&d){saveExamDate(n,d);showToast(\'Date saved! \u{1F4C5}\')}" style="padding:8px 12px;border-radius:8px;border:none;background:#4F46E5;color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Add</button>';
+  h += '</div></div>';
+  return h;
+}
+
+async function notifyLinkedParent() {
+  const parentId = STATE.user?.linked_parent_id;
+  if (!parentId) return;
+  const today = new Date().toISOString().slice(0, 10);
+  if (LS.get('parent_notif_' + today)) return;
+  LS.set('parent_notif_' + today, true);
+  const token = STATE.user?.token;
+  const studentName = (STATE.user?.display_name || '').split(' ')[0] || 'Your child';
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/functions/v1/send-notification', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ student_user_id: parentId, child_name: studentName,
+        message: studentName + ' just completed all their science cards today! 🎉 Great progress!', type: 'parent-completion' })
+    });
+  } catch(e) {}
+}
+
+async function sendTeacherPing(studentUserId, studentName) {
+  if (!STATE._teacherPingsSent) STATE._teacherPingsSent = {};
+  STATE._teacherPingsSent[studentUserId] = true;
+  const token = STATE.user?.token;
+  const tg = (STATE.teacherStudents || []).find(function(s) { return s.user_id === studentUserId; })?.target_grade;
+  const message = getRotatingPingMessage(studentName, tg);
+  const btnId = 'ping-btn-' + studentUserId.replace(/-/g,'');
+  const btn = document.getElementById(btnId);
+  if (btn) { btn.textContent = 'SENT ✓'; btn.style.background = '#22C55E'; btn.style.color = 'white'; btn.disabled = true; }
+  updatePingAllBtn();
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/functions/v1/send-notification', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ student_user_id: studentUserId, child_name: studentName, message, source: 'teacher' })
+    });
+  } catch(e) { showToast('Could not send ping'); }
+}
+
+function updatePingAllBtn() {
+  const students = STATE.teacherStudents || [];
+  const remaining = students.filter(function(s) { return !s.studiedToday && !(STATE._teacherPingsSent || {})[s.user_id]; }).length;
+  const btn = document.getElementById('ping-all-btn');
+  if (btn) {
+    btn.textContent = remaining > 0 ? 'PING ALL (' + remaining + ' remaining) 📣' : 'ALL PINGED ✓';
+    btn.disabled = remaining === 0;
+    btn.style.background = remaining > 0 ? '#F59E0B' : '#D1D5DB';
+  }
+}
+
+async function pingAllRemaining() {
+  const students = STATE.teacherStudents || [];
+  const remaining = students.filter(function(s) { return !s.studiedToday && !(STATE._teacherPingsSent || {})[s.user_id]; });
+  if (!remaining.length) { showToast('All students done today! 🎉'); return; }
+  for (const s of remaining) {
+    await sendTeacherPing(s.user_id, s.name);
+    await new Promise(function(r) { setTimeout(r, 300); });
+  }
+  showToast('All ' + remaining.length + ' ping' + (remaining.length !== 1 ? 's' : '') + ' sent! 📨');
+}
+
+function scheduleTeacherDailyAutoPing(hour) {
+  if (STATE._teacherAutoPingTimeout) { clearTimeout(STATE._teacherAutoPingTimeout); STATE._teacherAutoPingTimeout = null; }
+  const now = new Date();
+  const fire = new Date(now); fire.setHours(hour, 0, 0, 0);
+  if (fire <= now) { showToast('That time has already passed today'); return; }
+  STATE._teacherAutoPingTimeout = setTimeout(async function() {
+    if (STATE.role !== 'teacher') return;
+    await pingAllRemaining();
+    STATE._teacherAutoPingTimeout = null;
+  }, fire.getTime() - now.getTime());
+  showToast('Auto-ping set for ' + (hour > 12 ? (hour - 12) + 'pm' : hour + 'am') + ' 🔔');
+}
+
+function cancelTeacherDailyAutoPing() {
+  if (STATE._teacherAutoPingTimeout) { clearTimeout(STATE._teacherAutoPingTimeout); STATE._teacherAutoPingTimeout = null; }
+  showToast('Auto-ping cancelled');
+}
+
+async function loadStudentNotifLog(studentUserId) {
+  const el = document.getElementById('notif-log-' + studentUserId.replace(/-/g,''));
+  if (!el) return;
+  const token = STATE.user?.token;
+  try {
+    const res = await fetch(
+      CONFIG.SUPABASE_URL + '/rest/v1/pings?student_id=eq.' + studentUserId + '&order=sent_at.desc&limit=5&select=id,message,sent_at,read_at',
+      { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token } }
+    );
+    const pings = res.ok ? await res.json() : [];
+    if (!pings.length) { el.innerHTML = '<div style="text-align:center;padding:8px 0;">No notifications sent yet</div>'; return; }
+    el.innerHTML = pings.map(function(p) {
+      const sent = new Date(p.sent_at);
+      const opened = p.read_at ? '✅ Opened' : '⏳ Pending';
+      const timeStr = sent.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ', ' + sent.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      return '<div style="padding:5px 0;border-bottom:1px solid #F8FAFC;">'
+        + '<div style="font-size:11px;font-weight:700;color:#374151;line-height:1.4;">' + p.message + '</div>'
+        + '<div style="font-size:10px;color:#94A3B8;font-weight:600;margin-top:2px;">' + timeStr + ' · ' + opened + '</div>'
+        + '</div>';
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="text-align:center;padding:8px 0;color:#EF4444;">Could not load</div>';
+  }
+}
+
+function canSendNotif(type) {
+  const today = new Date().toISOString().slice(0, 10);
+  const sent = LS.get('notif_hierarchy') || { date: '', types: [] };
+  if (sent.date !== today) return true;
+  if (type === 'teacher-ping') return true;
+  const priority = ['last-chance','streak-warn','completion','teacher-ping','reminder','motivational'];
+  const myIdx = priority.indexOf(type);
+  return !sent.types.some(function(t) { return priority.indexOf(t) <= myIdx && t !== 'teacher-ping'; });
+}
+
+function recordNotifSent(type) {
+  const today = new Date().toISOString().slice(0, 10);
+  const sent = LS.get('notif_hierarchy') || { date: '', types: [] };
+  if (sent.date !== today) { LS.set('notif_hierarchy', { date: today, types: [type] }); }
+  else { if (!sent.types.includes(type)) { sent.types.push(type); LS.set('notif_hierarchy', sent); } }
+}
+
 
 const TUTOR_SYSTEM = `You are ScienceSpark AI — a GCSE science tutor for students aged 11-16. You are warm, encouraging and feel like a brilliant teacher who actually makes science click.
 
@@ -14294,7 +14618,7 @@ async function loadUserPaidStatus() {
   if (!user?.token || !user?.id) return;
   try {
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     const profiles = res.ok ? await res.json() : [];
@@ -14313,6 +14637,15 @@ async function loadUserPaidStatus() {
       STATE.user.schedule_locked = p.schedule_locked || false;
       STATE.user.locked_topics   = Array.isArray(p.locked_topics) ? p.locked_topics : [];
       if (p.target_grade != null) STATE.user.target_grade = p.target_grade;
+      STATE.user.dream_job = p.dream_job || null;
+      STATE.user.salary_aspiration = p.salary_aspiration || null;
+      STATE.user.study_blocker = p.study_blocker || null;
+      STATE.user.learner_type = p.learner_type || null;
+      STATE.user.learning_preference = p.learning_preference || null;
+      STATE.user.science_feeling = p.science_feeling || null;
+      STATE.user.tutor_notes = p.tutor_notes || null;
+      STATE.user.exam_dates = p.exam_dates || {};
+      STATE.user.linked_parent_id = p.linked_parent_id || null;
       LS.set('demo_user', STATE.user);
     }
   } catch(e) {}
@@ -14454,6 +14787,8 @@ function getTotalRemainingCards() {
 }
 
 async function fireStudentCompletionNotification() {
+  if (!canSendNotif('completion')) return;
+  recordNotifSent('completion');
   if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
   const name = (STATE.user?.display_name || STATE.user?.name || '').split(' ')[0] || 'there';
   const streak = STATE.user?.streak || 0;
@@ -14480,10 +14815,13 @@ function checkAndFireCompletionNotification() {
   if (active.every(s => getRemainingCards(s) === 0)) {
     STATE._completionNotifFiredToday = true;
     fireStudentCompletionNotification();
+    notifyLinkedParent();
   }
 }
 
 async function checkAndFireStudentReminder() {
+  if (!canSendNotif('reminder')) return;
+  recordNotifSent('reminder');
   if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
   if (getTotalRemainingCards() <= 0) return;
   const name = (STATE.user?.display_name || STATE.user?.name || '').split(' ')[0] || 'there';
@@ -14555,6 +14893,8 @@ async function saveStudentReminderHour(hour) {
 }
 
 async function fireStreakWarningNotification() {
+  if (!canSendNotif('streak-warn')) return;
+  recordNotifSent('streak-warn');
   if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
   if (getTotalRemainingCards() <= 0) return;
   const name = (STATE.user?.display_name || STATE.user?.name || '').split(' ')[0] || 'there';
@@ -14576,6 +14916,8 @@ async function fireStreakWarningNotification() {
 }
 
 async function fireLastChanceNotification() {
+  if (!canSendNotif('last-chance')) return;
+  recordNotifSent('last-chance');
   if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
   if (getTotalRemainingCards() <= 0) return;
   const streak = STATE.user?.streak || 0;
@@ -14989,6 +15331,13 @@ ${renderNavBar('home')}
       </div>
     </div>
     ${new Date().getHours() >= 20 && !studiedToday ? `<div style="background:#FFF7ED;border:1.5px solid #F97316;border-radius:14px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;"><span style="font-size:20px;">⚠️</span><div style="flex:1;font-size:13px;font-weight:800;color:#92400E;">Complete your cards today${streak > 0 ? ' to keep your ' + streak + '-day streak' : ''}!</div><button onclick="startFlashcards()" style="background:#F97316;color:white;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Study →</button></div>` : ''}
+    ${STATE.role === 'student' && getPersonalisationProgress() < 43 ? `<div style="background:linear-gradient(135deg,#EEF2FF,#F0FDF4);border:1.5px solid #A5B4FC;border-radius:14px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="showProfile()">
+      <span style="font-size:20px;">\u2728</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:800;color:#3730A3;">Help your AI Tutor know you better</div>
+        <div style="font-size:12px;color:#6366F1;font-weight:600;">Answer a few quick questions \u2192</div>
+      </div>
+    </div>` : ''}
     ${streak > 0 && !studiedToday ? `<div style="background:linear-gradient(135deg,#DC2626,#F97316);border-radius:16px;padding:18px 20px;margin-bottom:12px;animation:streakPulse 1.5s ease-in-out infinite;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
         <div style="font-size:36px;">🔥</div>
@@ -17129,8 +17478,34 @@ ${renderNavBar('profile')}
     <div class="card" style="margin-bottom:16px;">
       <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🎯 My Target Grade</div>
       <div style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:14px;">Hit your target and we'll push you higher 🚀</div>
-      <div style="display:flex;gap:8px;justify-content:space-between;">
-        ${buildTargetGradeButtons(user.target_grade || null, 'student', null)}
+      ${buildTargetGradeButtons(user.target_grade || null, 'student', null)}
+    </div>
+
+    <!-- Personalise Your Experience -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.pchev').textContent=this.nextElementSibling.style.display==='none'?'\u25BC':'\u25B2'">
+        <div>
+          <div style="font-size:15px;font-weight:800;margin-bottom:2px;">\u2728 Personalise Your Experience</div>
+          <div style="font-size:12px;color:#64748B;font-weight:600;" id="personalise-progress">${getPersonalisationProgress()}% known about you by your AI Tutor</div>
+        </div>
+        <span class="pchev" style="font-size:18px;color:#94A3B8;">\u25BC</span>
+      </div>
+      <div style="display:none;margin-top:16px;border-top:1px solid #F1F5F9;padding-top:14px;">
+        ${buildPersonalisationSection(user)}
+      </div>
+    </div>
+
+    <!-- Exam Dates -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.edchev').textContent=this.nextElementSibling.style.display==='none'?'\u25BC':'\u25B2'">
+        <div>
+          <div style="font-size:15px;font-weight:800;margin-bottom:2px;">📅 My Exam Dates</div>
+          <div style="font-size:12px;color:#64748B;font-weight:600;">Help your AI Tutor focus as exams approach</div>
+        </div>
+        <span class="edchev" style="font-size:18px;color:#94A3B8;">\u25BC</span>
+      </div>
+      <div style="display:none;margin-top:14px;border-top:1px solid #F1F5F9;padding-top:12px;">
+        ${buildExamDatesSection(user)}
       </div>
     </div>
 
@@ -17787,7 +18162,7 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
 
     const ids = profiles.map(p => p.user_id).join(',');
     const hRes = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=in.(' + ids + ')&select=user_id,subject,topic_name,grade',
+      CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=in.(' + ids + ')&select=user_id,subject,topic_name,grade,created_at',
       { headers }
     );
     const history = hRes.ok ? await hRes.json() : [];
@@ -17827,6 +18202,7 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
         phys_freq: p.phys_frequency || 'daily',
         schedule_locked: p.schedule_locked || false,
         target_grade: p.target_grade ?? null,
+        studiedToday: sh.some(function(h) { const d = h.created_at ? h.created_at.slice(0,10) : ''; return d === new Date().toISOString().slice(0,10); }),
       };
     });
   } catch(e) {
@@ -17889,19 +18265,35 @@ async function showTeacherDashboard(selectedClass) {
         </div>`).join('')}
     </div>
     ${students.length === 0 ? emptyState : `<div style="background:white;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,0.06);border:1px solid #F1F5F9;overflow:hidden;">
-      <div style="padding:15px 20px;border-bottom:1px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:14px;font-weight:800;color:#1E293B;">All Students</span>
-        <span style="font-size:12px;font-weight:600;color:#94A3B8;">${selectedName} · ${students.length} student${students.length!==1?'s':''}</span>
+      <div style="padding:15px 20px;border-bottom:1px solid #F1F5F9;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:14px;font-weight:800;color:#1E293B;">All Students</span>
+          <span style="font-size:12px;font-weight:600;color:#94A3B8;">${selectedName} · ${students.length} student${students.length!==1?'s':''}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <button id="ping-all-btn" onclick="pingAllRemaining()" ${students.filter(s=>!s.studiedToday).length===0?'disabled':''} style="padding:7px 14px;border-radius:10px;border:none;background:${students.filter(s=>!s.studiedToday).length>0?'#F59E0B':'#D1D5DB'};color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">PING ALL (${students.filter(s=>!s.studiedToday).length} remaining) 📣</button>
+          <select onchange="if(this.value)scheduleTeacherDailyAutoPing(parseInt(this.value));this.value=''" style="padding:7px 10px;border-radius:8px;border:1px solid #E2E8F0;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;">
+            <option value="">Schedule auto-ping…</option>
+            ${[14,15,16,17,18,19,20].map(h=>`<option value="${h}">${h>12?h-12+'pm':h+'am'}</option>`).join('')}
+          </select>
+          ${STATE._teacherAutoPingTimeout?`<button onclick="cancelTeacherDailyAutoPing()" style="padding:7px 12px;border-radius:8px;border:1.5px solid #EF4444;background:white;color:#EF4444;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">Cancel auto-ping ✕</button>`:''}
+        </div>
       </div>
       ${students.map((s,si) => {
         const col = avatarColors[si%avatarColors.length], bg = avatarBgs[si%avatarBgs.length];
+        const pingBtnId = 'ping-btn-' + s.user_id.replace(/-/g,'');
+        const alreadyPinged = (STATE._teacherPingsSent || {})[s.user_id];
         return `<div style="display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid #F8FAFC;">
-          <div style="width:38px;height:38px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:${col};flex-shrink:0;">${s.name.charAt(0).toUpperCase()}</div>
+          <div style="position:relative;flex-shrink:0;">
+            <div style="width:38px;height:38px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:${col};">${s.name.charAt(0).toUpperCase()}</div>
+            <div style="position:absolute;bottom:0;right:0;width:11px;height:11px;border-radius:50%;background:${s.studiedToday?'#22C55E':'#EF4444'};border:2px solid white;"></div>
+          </div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:14px;font-weight:800;color:#1E293B;">${s.name}</div>
-            <div style="font-size:12px;color:#94A3B8;font-weight:600;">${tierLabel(s.tierFull)} · 🔥${s.streak} · ${s.cards} cards</div>
+            <div style="font-size:12px;color:#94A3B8;font-weight:600;">${tierLabel(s.tierFull)} · 🔥${s.streak} · ${s.cards} cards · ${s.studiedToday?'<span style="color:#16A34A;font-weight:800;">Done today ✓</span>':'<span style="color:#DC2626;font-weight:800;">Not done yet</span>'}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
+            ${!s.studiedToday ? `<button id="${pingBtnId}" onclick="sendTeacherPing('${s.user_id}','${s.name}')" ${alreadyPinged?'disabled':''} style="padding:5px 10px;border-radius:8px;border:none;background:${alreadyPinged?'#22C55E':'#F59E0B'};color:white;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">${alreadyPinged?'SENT ✓':'PING'}</button>` : ''}
             <div style="width:72px;background:#F1F5F9;border-radius:4px;height:6px;overflow:hidden;"><div style="width:${s.accuracy}%;height:100%;background:${ragColor(s.accuracy)};border-radius:4px;"></div></div>
             <span style="min-width:34px;text-align:right;font-size:13px;font-weight:900;color:${ragColor(s.accuracy)};">${s.accuracy}%</span>
           </div>
@@ -17950,9 +18342,13 @@ async function showTeacherDashboard(selectedClass) {
         const safeId = 'sc-' + s.user_id.replace(/-/g,'');
         const topicEntries = Object.entries(s.topics);
         return `<div onclick="toggleStudentCard('${s.user_id}')" style="background:white;border-radius:16px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.06);border:1px solid #F1F5F9;cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;" onmouseover="this.style.boxShadow='0 6px 22px rgba(0,0,0,0.12)';this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='0 2px 10px rgba(0,0,0,0.06)';this.style.transform='none'">
-          <div style="width:56px;height:56px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:${col};margin:0 auto 12px;">${s.name.charAt(0).toUpperCase()}</div>
+          <div style="position:relative;width:56px;margin:0 auto 12px;">
+            <div style="width:56px;height:56px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:${col};">${s.name.charAt(0).toUpperCase()}</div>
+            <div style="position:absolute;bottom:1px;right:1px;width:14px;height:14px;border-radius:50%;background:${s.studiedToday?'#22C55E':'#EF4444'};border:2px solid white;"></div>
+          </div>
           <div style="text-align:center;margin-bottom:12px;">
-            <div style="font-size:14px;font-weight:800;color:#1E293B;margin-bottom:5px;">${s.name}</div>
+            <div style="font-size:14px;font-weight:800;color:#1E293B;margin-bottom:3px;">${s.name}</div>
+            <div style="font-size:11px;font-weight:700;color:${s.studiedToday?'#16A34A':'#DC2626'};margin-bottom:4px;">${s.studiedToday?'Done today ✓':'Not done yet'}</div>
             <span style="background:${bg};color:${col};border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;">${tierLabel(s.tierFull)}</span>
           </div>
           <div style="display:flex;justify-content:center;gap:10px;margin-bottom:12px;font-size:12px;font-weight:700;color:#64748B;">
@@ -17962,9 +18358,10 @@ async function showTeacherDashboard(selectedClass) {
             <div style="width:${s.accuracy}%;height:100%;background:${ragColor(s.accuracy)};border-radius:6px;"></div>
           </div>
           <div style="text-align:center;font-size:13px;font-weight:900;color:${ragColor(s.accuracy)};">${s.accuracy}% accuracy</div>
-          <div style="display:flex;gap:6px;margin-top:12px;">
-            <button onclick="event.stopPropagation();showStudentHistory('${s.user_id}')" style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #E2E8F0;background:white;color:#374151;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">📖 History</button>
-            <button onclick="event.stopPropagation();showStudentDetail('${s.name}','${s.user_id}')" style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #4F46E5;background:#EEF2FF;color:#4F46E5;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⚙️ Settings</button>
+          <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;">
+            <button onclick="event.stopPropagation();showStudentHistory('${s.user_id}')" style="flex:1;min-width:60px;padding:8px 0;border-radius:8px;border:1.5px solid #E2E8F0;background:white;color:#374151;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">📖 History</button>
+            <button onclick="event.stopPropagation();showStudentDetail('${s.name}','${s.user_id}')" style="flex:1;min-width:60px;padding:8px 0;border-radius:8px;border:1.5px solid #4F46E5;background:#EEF2FF;color:#4F46E5;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⚙️ Settings</button>
+            ${!s.studiedToday ? `<button id="${'ping-btn-'+s.user_id.replace(/-/g,'')}" onclick="event.stopPropagation();sendTeacherPing('${s.user_id}','${s.name}')" ${(STATE._teacherPingsSent||{})[s.user_id]?'disabled':''} style="flex:1;min-width:60px;padding:8px 0;border-radius:8px;border:none;background:${(STATE._teacherPingsSent||{})[s.user_id]?'#22C55E':'#F59E0B'};color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">${(STATE._teacherPingsSent||{})[s.user_id]?'SENT ✓':'📣 PING'}</button>` : ''}
           </div>
           <div id="${safeId}" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid #F1F5F9;">
             ${topicEntries.length > 0 ? topicEntries.map(([topic,td]) =>
@@ -18433,9 +18830,7 @@ function showStudentDetail(name, studentUserId) {
       <div class="card" style="padding:12px;">
         <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">🎯 TARGET GRADE</div>
         <div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:10px;">Set this student's target grade — never a ceiling, always a launchpad.</div>
-        <div style="display:flex;gap:6px;">
-          ${buildTargetGradeButtons((STATE.teacherStudents||[]).find(s=>s.user_id===studentUserId)?.target_grade||null,'teacher',studentUserId)}
-        </div>
+        ${buildTargetGradeButtons((STATE.teacherStudents||[]).find(s=>s.user_id===studentUserId)?.target_grade||null,'teacher',studentUserId)}
       </div>` : ''}
       ${studentUserId ? `
       <div class="card" style="padding:12px;">
@@ -18456,9 +18851,15 @@ function showStudentDetail(name, studentUserId) {
           <div id="${lockId}" style="font-size:11px;color:#16A34A;font-weight:700;"></div>
         </div>
       </div>` : ''}
+      ${studentUserId ? `
+      <div class="card" style="padding:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">📨 NOTIFICATION LOG</div>
+        <div id="notif-log-${studentUserId.replace(/-/g,'')}" style="font-size:12px;color:#64748B;">Loading…</div>
+      </div>` : ''}
       <button class="btn btn-ghost btn-full" onclick="closeModal()">Close</button>
     </div>
   `);
+  if (studentUserId) loadStudentNotifLog(studentUserId);
 }
 
 // ============================================================
@@ -19176,7 +19577,7 @@ async function loadUserPaidStatus() {
   if (!user?.token || !user?.id) return;
   try {
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     const profiles = res.ok ? await res.json() : [];
@@ -19195,6 +19596,15 @@ async function loadUserPaidStatus() {
       STATE.user.schedule_locked = p.schedule_locked || false;
       STATE.user.locked_topics   = Array.isArray(p.locked_topics) ? p.locked_topics : [];
       if (p.target_grade != null) STATE.user.target_grade = p.target_grade;
+      STATE.user.dream_job = p.dream_job || null;
+      STATE.user.salary_aspiration = p.salary_aspiration || null;
+      STATE.user.study_blocker = p.study_blocker || null;
+      STATE.user.learner_type = p.learner_type || null;
+      STATE.user.learning_preference = p.learning_preference || null;
+      STATE.user.science_feeling = p.science_feeling || null;
+      STATE.user.tutor_notes = p.tutor_notes || null;
+      STATE.user.exam_dates = p.exam_dates || {};
+      STATE.user.linked_parent_id = p.linked_parent_id || null;
       LS.set('demo_user', STATE.user);
     }
   } catch(e) {}
@@ -19336,6 +19746,8 @@ function getTotalRemainingCards() {
 }
 
 async function fireStudentCompletionNotification() {
+  if (!canSendNotif('completion')) return;
+  recordNotifSent('completion');
   if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
   const name = (STATE.user?.display_name || STATE.user?.name || '').split(' ')[0] || 'there';
   const streak = STATE.user?.streak || 0;
@@ -19362,10 +19774,13 @@ function checkAndFireCompletionNotification() {
   if (active.every(s => getRemainingCards(s) === 0)) {
     STATE._completionNotifFiredToday = true;
     fireStudentCompletionNotification();
+    notifyLinkedParent();
   }
 }
 
 async function checkAndFireStudentReminder() {
+  if (!canSendNotif('reminder')) return;
+  recordNotifSent('reminder');
   if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
   if (getTotalRemainingCards() <= 0) return;
   const name = (STATE.user?.display_name || STATE.user?.name || '').split(' ')[0] || 'there';
@@ -19437,6 +19852,8 @@ async function saveStudentReminderHour(hour) {
 }
 
 async function fireStreakWarningNotification() {
+  if (!canSendNotif('streak-warn')) return;
+  recordNotifSent('streak-warn');
   if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
   if (getTotalRemainingCards() <= 0) return;
   const name = (STATE.user?.display_name || STATE.user?.name || '').split(' ')[0] || 'there';
@@ -19458,6 +19875,8 @@ async function fireStreakWarningNotification() {
 }
 
 async function fireLastChanceNotification() {
+  if (!canSendNotif('last-chance')) return;
+  recordNotifSent('last-chance');
   if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
   if (getTotalRemainingCards() <= 0) return;
   const streak = STATE.user?.streak || 0;
@@ -19871,6 +20290,13 @@ ${renderNavBar('home')}
       </div>
     </div>
     ${new Date().getHours() >= 20 && !studiedToday ? `<div style="background:#FFF7ED;border:1.5px solid #F97316;border-radius:14px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;"><span style="font-size:20px;">⚠️</span><div style="flex:1;font-size:13px;font-weight:800;color:#92400E;">Complete your cards today${streak > 0 ? ' to keep your ' + streak + '-day streak' : ''}!</div><button onclick="startFlashcards()" style="background:#F97316;color:white;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Study →</button></div>` : ''}
+    ${STATE.role === 'student' && getPersonalisationProgress() < 43 ? `<div style="background:linear-gradient(135deg,#EEF2FF,#F0FDF4);border:1.5px solid #A5B4FC;border-radius:14px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="showProfile()">
+      <span style="font-size:20px;">\u2728</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:800;color:#3730A3;">Help your AI Tutor know you better</div>
+        <div style="font-size:12px;color:#6366F1;font-weight:600;">Answer a few quick questions \u2192</div>
+      </div>
+    </div>` : ''}
     ${streak > 0 && !studiedToday ? `<div style="background:linear-gradient(135deg,#DC2626,#F97316);border-radius:16px;padding:18px 20px;margin-bottom:12px;animation:streakPulse 1.5s ease-in-out infinite;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
         <div style="font-size:36px;">🔥</div>
@@ -22089,8 +22515,34 @@ ${renderNavBar('profile')}
     <div class="card" style="margin-bottom:16px;">
       <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🎯 My Target Grade</div>
       <div style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:14px;">Hit your target and we'll push you higher 🚀</div>
-      <div style="display:flex;gap:8px;justify-content:space-between;">
-        ${buildTargetGradeButtons(user.target_grade || null, 'student', null)}
+      ${buildTargetGradeButtons(user.target_grade || null, 'student', null)}
+    </div>
+
+    <!-- Personalise Your Experience -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.pchev').textContent=this.nextElementSibling.style.display==='none'?'\u25BC':'\u25B2'">
+        <div>
+          <div style="font-size:15px;font-weight:800;margin-bottom:2px;">\u2728 Personalise Your Experience</div>
+          <div style="font-size:12px;color:#64748B;font-weight:600;" id="personalise-progress">${getPersonalisationProgress()}% known about you by your AI Tutor</div>
+        </div>
+        <span class="pchev" style="font-size:18px;color:#94A3B8;">\u25BC</span>
+      </div>
+      <div style="display:none;margin-top:16px;border-top:1px solid #F1F5F9;padding-top:14px;">
+        ${buildPersonalisationSection(user)}
+      </div>
+    </div>
+
+    <!-- Exam Dates -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.edchev').textContent=this.nextElementSibling.style.display==='none'?'\u25BC':'\u25B2'">
+        <div>
+          <div style="font-size:15px;font-weight:800;margin-bottom:2px;">📅 My Exam Dates</div>
+          <div style="font-size:12px;color:#64748B;font-weight:600;">Help your AI Tutor focus as exams approach</div>
+        </div>
+        <span class="edchev" style="font-size:18px;color:#94A3B8;">\u25BC</span>
+      </div>
+      <div style="display:none;margin-top:14px;border-top:1px solid #F1F5F9;padding-top:12px;">
+        ${buildExamDatesSection(user)}
       </div>
     </div>
 
@@ -22747,7 +23199,7 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
 
     const ids = profiles.map(p => p.user_id).join(',');
     const hRes = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=in.(' + ids + ')&select=user_id,subject,topic_name,grade',
+      CONFIG.SUPABASE_URL + '/rest/v1/study_history?user_id=in.(' + ids + ')&select=user_id,subject,topic_name,grade,created_at',
       { headers }
     );
     const history = hRes.ok ? await hRes.json() : [];
@@ -22787,6 +23239,7 @@ async function loadStudentsForTeacher(selectedClassId, classesArr, token) {
         phys_freq: p.phys_frequency || 'daily',
         schedule_locked: p.schedule_locked || false,
         target_grade: p.target_grade ?? null,
+        studiedToday: sh.some(function(h) { const d = h.created_at ? h.created_at.slice(0,10) : ''; return d === new Date().toISOString().slice(0,10); }),
       };
     });
   } catch(e) {
@@ -22849,19 +23302,35 @@ async function showTeacherDashboard(selectedClass) {
         </div>`).join('')}
     </div>
     ${students.length === 0 ? emptyState : `<div style="background:white;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,0.06);border:1px solid #F1F5F9;overflow:hidden;">
-      <div style="padding:15px 20px;border-bottom:1px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:14px;font-weight:800;color:#1E293B;">All Students</span>
-        <span style="font-size:12px;font-weight:600;color:#94A3B8;">${selectedName} · ${students.length} student${students.length!==1?'s':''}</span>
+      <div style="padding:15px 20px;border-bottom:1px solid #F1F5F9;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:14px;font-weight:800;color:#1E293B;">All Students</span>
+          <span style="font-size:12px;font-weight:600;color:#94A3B8;">${selectedName} · ${students.length} student${students.length!==1?'s':''}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <button id="ping-all-btn" onclick="pingAllRemaining()" ${students.filter(s=>!s.studiedToday).length===0?'disabled':''} style="padding:7px 14px;border-radius:10px;border:none;background:${students.filter(s=>!s.studiedToday).length>0?'#F59E0B':'#D1D5DB'};color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">PING ALL (${students.filter(s=>!s.studiedToday).length} remaining) 📣</button>
+          <select onchange="if(this.value)scheduleTeacherDailyAutoPing(parseInt(this.value));this.value=''" style="padding:7px 10px;border-radius:8px;border:1px solid #E2E8F0;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;">
+            <option value="">Schedule auto-ping…</option>
+            ${[14,15,16,17,18,19,20].map(h=>`<option value="${h}">${h>12?h-12+'pm':h+'am'}</option>`).join('')}
+          </select>
+          ${STATE._teacherAutoPingTimeout?`<button onclick="cancelTeacherDailyAutoPing()" style="padding:7px 12px;border-radius:8px;border:1.5px solid #EF4444;background:white;color:#EF4444;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">Cancel auto-ping ✕</button>`:''}
+        </div>
       </div>
       ${students.map((s,si) => {
         const col = avatarColors[si%avatarColors.length], bg = avatarBgs[si%avatarBgs.length];
+        const pingBtnId = 'ping-btn-' + s.user_id.replace(/-/g,'');
+        const alreadyPinged = (STATE._teacherPingsSent || {})[s.user_id];
         return `<div style="display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid #F8FAFC;">
-          <div style="width:38px;height:38px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:${col};flex-shrink:0;">${s.name.charAt(0).toUpperCase()}</div>
+          <div style="position:relative;flex-shrink:0;">
+            <div style="width:38px;height:38px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:${col};">${s.name.charAt(0).toUpperCase()}</div>
+            <div style="position:absolute;bottom:0;right:0;width:11px;height:11px;border-radius:50%;background:${s.studiedToday?'#22C55E':'#EF4444'};border:2px solid white;"></div>
+          </div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:14px;font-weight:800;color:#1E293B;">${s.name}</div>
-            <div style="font-size:12px;color:#94A3B8;font-weight:600;">${tierLabel(s.tierFull)} · 🔥${s.streak} · ${s.cards} cards</div>
+            <div style="font-size:12px;color:#94A3B8;font-weight:600;">${tierLabel(s.tierFull)} · 🔥${s.streak} · ${s.cards} cards · ${s.studiedToday?'<span style="color:#16A34A;font-weight:800;">Done today ✓</span>':'<span style="color:#DC2626;font-weight:800;">Not done yet</span>'}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
+            ${!s.studiedToday ? `<button id="${pingBtnId}" onclick="sendTeacherPing('${s.user_id}','${s.name}')" ${alreadyPinged?'disabled':''} style="padding:5px 10px;border-radius:8px;border:none;background:${alreadyPinged?'#22C55E':'#F59E0B'};color:white;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">${alreadyPinged?'SENT ✓':'PING'}</button>` : ''}
             <div style="width:72px;background:#F1F5F9;border-radius:4px;height:6px;overflow:hidden;"><div style="width:${s.accuracy}%;height:100%;background:${ragColor(s.accuracy)};border-radius:4px;"></div></div>
             <span style="min-width:34px;text-align:right;font-size:13px;font-weight:900;color:${ragColor(s.accuracy)};">${s.accuracy}%</span>
           </div>
@@ -22910,9 +23379,13 @@ async function showTeacherDashboard(selectedClass) {
         const safeId = 'sc-' + s.user_id.replace(/-/g,'');
         const topicEntries = Object.entries(s.topics);
         return `<div onclick="toggleStudentCard('${s.user_id}')" style="background:white;border-radius:16px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.06);border:1px solid #F1F5F9;cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;" onmouseover="this.style.boxShadow='0 6px 22px rgba(0,0,0,0.12)';this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='0 2px 10px rgba(0,0,0,0.06)';this.style.transform='none'">
-          <div style="width:56px;height:56px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:${col};margin:0 auto 12px;">${s.name.charAt(0).toUpperCase()}</div>
+          <div style="position:relative;width:56px;margin:0 auto 12px;">
+            <div style="width:56px;height:56px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:${col};">${s.name.charAt(0).toUpperCase()}</div>
+            <div style="position:absolute;bottom:1px;right:1px;width:14px;height:14px;border-radius:50%;background:${s.studiedToday?'#22C55E':'#EF4444'};border:2px solid white;"></div>
+          </div>
           <div style="text-align:center;margin-bottom:12px;">
-            <div style="font-size:14px;font-weight:800;color:#1E293B;margin-bottom:5px;">${s.name}</div>
+            <div style="font-size:14px;font-weight:800;color:#1E293B;margin-bottom:3px;">${s.name}</div>
+            <div style="font-size:11px;font-weight:700;color:${s.studiedToday?'#16A34A':'#DC2626'};margin-bottom:4px;">${s.studiedToday?'Done today ✓':'Not done yet'}</div>
             <span style="background:${bg};color:${col};border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;">${tierLabel(s.tierFull)}</span>
           </div>
           <div style="display:flex;justify-content:center;gap:10px;margin-bottom:12px;font-size:12px;font-weight:700;color:#64748B;">
@@ -22922,9 +23395,10 @@ async function showTeacherDashboard(selectedClass) {
             <div style="width:${s.accuracy}%;height:100%;background:${ragColor(s.accuracy)};border-radius:6px;"></div>
           </div>
           <div style="text-align:center;font-size:13px;font-weight:900;color:${ragColor(s.accuracy)};">${s.accuracy}% accuracy</div>
-          <div style="display:flex;gap:6px;margin-top:12px;">
-            <button onclick="event.stopPropagation();showStudentHistory('${s.user_id}')" style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #E2E8F0;background:white;color:#374151;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">📖 History</button>
-            <button onclick="event.stopPropagation();showStudentDetail('${s.name}','${s.user_id}')" style="flex:1;padding:8px 0;border-radius:8px;border:1.5px solid #4F46E5;background:#EEF2FF;color:#4F46E5;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⚙️ Settings</button>
+          <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;">
+            <button onclick="event.stopPropagation();showStudentHistory('${s.user_id}')" style="flex:1;min-width:60px;padding:8px 0;border-radius:8px;border:1.5px solid #E2E8F0;background:white;color:#374151;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">📖 History</button>
+            <button onclick="event.stopPropagation();showStudentDetail('${s.name}','${s.user_id}')" style="flex:1;min-width:60px;padding:8px 0;border-radius:8px;border:1.5px solid #4F46E5;background:#EEF2FF;color:#4F46E5;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⚙️ Settings</button>
+            ${!s.studiedToday ? `<button id="${'ping-btn-'+s.user_id.replace(/-/g,'')}" onclick="event.stopPropagation();sendTeacherPing('${s.user_id}','${s.name}')" ${(STATE._teacherPingsSent||{})[s.user_id]?'disabled':''} style="flex:1;min-width:60px;padding:8px 0;border-radius:8px;border:none;background:${(STATE._teacherPingsSent||{})[s.user_id]?'#22C55E':'#F59E0B'};color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">${(STATE._teacherPingsSent||{})[s.user_id]?'SENT ✓':'📣 PING'}</button>` : ''}
           </div>
           <div id="${safeId}" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid #F1F5F9;">
             ${topicEntries.length > 0 ? topicEntries.map(([topic,td]) =>
@@ -23393,9 +23867,7 @@ function showStudentDetail(name, studentUserId) {
       <div class="card" style="padding:12px;">
         <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">🎯 TARGET GRADE</div>
         <div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:10px;">Set this student's target grade — never a ceiling, always a launchpad.</div>
-        <div style="display:flex;gap:6px;">
-          ${buildTargetGradeButtons((STATE.teacherStudents||[]).find(s=>s.user_id===studentUserId)?.target_grade||null,'teacher',studentUserId)}
-        </div>
+        ${buildTargetGradeButtons((STATE.teacherStudents||[]).find(s=>s.user_id===studentUserId)?.target_grade||null,'teacher',studentUserId)}
       </div>` : ''}
       ${studentUserId ? `
       <div class="card" style="padding:12px;">
@@ -23416,9 +23888,15 @@ function showStudentDetail(name, studentUserId) {
           <div id="${lockId}" style="font-size:11px;color:#16A34A;font-weight:700;"></div>
         </div>
       </div>` : ''}
+      ${studentUserId ? `
+      <div class="card" style="padding:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">📨 NOTIFICATION LOG</div>
+        <div id="notif-log-${studentUserId.replace(/-/g,'')}" style="font-size:12px;color:#64748B;">Loading…</div>
+      </div>` : ''}
       <button class="btn btn-ghost btn-full" onclick="closeModal()">Close</button>
     </div>
   `);
+  if (studentUserId) loadStudentNotifLog(studentUserId);
 }
 
 
@@ -24572,8 +25050,44 @@ function buildParentProfileTabHTML(user, children, activeChildId) {
     h += '<div style="background:white;border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid #E2E8F0;box-shadow:0 1px 6px rgba(0,0,0,.06);">';
     h += '<div style="font-size:11px;font-weight:800;color:#64748B;letter-spacing:.08em;margin-bottom:10px;">TARGET GRADE</div>';
     h += '<div style="font-size:13px;color:#64748B;font-weight:600;margin-bottom:12px;line-height:1.5;">Set ' + childGradeFirstName + '\'s target grade. Hit the target and we\'ll push higher 🚀</div>';
-    h += '<div style="display:flex;gap:8px;">' + buildTargetGradeButtons(curGrade, 'parent', childGradeId) + '</div>';
+    h += buildTargetGradeButtons(curGrade, 'parent', childGradeId);
     h += '</div>';
+  }
+
+  // ── About My Child ──
+  if (childGradeId) {
+    h += '<div style="background:white;border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid #E2E8F0;box-shadow:0 1px 6px rgba(0,0,0,.06);">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">';
+    h += '<div><div style="font-size:15px;font-weight:800;margin-bottom:2px;">\u{1F31F} About My Child</div>';
+    h += '<div style="font-size:12px;color:#64748B;font-weight:600;">Help us support your child better</div></div>';
+    h += '<span style="font-size:18px;color:#94A3B8;">\u25BC</span></div>';
+    h += '<div style="display:none;margin-top:14px;border-top:1px solid #F1F5F9;padding-top:12px;">';
+    // Q1: Goal
+    const goalOpts = [["Pass their GCSEs \u{1F393}","pass"],["Aim for Grade 7+ \u{1F3AF}","grade7"],["Get into sixth form \u{1F3AB}","sixthform"],["Build confidence \u{1F4AA}","confidence"],["Follow their passion \u2764\uFE0F","passion"]];
+    h += '<div style="margin-bottom:16px;">';
+    h += '<div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px;">What is your main goal for your child in science?</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    goalOpts.forEach(function([label,val]) {
+      const active = user.parent_goal === val;
+      h += '<button onclick="saveParentField(\'parent_goal\',\'' + val + '\')" style="padding:6px 12px;border-radius:20px;border:1.5px solid ' + (active?'#7C3AED':'#E2E8F0') + ';background:' + (active?'#7C3AED':'white') + ';color:' + (active?'white':'#374151') + ';font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">' + label + '</button>';
+    });
+    h += '</div></div>';
+    // Q2: Involvement
+    const invOpts = [["Very involved \u{1F91D}","very"],["Check in weekly \u{1F4C5}","weekly"],["They prefer to lead \u{1F393}","independent"],["Just getting started \u{1F331}","starting"]];
+    h += '<div style="margin-bottom:16px;">';
+    h += '<div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px;">How involved are you in their daily revision?</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    invOpts.forEach(function([label,val]) {
+      const active = user.parent_involvement === val;
+      h += '<button onclick="saveParentField(\'parent_involvement\',\'' + val + '\')" style="padding:6px 12px;border-radius:20px;border:1.5px solid ' + (active?'#7C3AED':'#E2E8F0') + ';background:' + (active?'#7C3AED':'white') + ';color:' + (active?'white':'#374151') + ';font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">' + label + '</button>';
+    });
+    h += '</div></div>';
+    // Q3: Notes
+    h += '<div>';
+    h += '<div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:6px;">Anything else we should know? \u{1F4DD}</div>';
+    h += '<textarea id="parent-notes-input" placeholder="e.g. They have dyslexia, or they love space..." style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #E2E8F0;font-size:13px;font-family:inherit;resize:vertical;min-height:70px;box-sizing:border-box;" onblur="if(this.value.trim())saveParentField(\'parent_notes\',this.value.trim())">' + (user.parent_notes || '') + '</textarea>';
+    h += '</div>';
+    h += '</div></div>';
   }
 
   // ── Notifications section ──
