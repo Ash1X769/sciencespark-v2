@@ -15167,7 +15167,7 @@ function renderFlashcard() {
 
     <div id="answer-sec" style="display:none;">
       <div class="card" style="padding:16px;">
-        <div style="font-size:11px;font-style:italic;color:#94A3B8;font-weight:600;line-height:1.4;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #F1F5F9;">Q: ${questionHTML}</div>
+        <div id="answer-question-echo" style="font-size:13px;color:#64748B;font-style:italic;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #E2E8F0;"></div>
         <div class="ans-lbl">✅ Answer</div>
         <ul class="ans-list">${answerBullets}</ul>
       </div>
@@ -15213,6 +15213,10 @@ function revealFlashcardAnswer() {
     answerSec.style.animation = 'cardRevealIn 0.28s ease forwards';
   }
   if (ratingWrap) ratingWrap.style.display = 'block';
+  const card = STATE.cardQueue[STATE.currentCardIndex];
+  const qText = card?.q || card?.question || '';
+  const qEcho = document.getElementById('answer-question-echo');
+  if (qEcho && qText) qEcho.innerHTML = bold(qText);
 }
 
 function toggleExamCard() {
@@ -20013,7 +20017,7 @@ function renderFlashcard() {
 
     <div id="answer-sec" style="display:none;">
       <div class="card" style="padding:16px;">
-        <div style="font-size:11px;font-style:italic;color:#94A3B8;font-weight:600;line-height:1.4;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #F1F5F9;">Q: ${questionHTML}</div>
+        <div id="answer-question-echo" style="font-size:13px;color:#64748B;font-style:italic;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #E2E8F0;"></div>
         <div class="ans-lbl">✅ Answer</div>
         <ul class="ans-list">${answerBullets}</ul>
       </div>
@@ -20059,6 +20063,10 @@ function revealFlashcardAnswer() {
     answerSec.style.animation = 'cardRevealIn 0.28s ease forwards';
   }
   if (ratingWrap) ratingWrap.style.display = 'block';
+  const card = STATE.cardQueue[STATE.currentCardIndex];
+  const qText = card?.q || card?.question || '';
+  const qEcho = document.getElementById('answer-question-echo');
+  if (qEcho && qText) qEcho.innerHTML = bold(qText);
 }
 
 function toggleExamCard() {
