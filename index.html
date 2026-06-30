@@ -1825,9 +1825,9 @@ textarea.input { resize: vertical; min-height: 100px; }
 .feed-btn:hover { background: rgba(0,0,0,0.05); }
 .feed-btn.saved { border-color: #7C3AED; color: #7C3AED; }
 .insight-badge { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #EF4444; margin-left: 5px; vertical-align: middle; position: relative; top: -1px; }
-/* ── Student Revision Spark ────────────────────────────────────────────────── */
-.spark-screen { min-height: 100vh; background: #F0FDF4; padding-bottom: 100px; }
-.spark-hdr { background: linear-gradient(135deg,#16A34A,#15803D); padding: 22px 20px 18px; color: white; display: flex; align-items: center; gap: 12px; }
+/* ── Student StudyCoach ────────────────────────────────────────────────── */
+.studycoach-screen { min-height: 100vh; background: #F0FDF4; padding-bottom: 100px; }
+.studycoach-hdr { background: linear-gradient(135deg,#16A34A,#15803D); padding: 22px 20px 18px; color: white; display: flex; align-items: center; gap: 12px; }
 
   /* ─── DEEP DIVE / AQA EXAM PAPER ─── */
   .aqa-paper {
@@ -14705,6 +14705,21 @@ async function afterLogin(startScreen) {
   else { showParentPortal(); setTimeout(requestPushPermission, 1500); }
 }
 
+const sessionStartMessages = [
+  "Let's master this! 🚀",
+  "Time to level up! 📈",
+  "Let's make this click! 🧠",
+  "Ready to learn? Let's go! 🔥"
+];
+let _lastSessionMsgIdx = -1;
+function getSessionStartMessage() {
+  let idx;
+  do { idx = Math.floor(Math.random() * sessionStartMessages.length); }
+  while (idx === _lastSessionMsgIdx && sessionStartMessages.length > 1);
+  _lastSessionMsgIdx = idx;
+  return sessionStartMessages[idx];
+}
+
 function saveScreen(name) {
   LS.set('last_screen', name);
 }
@@ -15418,7 +15433,7 @@ ${renderNavBar('home')}
   <div id="ping-banner-student"></div>
   <div class="home-content">
     <div style="text-align:center;padding:16px 20px 12px;">
-      <div style="font-size:24px;font-weight:900;margin-bottom:6px;">Let's spark some learning! ⚡</div>
+      <div style="font-size:24px;font-weight:900;margin-bottom:6px;">${getSessionStartMessage()}</div>
       <div style="font-size:14px;color:#64748B;font-weight:600;">Welcome back, ${firstName}! Keep building that habit.</div>
     </div>
     <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
@@ -15492,10 +15507,10 @@ ${renderNavBar('home')}
       </div>
       <div style="font-size:20px;color:rgba(255,255,255,0.7);">→</div>
     </div>
-    <div onclick="showRevisionSparkFeed()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
+    <div onclick="showStudyCoachFeed()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
       <div style="font-size:32px;">⚡</div>
       <div style="flex:1;">
-        <div style="font-size:16px;font-weight:900;color:white;">Revision Spark</div>
+        <div style="font-size:16px;font-weight:900;color:white;">StudyCoach</div>
         <div style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:600;">Brain science that actually helps you revise</div>
       </div>
       <div style="font-size:20px;color:rgba(255,255,255,0.7);">→</div>
@@ -17292,7 +17307,7 @@ function showLevelUpCelebration(newLevel, callback) {
     <div style="font-size:80px;margin-bottom:12px;">⬆️</div>
     <div style="font-size:38px;font-weight:900;color:white;letter-spacing:0.02em;margin-bottom:6px;">LEVEL UP!</div>
     <div style="font-size:24px;font-weight:900;color:rgba(255,255,255,0.92);margin-bottom:10px;">Level ${newLevel} unlocked 🎉</div>
-    <div style="font-size:15px;color:rgba(255,255,255,0.75);font-weight:700;">Keep sparking — you're on fire! 🔥</div>
+    <div style="font-size:15px;color:rgba(255,255,255,0.75);font-weight:700;">Keep going — you're on fire! 🔥</div>
   `;
   document.body.appendChild(overlay);
   launchConfetti();
@@ -20548,7 +20563,7 @@ ${renderNavBar('home')}
   <div id="ping-banner-student"></div>
   <div class="home-content">
     <div style="text-align:center;padding:16px 20px 12px;">
-      <div style="font-size:24px;font-weight:900;margin-bottom:6px;">Let's spark some learning! ⚡</div>
+      <div style="font-size:24px;font-weight:900;margin-bottom:6px;">${getSessionStartMessage()}</div>
       <div style="font-size:14px;color:#64748B;font-weight:600;">Welcome back, ${firstName}! Keep building that habit.</div>
     </div>
     <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
@@ -20622,10 +20637,10 @@ ${renderNavBar('home')}
       </div>
       <div style="font-size:20px;color:rgba(255,255,255,0.7);">→</div>
     </div>
-    <div onclick="showRevisionSparkFeed()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
+    <div onclick="showStudyCoachFeed()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
       <div style="font-size:32px;">⚡</div>
       <div style="flex:1;">
-        <div style="font-size:16px;font-weight:900;color:white;">Revision Spark</div>
+        <div style="font-size:16px;font-weight:900;color:white;">StudyCoach</div>
         <div style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:600;">Brain science that actually helps you revise</div>
       </div>
       <div style="font-size:20px;color:rgba(255,255,255,0.7);">→</div>
@@ -22500,7 +22515,7 @@ function showLevelUpCelebration(newLevel, callback) {
     <div style="font-size:80px;margin-bottom:12px;">⬆️</div>
     <div style="font-size:38px;font-weight:900;color:white;letter-spacing:0.02em;margin-bottom:6px;">LEVEL UP!</div>
     <div style="font-size:24px;font-weight:900;color:rgba(255,255,255,0.92);margin-bottom:10px;">Level ${newLevel} unlocked 🎉</div>
-    <div style="font-size:15px;color:rgba(255,255,255,0.75);font-weight:700;">Keep sparking — you're on fire! 🔥</div>
+    <div style="font-size:15px;color:rgba(255,255,255,0.75);font-weight:700;">Keep going — you're on fire! 🔥</div>
   `;
   document.body.appendChild(overlay);
   launchConfetti();
@@ -24753,7 +24768,7 @@ async function loadParentFeedContent(_, showSavedOnly) {
 }
 
 async function loadStudentFeedContent(showSavedOnly) {
-  const el = document.getElementById('spark-feed-list');
+  const el = document.getElementById('studycoach-feed-list');
   if (!el) return;
   el.innerHTML = '<div style="padding:20px;text-align:center;color:#15803D;font-weight:700;">Loading... ✨</div>';
 
@@ -24790,15 +24805,15 @@ async function loadStudentFeedContent(showSavedOnly) {
   const displayTips = showSavedOnly ? tips.filter(function(t) { return savedSet.has(t.id); }) : tips;
 
   if (displayTips.length === 0) {
-    el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#15803D;"><div style="font-size:36px;margin-bottom:12px;">🔖</div><div style="font-size:15px;font-weight:700;">No saved sparks yet</div><div style="font-size:13px;margin-top:6px;">Tap 🔖 on any card to save it.</div></div>';
+    el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#15803D;"><div style="font-size:36px;margin-bottom:12px;">🔖</div><div style="font-size:15px;font-weight:700;">No saved tips yet</div><div style="font-size:13px;margin-top:6px;">Tap 🔖 on any card to save it.</div></div>';
     return;
   }
 
   el.innerHTML = displayTips.map(function(t) {
     const isSaved = savedSet.has(t.id);
     const shareText = (t.headline + '\n\n' + t.body).replace(/'/g, '&#39;');
-    return '<div class="feed-card" id="spark-' + t.id + '" style="background:#F0FDF4;">'
-      + '<div class="feed-hdr-green">Revision Spark ⚡</div>'
+    return '<div class="feed-card" id="studycoach-' + t.id + '" style="background:#F0FDF4;">'
+      + '<div class="feed-hdr-green">StudyCoach 💡</div>'
       + '<div class="feed-card-body">'
       + '<div class="feed-card-headline" style="color:#14532D;">' + t.headline + '</div>'
       + '<div class="feed-card-text" style="color:#166534;">' + t.body + '</div>'
@@ -24836,19 +24851,19 @@ async function toggleStudentBookmark(tipId, btn) {
     }).catch(function() {});
 }
 
-// ── Student Revision Spark Feed screen ───────────────────────────────────────
-function showRevisionSparkFeed() {
-  STATE.screen = 'spark'; saveScreen('spark');
-  const html = '<div class="spark-screen">'
-    + '<div class="spark-hdr">'
+// ── Student StudyCoach Feed screen ───────────────────────────────────────
+function showStudyCoachFeed() {
+  STATE.screen = 'studycoach'; saveScreen('studycoach');
+  const html = '<div class="studycoach-screen">'
+    + '<div class="studycoach-hdr">'
     + '<button onclick="showHome()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">← Back</button>'
-    + '<div style="flex:1;"><div style="font-size:18px;font-weight:900;">Revision Spark ⚡</div><div style="font-size:12px;opacity:0.85;font-weight:600;">Brain science for GCSE students</div></div>'
+    + '<div style="flex:1;"><div style="font-size:18px;font-weight:900;">StudyCoach 💡</div><div style="font-size:12px;opacity:0.85;font-weight:600;">Brain science for GCSE students</div></div>'
     + '</div>'
     + '<div style="display:flex;gap:8px;padding:16px 20px 8px;">'
-    + '<button onclick="loadStudentFeedContent(false)" style="flex:1;padding:9px;border-radius:8px;border:none;background:#16A34A;color:white;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">All Sparks</button>'
+    + '<button onclick="loadStudentFeedContent(false)" style="flex:1;padding:9px;border-radius:8px;border:none;background:#16A34A;color:white;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">All Tips</button>'
     + '<button onclick="loadStudentFeedContent(true)" style="flex:1;padding:9px;border-radius:8px;border:1.5px solid #16A34A;background:transparent;color:#15803D;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">🔖 Saved</button>'
     + '</div>'
-    + '<div id="spark-feed-list" style="padding:0 20px;"></div>'
+    + '<div id="studycoach-feed-list" style="padding:0 20px;"></div>'
     + '</div>';
   render(html);
   loadStudentFeedContent(false);
