@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sciencespark-v2-3';
+const CACHE_NAME = 'grademastery-v2-3';
 const PRECACHE = [
   '/',
   '/index.html',
@@ -43,11 +43,11 @@ self.addEventListener('fetch', event => {
 });
 
 self.addEventListener('push', event => {
-  let data = { title: 'ScienceSpark', body: 'Time to study! 📚' };
+  let data = { title: 'GradeMastery', body: 'Time to study! 📚' };
   try { data = JSON.parse(event.data?.text() || '{}'); } catch(_) {}
   const targetUrl = data.url || (self.location.origin + '/');
   event.waitUntil(
-    self.registration.showNotification(data.title || 'ScienceSpark', {
+    self.registration.showNotification(data.title || 'GradeMastery', {
       body: data.body || '',
       icon: data.icon || '/icon-192.png',
       badge: '/icon-192.png',
