@@ -1910,18 +1910,19 @@ textarea.input { resize: vertical; min-height: 100px; }
   /* Gap input for Fill the Gaps */
   .gap-input {
     display: inline-block;
-    border: none;
-    border-bottom: 2px solid var(--ss-blue);
-    background: transparent;
+    border: 2px solid var(--ss-blue);
+    border-radius: 6px;
+    background: #EFF6FF;
     font-family: inherit;
     font-size: 14px;
     font-weight: 700;
     text-align: center;
     outline: none;
-    padding: 2px 4px;
+    padding: 3px 8px;
     min-width: 60px;
-    vertical-align: baseline;
-    transition: border-color 0.2s;
+    vertical-align: middle;
+    margin: 0 2px;
+    transition: border-color 0.2s, background 0.2s;
   }
   .gap-input.correct { border-color: var(--ss-green); background: #F0FDF4; }
   .gap-input.wrong { border-color: var(--ss-red); background: #FFF0F0; }
@@ -26801,9 +26802,9 @@ function showDeepDiveFillGaps() {
     </div>
     <div id="gaps-score-bar" style="display:none;background:#F8FAFC;border-radius:10px;padding:12px;margin-bottom:12px;text-align:center;"></div>
     ${gapItems.map((item,i) => `
-    <div style="margin-bottom:16px;background:#FAFAFA;border-radius:12px;padding:14px;">
-      <div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin-bottom:6px;">Q: ${item.q}</div>
-      <div style="font-size:14px;font-weight:600;line-height:2.2;color:var(--text);">${item.text}</div>
+    <div style="margin-bottom:20px;background:#FAFAFA;border-radius:12px;padding:16px 14px;border-left:3px solid var(--ss-blue);">
+      <div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.03em;">Q: ${item.q}</div>
+      <div style="font-size:14px;font-weight:600;line-height:2.8;color:var(--text);">${item.text}</div>
     </div>`).join('')}
   </div>
   <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
@@ -26842,11 +26843,38 @@ function copyKeyword(el, term, ev) {
   }
 }
 
+function levenshtein(a, b) {
+  const dp = Array.from({length: a.length + 1}, (_, i) => [i]);
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[a.length][b.length];
+}
+
+function gapAnswerMatches(given, correct) {
+  given = given.toLowerCase().trim();
+  correct = correct.toLowerCase().trim();
+  if (!given) return false;
+  if (given === correct) return true;
+  // Accept if student typed a complete prefix (at least 4 chars or the whole word)
+  if (correct.startsWith(given) && given.length >= Math.min(4, correct.length)) return true;
+  // Levenshtein: 1 typo for short words, 2 for medium, 3 for long
+  if (given.length >= 3 && correct.length >= 3) {
+    const threshold = correct.length <= 5 ? 1 : correct.length <= 9 ? 2 : 3;
+    if (levenshtein(given, correct) <= threshold) return true;
+  }
+  // Plural / stem tolerance
+  const stem = s => s.replace(/tion$/, '').replace(/sion$/, '').replace(/ies$/, 'y').replace(/(?:es|s)$/, '').replace(/ing$/, '').replace(/ed$/, '');
+  if (stem(given).length >= 3 && stem(given) === stem(correct)) return true;
+  return false;
+}
+
 function checkGapAnswer(input) {
   const given = input.value.toLowerCase().trim();
   const correct = (input.dataset.answer || '').toLowerCase().trim();
   if (!given) { input.classList.remove('correct','wrong'); return; }
-  if (given === correct || correct.startsWith(given) || given.startsWith(correct.slice(0,4))) {
+  if (gapAnswerMatches(given, correct)) {
     input.classList.add('correct'); input.classList.remove('wrong');
   } else {
     input.classList.add('wrong'); input.classList.remove('correct');
@@ -26859,7 +26887,7 @@ function checkAllGaps() {
   inputs.forEach(inp => {
     const given = inp.value.toLowerCase().trim();
     const answer = (inp.dataset.answer || '').toLowerCase().trim();
-    if (given === answer || (answer.length > 3 && given.length > 2 && answer.startsWith(given.slice(0,4)))) {
+    if (gapAnswerMatches(given, answer)) {
       inp.classList.add('correct'); inp.classList.remove('wrong'); correct++;
     } else if (given) {
       inp.classList.add('wrong'); inp.classList.remove('correct');
@@ -26939,17 +26967,21 @@ async function submitBrainDump() {
 
   let result = { facts_covered: [], facts_missed: [], score: 0, total: STATE.cardQueue.length, feedback: '' };
   try {
-    const aiResult = await gradeAnswer(
-      'Brain dump: student wrote everything they remember about ' + (STATE.cardQueue[0]?.topic_name || 'this topic') + '. Reference content: ' + referenceContent.slice(0, 800),
-      referenceContent,
-      text,
-      0
-    );
-    const score = Math.round((STATE.cardQueue.length * (aiResult.grade === 'easy' ? 0.9 : aiResult.grade === 'good' ? 0.7 : aiResult.grade === 'hard' ? 0.5 : 0.3)));
-    result.score = score;
-    result.feedback = aiResult.feedback || 'Good effort!';
+    const topicName = STATE.cardQueue[0]?.topic_name || 'this topic';
+    const bdSystem = `You are a supportive AQA GCSE science tutor marking a student's brain dump. The student wrote from memory without notes.
+Return ONLY valid JSON: {"score_pct": number_0_to_100, "feedback": "string"}
+The feedback MUST be 3-4 sentences minimum and MUST include all of: (1) name at least 2 specific facts the student got right, quoting or paraphrasing what they actually wrote; (2) name 1-2 key facts from the reference that they missed or got wrong; (3) note whether any answers were partially correct or showed partial understanding; (4) end with one specific encouraging comment that references their actual content — never generic phrases like "Good effort!" or "Well done!".`;
+    const bdUser = `Topic: ${topicName}
+Reference facts (what they should know): ${referenceContent.slice(0, 1200)}
+Student's brain dump: ${text}`;
+    const raw = await callClaude(bdSystem, bdUser, 500);
+    let aiResult;
+    try { aiResult = JSON.parse(raw); } catch { aiResult = null; }
+    const scorePct = (aiResult?.score_pct != null) ? Math.max(0, Math.min(100, aiResult.score_pct)) : 50;
+    result.score = Math.round(STATE.cardQueue.length * scorePct / 100);
+    result.feedback = aiResult?.feedback || 'You recalled some content from this topic — well done for trying without notes! Review the flashcard answers to see what you missed, then test yourself again. Repeated retrieval is how it sticks. 🧠';
   } catch(e) {
-    result.feedback = 'Could not mark right now — but great effort! Move on to flashcards.';
+    result.feedback = 'Could not reach the AI marker right now. Review the flashcards to see what you remembered correctly — and what to focus on next time. 🧠';
   }
 
   if (STATE.deepDiveResults) { STATE.deepDiveResults.brainDumpScore = result.score; }
