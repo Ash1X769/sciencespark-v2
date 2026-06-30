@@ -14733,7 +14733,7 @@ async function loadUserPaidStatus() {
   if (!user?.token || !user?.id) return;
   try {
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id,tier',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     const profiles = res.ok ? await res.json() : [];
@@ -14761,6 +14761,7 @@ async function loadUserPaidStatus() {
       STATE.user.tutor_notes = p.tutor_notes || null;
       STATE.user.exam_dates = p.exam_dates || {};
       STATE.user.linked_parent_id = p.linked_parent_id || null;
+      if (p.tier) STATE.user.tier = p.tier;
       LS.set('demo_user', STATE.user);
     }
   } catch(e) {}
@@ -15404,6 +15405,11 @@ function showHome() {
       statusLine  = '<div style="font-size:12px;color:#16A34A;font-weight:700;margin-top:3px;">Complete for today ✓</div>';
       cardOnclick = 'startFlashcardsForSubject(\'' + s.subj + '\')';
       cardOpacity = '';
+    } else if (s.due === 0) {
+      badge       = '';
+      statusLine  = '<div style="font-size:12px;color:#94A3B8;font-weight:700;margin-top:3px;">All caught up ✓</div>';
+      cardOnclick = '';
+      cardOpacity = 'opacity:0.55;cursor:default;';
     } else {
       badge       = '<div style="position:absolute;top:10px;right:10px;background:#EF4444;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;box-shadow:0 2px 6px rgba(239,68,68,0.4);">' + s.due + '</div>';
       statusLine  = partiallyDone
@@ -19863,7 +19869,7 @@ async function loadUserPaidStatus() {
   if (!user?.token || !user?.id) return;
   try {
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id,tier',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     const profiles = res.ok ? await res.json() : [];
@@ -19891,6 +19897,7 @@ async function loadUserPaidStatus() {
       STATE.user.tutor_notes = p.tutor_notes || null;
       STATE.user.exam_dates = p.exam_dates || {};
       STATE.user.linked_parent_id = p.linked_parent_id || null;
+      if (p.tier) STATE.user.tier = p.tier;
       LS.set('demo_user', STATE.user);
     }
   } catch(e) {}
@@ -20534,6 +20541,11 @@ function showHome() {
       statusLine  = '<div style="font-size:12px;color:#16A34A;font-weight:700;margin-top:3px;">Complete for today ✓</div>';
       cardOnclick = 'startFlashcardsForSubject(\'' + s.subj + '\')';
       cardOpacity = '';
+    } else if (s.due === 0) {
+      badge       = '';
+      statusLine  = '<div style="font-size:12px;color:#94A3B8;font-weight:700;margin-top:3px;">All caught up ✓</div>';
+      cardOnclick = '';
+      cardOpacity = 'opacity:0.55;cursor:default;';
     } else {
       badge       = '<div style="position:absolute;top:10px;right:10px;background:#EF4444;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;box-shadow:0 2px 6px rgba(239,68,68,0.4);">' + s.due + '</div>';
       statusLine  = partiallyDone
@@ -24863,7 +24875,7 @@ function showStudyCoachFeed() {
     + '<button onclick="loadStudentFeedContent(false)" style="flex:1;padding:9px;border-radius:8px;border:none;background:#16A34A;color:white;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">All Tips</button>'
     + '<button onclick="loadStudentFeedContent(true)" style="flex:1;padding:9px;border-radius:8px;border:1.5px solid #16A34A;background:transparent;color:#15803D;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">🔖 Saved</button>'
     + '</div>'
-    + '<div id="studycoach-feed-list" style="padding:0 20px;"></div>'
+    + '<div id="studycoach-feed-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:0 16px 16px;"></div>'
     + '</div>';
   render(html);
   loadStudentFeedContent(false);
@@ -26564,6 +26576,26 @@ function showDeepDiveTopicPicker(subject, mode) {
       }
     });
     items.sort((a, b) => a.topic.localeCompare(b.topic) || a.key.localeCompare(b.key));
+  }
+
+  if (items.length === 0) {
+    const _emptyTitle = mode === 'topic' ? 'Choose Topics' : 'Choose Subtopics';
+    render(`
+<div class="screen" style="background:white;min-height:100vh;display:flex;flex-direction:column;">
+  <div class="top-bar">
+    <button class="btn btn-ghost btn-sm" onclick="showDeepDiveDepthPicker('${subject}')">← Back</button>
+    <div style="font-size:17px;font-weight:800;">${_emptyTitle}</div>
+    <div></div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:20px;">
+    <div style="font-size:64px;">🔒</div>
+    <div style="font-size:20px;font-weight:900;">No topics unlocked yet!</div>
+    <div style="font-size:14px;color:var(--text-secondary);font-weight:600;max-width:280px;line-height:1.5;">Head to My Topics to choose what you want to study 🎯</div>
+    <button class="btn btn-primary btn-lg" onclick="showProfile()">Go to My Topics →</button>
+    <button class="btn btn-ghost" onclick="showDeepDiveDepthPicker('${subject}')">← Back</button>
+  </div>
+</div>`);
+    return;
   }
 
   // Store for card-count lookups and full-topic detection
