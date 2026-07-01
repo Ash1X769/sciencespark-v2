@@ -13689,7 +13689,7 @@ async function markExamAnswer(question, markScheme, studentAnswer, totalMarks) {
     const matched = msTerms.filter(t => _smTermMatch(text, t));
     const pct = msTerms.length > 0 ? matched.length / msTerms.length : 0.5;
     const marks = Math.round(totalMarks * pct);
-    return { marks, total: totalMarks, feedback: `Smart Mark: ${matched.length}/${msTerms.length} key terms found. Check the mark scheme below for full details.`, strengths: matched.length > 0 ? matched.slice(0,2).join(', ') : 'Attempted', improve: 'Review the mark scheme for precise terminology', isSmartMark: true };
+    return { marks, total: totalMarks, feedback: `AI Grading: ${matched.length}/${msTerms.length} key terms matched. Review the mark scheme below for full details.`, strengths: matched.length > 0 ? matched.slice(0,2).join(', ') : 'Attempted', improve: 'Review the mark scheme for precise terminology', isSmartMark: true };
   }
   await incrementAIMarkingCount();
   const system = `You are an AQA GCSE science examiner. Mark the student's exam answer.
@@ -15792,8 +15792,8 @@ function renderFlashcard() {
     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
         <div>
-          <div style="font-size:13px;font-weight:800;">${!aiMode ? '🙋 Self Grade' : aiLimitReached ? '🔬 Smart Mark ✨' : '✨ AI Marking ON'}</div>
-          <div style="font-size:11px;color:#64748B;font-weight:600;">${!aiMode ? 'Reveal and rate yourself honestly' : aiLimitReached ? 'Keyword matching — AI quota used' : 'Write your answer — AI marks it'}</div>
+          <div style="font-size:13px;font-weight:800;">${!aiMode ? '🙋 Self Grade' : aiLimitReached ? 'AI Grading ✨' : 'Smart Grading AI ✨'}</div>
+          <div style="font-size:11px;color:#64748B;font-weight:600;">${!aiMode ? 'Reveal and rate yourself honestly' : aiLimitReached ? '' : 'Write your answer — AI marks it'}</div>
         </div>
         <div onclick="toggleAIMode()" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:${aiMode ? '#22C55E' : '#E2E8F0'};position:relative;transition:background 0.2s;flex-shrink:0;">
           <div style="position:absolute;top:3px;${aiMode ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>
@@ -15810,7 +15810,7 @@ function renderFlashcard() {
       <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
       ${hintHTML}
     </div>
-    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${aiLimitReached ? `<div style="text-align:right;font-size:11px;color:#7C3AED;font-weight:700;margin-bottom:6px;">🔬 Smart Mark active</div>` : getAIMarkingLimit() > 0 ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${getAIMarkingLimit()} AI marks used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">${aiLimitReached ? '🔬 Smart Mark' : 'Submit for marking'}</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
+    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${!aiLimitReached && getAIMarkingLimit() > 0 ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${getAIMarkingLimit()} used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for grading</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
 
     <div id="answer-sec" style="display:none;">
       <div class="card" style="padding:16px;">
@@ -19391,7 +19391,7 @@ async function markExamAnswer(question, markScheme, studentAnswer, totalMarks) {
     const matched = msTerms.filter(t => _smTermMatch(text, t));
     const pct = msTerms.length > 0 ? matched.length / msTerms.length : 0.5;
     const marks = Math.round(totalMarks * pct);
-    return { marks, total: totalMarks, feedback: `Smart Mark: ${matched.length}/${msTerms.length} key terms found. Check the mark scheme below for full details.`, strengths: matched.length > 0 ? matched.slice(0,2).join(', ') : 'Attempted', improve: 'Review the mark scheme for precise terminology', isSmartMark: true };
+    return { marks, total: totalMarks, feedback: `AI Grading: ${matched.length}/${msTerms.length} key terms matched. Review the mark scheme below for full details.`, strengths: matched.length > 0 ? matched.slice(0,2).join(', ') : 'Attempted', improve: 'Review the mark scheme for precise terminology', isSmartMark: true };
   }
   await incrementAIMarkingCount();
   const system = `You are an AQA GCSE science examiner. Mark the student's exam answer.
@@ -21038,8 +21038,8 @@ function renderFlashcard() {
     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
         <div>
-          <div style="font-size:13px;font-weight:800;">${!aiMode ? '🙋 Self Grade' : aiLimitReached ? '🔬 Smart Mark ✨' : '✨ AI Marking ON'}</div>
-          <div style="font-size:11px;color:#64748B;font-weight:600;">${!aiMode ? 'Reveal and rate yourself honestly' : aiLimitReached ? 'Keyword matching — AI quota used' : 'Write your answer — AI marks it'}</div>
+          <div style="font-size:13px;font-weight:800;">${!aiMode ? '🙋 Self Grade' : aiLimitReached ? 'AI Grading ✨' : 'Smart Grading AI ✨'}</div>
+          <div style="font-size:11px;color:#64748B;font-weight:600;">${!aiMode ? 'Reveal and rate yourself honestly' : aiLimitReached ? '' : 'Write your answer — AI marks it'}</div>
         </div>
         <div onclick="toggleAIMode()" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:${aiMode ? '#22C55E' : '#E2E8F0'};position:relative;transition:background 0.2s;flex-shrink:0;">
           <div style="position:absolute;top:3px;${aiMode ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>
@@ -21056,7 +21056,7 @@ function renderFlashcard() {
       <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
       ${hintHTML}
     </div>
-    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${aiLimitReached ? `<div style="text-align:right;font-size:11px;color:#7C3AED;font-weight:700;margin-bottom:6px;">🔬 Smart Mark active</div>` : getAIMarkingLimit() > 0 ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${getAIMarkingLimit()} AI marks used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">${aiLimitReached ? '🔬 Smart Mark' : 'Submit for marking'}</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
+    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${!aiLimitReached && getAIMarkingLimit() > 0 ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${getAIMarkingLimit()} used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for grading</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
 
     <div id="answer-sec" style="display:none;">
       <div class="card" style="padding:16px;">
@@ -26775,7 +26775,6 @@ function showSmartMarkCardResult(result) {
     resultDiv.style.display = 'block';
     resultDiv.innerHTML = `<div style="background:white;border-radius:12px;padding:14px 16px;border-left:4px solid ${col};margin-bottom:8px;">
       <div style="font-size:15px;font-weight:900;color:${col};">${emojis[result.grade] || ''} ${result.grade.charAt(0).toUpperCase() + result.grade.slice(1)}</div>
-      <div style="font-size:11px;color:#94A3B8;font-weight:600;margin-top:2px;">🔬 Smart Mark — keyword check</div>
       ${termsHTML}
     </div>`;
   }
@@ -27332,7 +27331,7 @@ async function submitBrainDump() {
       const matchedHTML = smBD.matched.slice(0,8).map(t => `<span style="font-size:11px;background:#DCFCE7;color:#16A34A;padding:2px 8px;border-radius:99px;font-weight:700;">✅ ${t}</span>`).join(' ');
       const missedHTML = smBD.missed.slice(0,5).map(t => `<span style="font-size:11px;background:#FEE2E2;color:#DC2626;padding:2px 8px;border-radius:99px;font-weight:700;">❌ ${t}</span>`).join(' ');
       resultDiv.innerHTML = `<div class="card" style="border-top:4px solid ${color};">
-        <div style="font-size:13px;font-weight:800;margin-bottom:8px;">🔬 Smart Mark</div>
+        <div style="font-size:13px;font-weight:800;margin-bottom:8px;">AI Grading ✨</div>
         <div style="font-size:14px;font-weight:600;line-height:1.6;color:var(--text);">You mentioned ${smBD.matched.length} of ${smBD.total} key terms (${smPct}%).</div>
         ${matchedHTML || missedHTML ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">${matchedHTML}${missedHTML}</div>` : ''}
         <div style="margin-top:12px;font-size:13px;color:var(--text-secondary);font-weight:600;">Review the flashcards to check any terms you missed! 🧠</div>
