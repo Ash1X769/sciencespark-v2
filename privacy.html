@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — GradeMastery</title>
+<meta name="description" content="GradeMastery Privacy Policy — how we collect, use, and protect your personal data under UK GDPR.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body { font-family: 'Inter', sans-serif; font-weight: 400; color: var(--gm-text); background: #fff; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+:root {
+  --gm-dark:   #0F1A14;
+  --gm-forest: #216D39;
+  --gm-accent: #03A860;
+  --gm-orange: #F97316;
+  --gm-gold:   #F5B100;
+  --gm-white:  #FFFFFF;
+  --gm-off:    #F7FAF8;
+  --gm-text:   #1A2E22;
+  --gm-muted:  #64748B;
+  --gm-border: #E2E8F0;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+}
+
+h1,h2,h3,h4,h5 { font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.2; }
+p { line-height: 1.75; }
+
+/* ── Nav ── */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+#nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 20px 0; transition: all .3s ease; }
+#nav.scrolled { background: rgba(255,255,255,.97); backdrop-filter: blur(12px); padding: 12px 0; box-shadow: 0 1px 0 var(--gm-border); }
+.nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+.nav-wordmark { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.35rem; color: var(--gm-forest); text-decoration: none; letter-spacing: -.02em; }
+.nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+.nav-links a { font-family: 'Inter', sans-serif; font-weight: 500; font-size: .875rem; color: var(--gm-muted); text-decoration: none; transition: color .2s; }
+.nav-links a:hover { color: var(--gm-text); }
+.nav-cta { display: flex; align-items: center; gap: 12px; }
+.nav-login { font-family: 'Inter', sans-serif; font-weight: 600; font-size: .875rem; color: var(--gm-forest); text-decoration: none; padding: 8px 16px; border: 1.5px solid var(--gm-forest); border-radius: 999px; transition: all .2s; }
+.nav-login:hover { background: var(--gm-forest); color: #fff; }
+.nav-start { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .875rem; background: var(--gm-orange); color: #fff; text-decoration: none; padding: 9px 20px; border-radius: 999px; transition: all .2s; }
+.nav-start:hover { background: #c43515; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(218,59,24,.35); }
+.hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; }
+.hamburger span { display: block; width: 24px; height: 2px; background: var(--gm-text); border-radius: 2px; transition: all .3s; }
+#nav-overlay { display: none; position: fixed; inset: 0; background: var(--gm-dark); z-index: 999; flex-direction: column; align-items: center; justify-content: center; gap: 40px; }
+#nav-overlay.open { display: flex; }
+#nav-overlay a { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 1.6rem; color: #fff; text-decoration: none; transition: color .2s; }
+#nav-overlay a:hover { color: var(--gm-accent); }
+#nav-close { position: absolute; top: 24px; right: 24px; background: none; border: none; color: #fff; font-size: 2rem; cursor: pointer; line-height: 1; }
+
+/* ── Page hero ── */
+.page-hero { background: var(--gm-dark); padding: 140px 0 72px; text-align: center; }
+.page-hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; color: #fff; margin-bottom: 12px; }
+.page-hero .meta { font-size: .88rem; color: rgba(255,255,255,.45); font-weight: 500; }
+
+/* ── Layout ── */
+.legal-wrap { max-width: 800px; margin: 0 auto; padding: 64px 24px 96px; }
+
+/* ── Table of contents ── */
+.toc { background: var(--gm-off); border: 1px solid var(--gm-border); border-radius: var(--radius-md); padding: 28px 32px; margin-bottom: 56px; }
+.toc h2 { font-size: 1rem; font-weight: 800; color: var(--gm-text); margin-bottom: 16px; letter-spacing: -.01em; }
+.toc ol { padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+.toc li { font-size: .88rem; line-height: 1.5; }
+.toc a { color: var(--gm-forest); text-decoration: none; font-weight: 500; transition: color .15s; }
+.toc a:hover { color: var(--gm-accent); text-decoration: underline; }
+
+/* ── Sections ── */
+.legal-section { margin-bottom: 52px; scroll-margin-top: 96px; }
+.section-number { display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--gm-forest); background: rgba(33,109,57,.09); padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; }
+.legal-section h2 { font-size: 1.35rem; font-weight: 800; color: var(--gm-text); margin-bottom: 18px; letter-spacing: -.02em; }
+.legal-section h3 { font-size: 1rem; font-weight: 700; color: var(--gm-text); margin: 22px 0 10px; }
+.legal-section p { font-size: .95rem; color: #334155; margin-bottom: 14px; }
+.legal-section ul, .legal-section ol { padding-left: 20px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.legal-section li { font-size: .95rem; color: #334155; line-height: 1.65; }
+.legal-section a { color: var(--gm-forest); font-weight: 500; }
+.legal-section a:hover { color: var(--gm-accent); }
+.divider { border: none; border-top: 1px solid var(--gm-border); margin: 0 0 52px; }
+
+/* ── Data table ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: .88rem; margin: 16px 0 20px; }
+.data-table th { text-align: left; padding: 10px 14px; background: var(--gm-off); font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gm-muted); border: 1px solid var(--gm-border); }
+.data-table td { padding: 12px 14px; border: 1px solid var(--gm-border); vertical-align: top; color: #334155; line-height: 1.6; }
+.data-table tr:hover td { background: var(--gm-off); }
+
+/* ── Callouts ── */
+.callout { background: rgba(33,109,57,.06); border-left: 3px solid var(--gm-forest); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 16px 20px; margin: 16px 0; }
+.callout p { font-size: .9rem; color: var(--gm-text); margin: 0; }
+.callout-children { background: rgba(245,177,0,.07); border-left: 3px solid var(--gm-gold); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 16px 20px; margin: 16px 0; }
+.callout-children p { font-size: .9rem; color: var(--gm-text); margin: 0; }
+.callout-children strong { color: #92660a; }
+
+/* ── ICO Code list ── */
+.ico-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+.ico-list li { display: flex; gap: 12px; font-size: .92rem; color: #334155; line-height: 1.6; }
+.ico-list li::before { content: '✓'; color: var(--gm-forest); font-weight: 800; flex-shrink: 0; font-size: 1rem; margin-top: 1px; }
+
+/* ── Rights grid ── */
+.rights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+.right-card { background: var(--gm-off); border: 1px solid var(--gm-border); border-radius: var(--radius-sm); padding: 14px 16px; }
+.right-card strong { display: block; font-size: .9rem; color: var(--gm-text); margin-bottom: 4px; }
+.right-card span { font-size: .83rem; color: var(--gm-muted); line-height: 1.5; }
+
+/* ── Footer ── */
+footer { background: var(--gm-text); padding: 56px 0 32px; }
+.footer-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 32px; margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.footer-wordmark { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.35rem; color: #fff; display: block; margin-bottom: 6px; }
+.footer-tagline { font-size: .83rem; color: rgba(255,255,255,.4); font-weight: 500; }
+.footer-nav-links { display: flex; flex-wrap: wrap; gap: 8px 24px; list-style: none; }
+.footer-nav-links a { color: rgba(255,255,255,.55); text-decoration: none; font-size: .85rem; font-weight: 500; transition: color .2s; }
+.footer-nav-links a:hover { color: #fff; }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-legal { display: flex; gap: 20px; flex-wrap: wrap; }
+.footer-legal a { color: rgba(255,255,255,.35); text-decoration: none; font-size: .78rem; transition: color .2s; }
+.footer-legal a:hover { color: rgba(255,255,255,.65); }
+.footer-copy { font-size: .78rem; color: rgba(255,255,255,.25); }
+.footer-scholar { text-align: center; padding-top: 20px; margin-top: 20px; border-top: 1px solid rgba(255,255,255,.06); font-size: .75rem; color: rgba(255,255,255,.25); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-login { display: none; }
+  .hamburger { display: flex; }
+  .legal-wrap { padding: 48px 20px 72px; }
+  .toc { padding: 20px; }
+  .rights-grid { grid-template-columns: 1fr; }
+  .data-table { font-size: .82rem; }
+  .data-table th, .data-table td { padding: 8px 10px; }
+  .footer-top { flex-direction: column; gap: 24px; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav id="nav">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-wordmark">GradeMastery</a>
+      <ul class="nav-links">
+        <li><a href="index.html#how-it-works">How It Works</a></li>
+        <li><a href="index.html#whats-inside">Students</a></li>
+        <li><a href="index.html#parent-teacher">Parents</a></li>
+        <li><a href="index.html#pricing">Pricing</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="app.html" class="nav-login">Log In</a>
+        <a href="app.html" class="nav-start">Start Free</a>
+        <button class="hamburger" id="hamburger-btn" aria-label="Open menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile nav overlay -->
+<div id="nav-overlay">
+  <button id="nav-close" aria-label="Close menu">✕</button>
+  <a href="index.html">Home</a>
+  <a href="index.html#pricing">Pricing</a>
+  <a href="terms.html">Terms of Service</a>
+  <a href="app.html" style="background:var(--gm-orange);color:#fff;padding:12px 28px;border-radius:999px;font-size:1rem;margin-top:16px;">Start Free</a>
+</div>
+
+<!-- ── Page header ── -->
+<div class="page-hero">
+  <div class="container">
+    <h1>Privacy Policy</h1>
+    <p class="meta">Last updated: 1 July 2026 &nbsp;·&nbsp; Effective date: 1 July 2026</p>
+  </div>
+</div>
+
+<!-- ── Content ── -->
+<div class="legal-wrap">
+
+  <nav class="toc" aria-label="Contents">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#s1">Who We Are</a></li>
+      <li><a href="#s2">Data We Collect and Why</a></li>
+      <li><a href="#s3">Children's Data — Special Protections</a></li>
+      <li><a href="#s4">Who We Share Data With</a></li>
+      <li><a href="#s5">International Data Transfers</a></li>
+      <li><a href="#s6">How Long We Keep Your Data</a></li>
+      <li><a href="#s7">Your Rights Under UK GDPR</a></li>
+      <li><a href="#s8">Cookies and Local Storage</a></li>
+      <li><a href="#s9">AI and Your Data</a></li>
+      <li><a href="#s10">Security</a></li>
+      <li><a href="#s11">Changes to This Policy</a></li>
+      <li><a href="#s12">Contact and Complaints</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1. Who we are -->
+  <section class="legal-section" id="s1">
+    <span class="section-number">Section 1</span>
+    <h2>Who We Are and How to Contact Us</h2>
+    <p>GradeMastery operates as an educational technology service. We are the data controller for personal data processed through this platform — meaning we determine the purposes and means of processing.</p>
+    <p><strong>Contact:</strong> <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a><br>
+    <strong>Data subject requests:</strong> use subject line "Data Subject Request"<br>
+    <strong>ICO registration:</strong> [To be completed on ICO registration]</p>
+    <p>If you have concerns about how we handle your data, you can also contact the Information Commissioner's Office (ICO) at <a href="https://ico.org.uk" target="_blank" rel="noopener">ico.org.uk</a> or by calling 0303 123 1113.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 2. Data we collect -->
+  <section class="legal-section" id="s2">
+    <span class="section-number">Section 2</span>
+    <h2>Data We Collect and Why</h2>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>What we collect</th>
+          <th>Why</th>
+          <th>Legal basis</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Account data</strong></td>
+          <td>Display name, email address, year group, school (if applicable)</td>
+          <td>To create and manage your account</td>
+          <td>Contract</td>
+        </tr>
+        <tr>
+          <td><strong>Learning data</strong></td>
+          <td>Flashcard responses, grades (Again / Hard / Good / Easy), study history, Brain Dump content, AI Tutor conversations, card progress, mastery percentages</td>
+          <td>To power spaced repetition, track progress, and personalise your learning</td>
+          <td>Contract; Legitimate interests</td>
+        </tr>
+        <tr>
+          <td><strong>Personalisation data</strong></td>
+          <td>Target grade, dream job, learning preferences, study blockers (if you choose to provide these)</td>
+          <td>To personalise the AI Tutor and Learning Coach to your needs</td>
+          <td>Consent — you can update or delete this at any time in your profile settings</td>
+        </tr>
+        <tr>
+          <td><strong>Technical data</strong></td>
+          <td>Device type, browser, IP address, usage logs, session data</td>
+          <td>Security, debugging, and ensuring the Service works correctly</td>
+          <td>Legitimate interests</td>
+        </tr>
+        <tr>
+          <td><strong>Payment data</strong></td>
+          <td>We do not store card details. Stripe provides us with transaction confirmation only.</td>
+          <td>To process your subscription</td>
+          <td>Contract</td>
+        </tr>
+        <tr>
+          <td><strong>Communications</strong></td>
+          <td>Emails and support messages you send us</td>
+          <td>To respond to you and improve our service</td>
+          <td>Legitimate interests</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>We collect only what is necessary. We do not collect geolocation data.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 3. Children -->
+  <section class="legal-section" id="s3">
+    <span class="section-number">Section 3</span>
+    <h2>Children's Data — Special Protections</h2>
+
+    <div class="callout-children">
+      <p><strong>This section is especially important.</strong> GradeMastery serves students from Year 7 (age 11) upwards. We comply with the ICO Age Appropriate Design Code (Children's Code) and treat the protection of younger users as a primary responsibility.</p>
+    </div>
+
+    <h3>Age and consent</h3>
+    <ul>
+      <li>Users under 13 cannot self-register. A parent, guardian, or school must create the account on their behalf.</li>
+      <li>Users aged 13–17 should have parental or guardian awareness of their use.</li>
+      <li>Where parent accounts are linked to student accounts, parents can view their child's progress data through the parent portal.</li>
+      <li>We recommend schools obtain parental consent before adding students to GradeMastery class accounts.</li>
+    </ul>
+
+    <h3>What we do with under-13 data</h3>
+    <ul>
+      <li>We process under-13 data only to the minimum extent necessary to provide the educational service.</li>
+      <li>No marketing communications will be sent to under-13 users.</li>
+      <li>AI personalisation for under-13 users is limited to what is strictly necessary for learning — no broader profiling.</li>
+      <li>Under-13 data is never used for any commercial purpose.</li>
+      <li>AI Tutor interactions for under-13 users are subject to additional content filtering.</li>
+      <li>Parents can request complete deletion of their child's data at any time.</li>
+    </ul>
+
+    <h3>What we do not do with any under-18 data</h3>
+    <ul>
+      <li>We do not use children's or teenagers' data for commercial profiling or targeting.</li>
+      <li>We do not share children's data with advertisers.</li>
+      <li>We do not use dark patterns or nudge techniques designed to lead children to share more personal data than they need to.</li>
+      <li>We do not use children's data to train AI models for any purpose beyond providing the Service.</li>
+      <li>We do not collect geolocation data from any user.</li>
+    </ul>
+
+    <h3>ICO Children's Code — our commitments</h3>
+    <ul class="ico-list">
+      <li>The best interests of the child are a primary consideration in all design decisions.</li>
+      <li>Data minimisation — we collect only what is necessary to provide the service.</li>
+      <li>No profiling of children for commercial purposes.</li>
+      <li>No use of children's data to target advertising.</li>
+      <li>Geolocation data is never collected.</li>
+      <li>Parental controls are available through the parent portal.</li>
+      <li>Children and young people can ask us to stop processing their data at any time.</li>
+      <li>All default privacy settings for under-18 users are set to the most privacy-protective options.</li>
+      <li>We conduct a Children's Code compliance review annually.</li>
+    </ul>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 4. Who we share with -->
+  <section class="legal-section" id="s4">
+    <span class="section-number">Section 4</span>
+    <h2>Who We Share Data With</h2>
+
+    <div class="callout">
+      <p>We do not sell your personal data. We never have and never will.</p>
+    </div>
+
+    <h3>4.1 Service providers (data processors)</h3>
+    <p>These companies process data on our behalf under our instructions:</p>
+    <ul>
+      <li><strong>Supabase Inc</strong> — database storage and authentication. Data held in EU/US data centres; standard contractual clauses apply. <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Privacy policy →</a></li>
+      <li><strong>Anthropic PBC</strong> — AI processing for tutoring and marking features. US-based; standard contractual clauses apply. <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Privacy policy →</a></li>
+      <li><strong>Cloudflare Inc</strong> — infrastructure and CDN. US-based; standard contractual clauses apply. <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Privacy policy →</a></li>
+      <li><strong>Stripe Inc</strong> — payment processing. US-based; standard contractual clauses apply. <a href="https://stripe.com/gb/privacy" target="_blank" rel="noopener">Privacy policy →</a></li>
+    </ul>
+
+    <h3>4.2 Teachers and schools</h3>
+    <p>If you join a class, your teacher can see:</p>
+    <ul>
+      <li>Your study progress and mastery data per topic</li>
+      <li>Your Brain Dump submissions</li>
+      <li>Your daily card completion status</li>
+      <li>Your streak and XP</li>
+    </ul>
+
+    <h3>4.3 Parents and guardians</h3>
+    <p>If a parent account is linked to yours, they can see:</p>
+    <ul>
+      <li>Your overall progress and mastery data</li>
+      <li>Your daily card completion</li>
+      <li>Your streak</li>
+    </ul>
+
+    <h3>4.4 Legal requirements</h3>
+    <p>We may disclose data where required by law, court order, or to protect the safety of users or the public. We will tell you if we are legally required to share your data, unless we are prohibited from doing so.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 5. International transfers -->
+  <section class="legal-section" id="s5">
+    <span class="section-number">Section 5</span>
+    <h2>International Data Transfers</h2>
+    <p>Some of our service providers are based outside the UK, primarily in the United States. Where we transfer data internationally, we ensure appropriate safeguards are in place, including:</p>
+    <ul>
+      <li>Standard Contractual Clauses approved by the ICO</li>
+      <li>Adequacy decisions where applicable</li>
+      <li>Data Processing Agreements with all processors</li>
+    </ul>
+    <p>You can request details of the specific safeguards in place for any transfer by emailing <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a>.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 6. Retention -->
+  <section class="legal-section" id="s6">
+    <span class="section-number">Section 6</span>
+    <h2>How Long We Keep Your Data</h2>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Data type</th>
+          <th>Retention period</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Account data</td>
+          <td>Until account deletion, plus 30 days for backup recovery</td>
+          <td>To provide the Service and allow account recovery</td>
+        </tr>
+        <tr>
+          <td>Learning data</td>
+          <td>Until account deletion</td>
+          <td>To maintain your progress history</td>
+        </tr>
+        <tr>
+          <td>Payment records</td>
+          <td>7 years</td>
+          <td>Legal requirement for financial records</td>
+        </tr>
+        <tr>
+          <td>Support communications</td>
+          <td>2 years</td>
+          <td>To resolve recurring issues and improve service quality</td>
+        </tr>
+        <tr>
+          <td>Technical logs</td>
+          <td>90 days</td>
+          <td>Security monitoring and debugging</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>After your account is deleted, we remove all personal data within 30 days, except where we are legally required to retain it (such as payment records).</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 7. Your rights -->
+  <section class="legal-section" id="s7">
+    <span class="section-number">Section 7</span>
+    <h2>Your Rights Under UK GDPR</h2>
+    <p>Under UK GDPR and the Data Protection Act 2018, you have the following rights:</p>
+
+    <div class="rights-grid">
+      <div class="right-card">
+        <strong>Access</strong>
+        <span>Request a copy of all personal data we hold about you.</span>
+      </div>
+      <div class="right-card">
+        <strong>Rectification</strong>
+        <span>Ask us to correct inaccurate or incomplete data.</span>
+      </div>
+      <div class="right-card">
+        <strong>Erasure</strong>
+        <span>Request deletion of your data — the "right to be forgotten".</span>
+      </div>
+      <div class="right-card">
+        <strong>Portability</strong>
+        <span>Receive your data in a machine-readable format to transfer elsewhere.</span>
+      </div>
+      <div class="right-card">
+        <strong>Restriction</strong>
+        <span>Ask us to limit how we process your data while a dispute is resolved.</span>
+      </div>
+      <div class="right-card">
+        <strong>Object</strong>
+        <span>Object to processing based on legitimate interests.</span>
+      </div>
+      <div class="right-card">
+        <strong>Withdraw consent</strong>
+        <span>Where processing is based on consent, withdraw it at any time — this does not affect past processing.</span>
+      </div>
+      <div class="right-card">
+        <strong>Complaints</strong>
+        <span>Lodge a complaint with the ICO if you are unhappy with our response.</span>
+      </div>
+    </div>
+
+    <p>To exercise any of these rights, email <a href="mailto:hello@grademastery.co.uk?subject=Data%20Subject%20Request">hello@grademastery.co.uk</a> with the subject line "Data Subject Request". We will respond within 30 days. There is no charge for making a request.</p>
+
+    <h3>Parents exercising rights on behalf of children</h3>
+    <p>Parents and guardians may exercise these rights on behalf of their child. We may ask for reasonable proof that you are the child's parent or guardian before responding.</p>
+
+    <h3>If you are unhappy with our response</h3>
+    <p>You have the right to complain to the ICO at <a href="https://ico.org.uk/make-a-complaint" target="_blank" rel="noopener">ico.org.uk/make-a-complaint</a> or by calling 0303 123 1113. We would always prefer the chance to address your concern directly first.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 8. Cookies -->
+  <section class="legal-section" id="s8">
+    <span class="section-number">Section 8</span>
+    <h2>Cookies and Local Storage</h2>
+    <p>We use browser local storage — not traditional third-party cookies — for the following purposes:</p>
+    <ul>
+      <li><strong>Session management:</strong> keeping you logged in between visits</li>
+      <li><strong>Preferences:</strong> remembering settings such as dark mode and view preferences</li>
+      <li><strong>Performance:</strong> storing your card progress locally so the app loads faster</li>
+    </ul>
+    <div class="callout">
+      <p>We do not use advertising cookies, third-party tracking cookies, or any technology designed to follow you across other websites.</p>
+    </div>
+    <p>You can clear local storage at any time through your browser settings. This will log you out of the Service and reset local preferences.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 9. AI -->
+  <section class="legal-section" id="s9">
+    <span class="section-number">Section 9</span>
+    <h2>AI and Your Data</h2>
+    <p>Our AI features (AI Tutor, Smart Grading AI, AI Learning Coach) are powered by Anthropic's Claude API. Here is how your data is handled when you use them:</p>
+    <ul>
+      <li>Your inputs are sent to Anthropic's API for processing. Anthropic does not store your conversations for model training beyond what their standard API terms provide.</li>
+      <li>AI conversations are stored in our own database to maintain context within your session and to allow the Learning Coach to identify patterns in your progress over time.</li>
+      <li>You can request deletion of your AI conversation history at any time by emailing <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a>.</li>
+      <li>We do not use your AI conversations to train our own models or to share with third parties beyond those named in this policy.</li>
+      <li>For under-13 users, AI interactions are subject to additional content filtering and stricter data minimisation.</li>
+    </ul>
+    <p>For full details of how Anthropic handles data, see their privacy policy at <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">anthropic.com/privacy</a>.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 10. Security -->
+  <section class="legal-section" id="s10">
+    <span class="section-number">Section 10</span>
+    <h2>Security</h2>
+    <p>We take a layered approach to security:</p>
+    <ul>
+      <li><strong>Encryption in transit:</strong> all data is transmitted over HTTPS. We enforce HTTPS on all connections.</li>
+      <li><strong>Row Level Security:</strong> our database uses Supabase Row Level Security (RLS) — each user can only access their own data, enforced at the database layer.</li>
+      <li><strong>Payment security:</strong> payment processing is handled entirely by Stripe. We never see, store, or transmit your card details.</li>
+      <li><strong>Access controls:</strong> access to production systems is restricted to authorised personnel only.</li>
+      <li><strong>Regular reviews:</strong> we conduct periodic security reviews of our infrastructure and code.</li>
+    </ul>
+    <p>No system is completely secure. If you believe you have found a security vulnerability, please report it responsibly to <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a> and we will investigate promptly.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 11. Changes -->
+  <section class="legal-section" id="s11">
+    <span class="section-number">Section 11</span>
+    <h2>Changes to This Policy</h2>
+    <p>We will notify you of significant changes to this Privacy Policy by email (if you have provided one) and by displaying a notice on the platform when you next log in. The "Last Updated" date at the top of this page always reflects the most recent version.</p>
+    <p>Minor changes — such as clarifications that do not affect how we process your data — may be made without direct notification. We encourage you to review this policy periodically.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 12. Contact -->
+  <section class="legal-section" id="s12">
+    <span class="section-number">Section 12</span>
+    <h2>Contact and Complaints</h2>
+    <ul>
+      <li><strong>Data Controller:</strong> GradeMastery</li>
+      <li><strong>Email:</strong> <a href="mailto:hello@grademastery.co.uk?subject=Privacy%20Query">hello@grademastery.co.uk</a> — subject line: Privacy Query</li>
+      <li><strong>Data Subject Requests:</strong> <a href="mailto:hello@grademastery.co.uk?subject=Data%20Subject%20Request">hello@grademastery.co.uk</a> — subject line: Data Subject Request</li>
+      <li><strong>ICO registration:</strong> [To be completed on ICO registration]</li>
+      <li><strong>ICO complaints:</strong> <a href="https://ico.org.uk" target="_blank" rel="noopener">ico.org.uk</a> or 0303 123 1113</li>
+    </ul>
+    <p>Also see our <a href="terms.html">Terms of Service</a> for the full terms governing your use of GradeMastery.</p>
+  </section>
+
+</div><!-- /legal-wrap -->
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="footer-wordmark">GradeMastery</span>
+        <span class="footer-tagline">Where Grade 9 starts</span>
+      </div>
+      <ul class="footer-nav-links">
+        <li><a href="index.html#whats-inside">Students</a></li>
+        <li><a href="index.html#parent-teacher">Parents</a></li>
+        <li><a href="index.html#parent-teacher">Teachers</a></li>
+        <li><a href="index.html#pricing">Pricing</a></li>
+        <li><a href="index.html#scholarships">Scholarships</a></li>
+        <li><a href="index.html#how-it-works">How It Works</a></li>
+      </ul>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="mailto:hello@grademastery.co.uk">Contact</a>
+      </div>
+      <span class="footer-copy">© 2026 GradeMastery. All rights reserved.</span>
+    </div>
+    <div class="footer-scholar">Subsidised access for FSM students available — email us</div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', function() {
+    nav.classList.toggle('scrolled', window.scrollY > 50);
+  }, { passive: true });
+
+  document.getElementById('hamburger-btn').addEventListener('click', function() {
+    document.getElementById('nav-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  });
+  document.getElementById('nav-close').addEventListener('click', function() {
+    document.getElementById('nav-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  });
+})();
+</script>
+</body>
+</html>
