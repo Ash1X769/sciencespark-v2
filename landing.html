@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GradeMastery — The revision tool that actually knows your child</title>
+<meta name="description" content="1,189 AQA GCSE flashcards. AI that adapts to your child's target grade, learning style, and dream career. Real progress parents can see.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Root ────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body { font-family: 'Inter', sans-serif; font-weight: 400; color: var(--gm-text); background: #fff; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+:root {
+  --gm-dark:   #0F1A14;
+  --gm-forest: #216D39;
+  --gm-accent: #03A860;
+  --gm-orange: #DA3B18;
+  --gm-gold:   #F5B100;
+  --gm-white:  #FFFFFF;
+  --gm-off:    #F7FAF8;
+  --gm-text:   #1A2E22;
+  --gm-muted:  #64748B;
+  --gm-border: #E2E8F0;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 1px 4px rgba(0,0,0,.04);
+  --shadow-lg: 0 16px 48px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.06);
+}
+
+/* ── Typography ──────────────────────────────────────────────────────── */
+h1,h2,h3,h4,h5 { font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.15; }
+h1 { font-size: clamp(2.4rem, 5.5vw, 4.2rem); font-weight: 900; letter-spacing: -.03em; }
+h2 { font-size: clamp(1.9rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.025em; }
+h3 { font-size: clamp(1.25rem, 2.5vw, 1.6rem); font-weight: 700; }
+h4 { font-size: 1.1rem; font-weight: 700; }
+p  { line-height: 1.7; }
+
+.eyebrow { font-family: 'Inter', sans-serif; font-size: .7rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--gm-accent); margin-bottom: 16px; display: block; }
+
+/* ── Utility ─────────────────────────────────────────────────────────── */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.container-wide { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+.text-center { text-align: center; }
+.text-muted { color: var(--gm-muted); }
+.section { padding: 96px 0; }
+.section-sm { padding: 64px 0; }
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.btn { display: inline-flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .95rem; border-radius: 999px; padding: 12px 24px; cursor: pointer; text-decoration: none; border: 2px solid transparent; transition: all .2s ease; white-space: nowrap; line-height: 1; }
+.btn:hover { transform: translateY(-1px); }
+.btn-lg { font-size: 1.05rem; padding: 16px 32px; }
+.btn-xl { font-size: 1.15rem; padding: 20px 40px; }
+.btn-orange { background: var(--gm-orange); color: #fff; border-color: var(--gm-orange); }
+.btn-orange:hover { background: #c43515; border-color: #c43515; box-shadow: 0 8px 24px rgba(218,59,24,.35); }
+.btn-forest { background: var(--gm-forest); color: #fff; border-color: var(--gm-forest); }
+.btn-forest:hover { background: #1a5630; border-color: #1a5630; }
+.btn-ghost-white { background: transparent; color: #fff; border-color: rgba(255,255,255,.4); }
+.btn-ghost-white:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.7); }
+.btn-ghost-forest { background: transparent; color: var(--gm-forest); border-color: var(--gm-forest); }
+.btn-ghost-forest:hover { background: var(--gm-forest); color: #fff; }
+.btn-ghost-gold { background: transparent; color: var(--gm-gold); border-color: var(--gm-gold); }
+.btn-ghost-gold:hover { background: var(--gm-gold); color: var(--gm-dark); }
+.btn-white-solid { background: #fff; color: var(--gm-forest); border-color: #fff; }
+.btn-white-solid:hover { background: var(--gm-off); }
+
+/* ── Navigation ──────────────────────────────────────────────────────── */
+#nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 20px 0; transition: all .3s ease; }
+#nav.scrolled { background: rgba(255,255,255,.97); backdrop-filter: blur(12px); padding: 12px 0; box-shadow: 0 1px 0 var(--gm-border); }
+.nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+.nav-wordmark { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.35rem; color: var(--gm-white); text-decoration: none; letter-spacing: -.02em; transition: color .3s; }
+#nav.scrolled .nav-wordmark { color: var(--gm-forest); }
+.nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+.nav-links a { font-family: 'Inter', sans-serif; font-weight: 500; font-size: .875rem; color: rgba(255,255,255,.8); text-decoration: none; transition: color .2s; }
+.nav-links a:hover { color: #fff; }
+#nav.scrolled .nav-links a { color: var(--gm-muted); }
+#nav.scrolled .nav-links a:hover { color: var(--gm-text); }
+.nav-cta { display: flex; align-items: center; gap: 12px; }
+.nav-login { font-family: 'Inter', sans-serif; font-weight: 600; font-size: .875rem; color: rgba(255,255,255,.85); text-decoration: none; padding: 8px 16px; border: 1.5px solid rgba(255,255,255,.35); border-radius: 999px; transition: all .2s; }
+.nav-login:hover { color: #fff; border-color: #fff; }
+#nav.scrolled .nav-login { color: var(--gm-forest); border-color: var(--gm-forest); }
+#nav.scrolled .nav-login:hover { background: var(--gm-forest); color: #fff; }
+.nav-start { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .875rem; background: var(--gm-orange); color: #fff; text-decoration: none; padding: 9px 20px; border-radius: 999px; transition: all .2s; }
+.nav-start:hover { background: #c43515; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(218,59,24,.35); }
+.hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; }
+.hamburger span { display: block; width: 24px; height: 2px; background: #fff; border-radius: 2px; transition: all .3s; }
+#nav.scrolled .hamburger span { background: var(--gm-text); }
+
+/* Mobile nav overlay */
+#nav-overlay { display: none; position: fixed; inset: 0; background: var(--gm-dark); z-index: 999; flex-direction: column; align-items: center; justify-content: center; gap: 40px; }
+#nav-overlay.open { display: flex; }
+#nav-overlay a { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 1.6rem; color: #fff; text-decoration: none; transition: color .2s; }
+#nav-overlay a:hover { color: var(--gm-accent); }
+#nav-close { position: absolute; top: 24px; right: 24px; background: none; border: none; color: #fff; font-size: 2rem; cursor: pointer; line-height: 1; }
+
+/* ── Hero ────────────────────────────────────────────────────────────── */
+#hero { min-height: 100vh; background: var(--gm-dark); display: flex; align-items: center; padding: 120px 0 80px; }
+.hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+.hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; background: rgba(3,168,96,.15); border: 1px solid rgba(3,168,96,.3); color: var(--gm-accent); padding: 6px 14px; border-radius: 999px; font-size: .78rem; font-weight: 600; letter-spacing: .05em; margin-bottom: 28px; }
+.hero-headline { color: #fff; margin-bottom: 24px; }
+.hero-headline span { color: var(--gm-accent); }
+.hero-sub { color: var(--gm-muted); font-size: clamp(1rem, 1.5vw, 1.15rem); max-width: 480px; margin-bottom: 36px; line-height: 1.7; }
+.hero-cta-row { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 40px; }
+.hero-trust { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+.hero-trust-item { font-size: .8rem; font-weight: 500; color: rgba(255,255,255,.45); padding: 0 16px; }
+.hero-trust-item:first-child { padding-left: 0; }
+.hero-trust-divider { width: 1px; height: 14px; background: rgba(255,255,255,.15); }
+
+/* Phone mockup */
+.phone-wrap { display: flex; justify-content: center; align-items: center; }
+.phone-frame { width: 280px; background: #1A1A2E; border-radius: 40px; padding: 16px 12px 20px; box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1.5px rgba(255,255,255,.08), inset 0 0 0 2px rgba(255,255,255,.04); position: relative; }
+.phone-notch { width: 90px; height: 26px; background: #111; border-radius: 999px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.phone-notch-cam { width: 8px; height: 8px; background: #2a2a2a; border-radius: 50%; border: 1px solid rgba(255,255,255,.1); }
+.phone-notch-cam.main { width: 10px; height: 10px; }
+.phone-screen { background: #0F1A14; border-radius: 28px; overflow: hidden; }
+.phone-header { background: var(--gm-forest); padding: 12px 16px; display: flex; align-items: center; gap: 8px; }
+.phone-header-text { color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .85rem; }
+.phone-header-dot { width: 8px; height: 8px; background: var(--gm-accent); border-radius: 50%; }
+.phone-chat { padding: 14px 12px; display: flex; flex-direction: column; gap: 12px; min-height: 320px; }
+.phone-bubble { max-width: 85%; padding: 10px 13px; border-radius: 16px; font-size: .72rem; line-height: 1.5; font-family: 'Inter', sans-serif; }
+.phone-bubble.user { background: var(--gm-accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 500; }
+.phone-bubble.ai { background: #1E2D24; color: rgba(255,255,255,.9); align-self: flex-start; border-bottom-left-radius: 4px; white-space: pre-line; }
+.phone-input { background: #1A2520; margin: 0 12px 12px; border-radius: 20px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; }
+.phone-input-text { flex: 1; font-size: .7rem; color: rgba(255,255,255,.3); font-family: 'Inter', sans-serif; }
+.phone-input-send { width: 24px; height: 24px; background: var(--gm-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.phone-input-send svg { width: 11px; height: 11px; fill: #fff; }
+
+/* ── Social Proof ────────────────────────────────────────────────────── */
+#social-proof { padding: 56px 0; border-top: 1px solid var(--gm-border); border-bottom: 1px solid var(--gm-border); }
+.social-proof-label { font-size: .8rem; font-weight: 600; color: var(--gm-muted); text-align: center; margin-bottom: 28px; text-transform: uppercase; letter-spacing: .1em; }
+.logo-strip { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.logo-pill { background: var(--gm-off); border: 1px solid var(--gm-border); border-radius: 10px; padding: 14px 28px; font-size: .8rem; font-weight: 600; color: var(--gm-muted); }
+.social-proof-email { text-align: center; font-size: .8rem; color: var(--gm-muted); }
+.social-proof-email a { color: var(--gm-forest); text-decoration: none; font-weight: 600; }
+
+/* ── Problem ─────────────────────────────────────────────────────────── */
+#problem { background: var(--gm-off); }
+.problem-headline { font-size: clamp(1.6rem, 3.5vw, 2.4rem); max-width: 640px; margin: 0 auto 8px; text-align: center; }
+.problem-sub { text-align: center; color: var(--gm-muted); font-size: 1.05rem; margin-bottom: 56px; }
+.problem-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 48px; }
+.problem-card { background: #fff; border-radius: var(--radius-md); padding: 32px 28px; box-shadow: var(--shadow-sm); border: 1px solid var(--gm-border); }
+.problem-card-icon { font-size: 1.5rem; margin-bottom: 14px; display: block; }
+.problem-card h4 { margin-bottom: 10px; color: var(--gm-text); }
+.problem-card p { font-size: .9rem; color: var(--gm-muted); line-height: 1.65; }
+.problem-divider { height: 2px; background: var(--gm-accent); border-radius: 2px; margin-bottom: 40px; }
+.problem-solution { background: linear-gradient(135deg, rgba(3,168,96,.08), rgba(33,109,57,.06)); border: 1.5px solid rgba(3,168,96,.25); border-radius: var(--radius-md); padding: 32px 36px; }
+.problem-solution p { font-size: 1.05rem; color: var(--gm-text); font-weight: 500; line-height: 1.7; }
+.problem-solution span { color: var(--gm-forest); font-weight: 700; }
+
+/* ── How It Works ────────────────────────────────────────────────────── */
+#how-it-works { background: #fff; }
+.hiw-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 56px; }
+.hiw-card { position: relative; padding: 36px 32px; border: 1.5px solid var(--gm-border); border-radius: var(--radius-lg); transition: all .3s; }
+.hiw-card:hover { border-color: var(--gm-accent); box-shadow: var(--shadow-md); transform: translateY(-4px); }
+.hiw-number { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 3.5rem; font-weight: 900; color: var(--gm-accent); line-height: 1; margin-bottom: 20px; opacity: .9; }
+.hiw-card h3 { margin-bottom: 16px; font-size: 1.25rem; }
+.hiw-card p { font-size: .9rem; color: var(--gm-muted); line-height: 1.7; }
+
+/* ── Personalisation ─────────────────────────────────────────────────── */
+#personalisation { background: var(--gm-dark); padding: 96px 0; }
+#personalisation .eyebrow { color: var(--gm-accent); }
+#personalisation h2 { color: #fff; }
+.personalisation-sub { color: var(--gm-muted); font-size: 1.05rem; max-width: 560px; margin-top: 12px; line-height: 1.7; }
+.personalisation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; margin-top: 56px; }
+.personalisation-list { list-style: none; display: flex; flex-direction: column; gap: 20px; }
+.personalisation-list li { display: flex; gap: 16px; align-items: flex-start; }
+.personalisation-list .p-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+.personalisation-list .p-content strong { display: block; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .95rem; margin-bottom: 3px; }
+.personalisation-list .p-content span { color: rgba(255,255,255,.5); font-size: .85rem; line-height: 1.5; }
+.personalisation-chats { display: flex; flex-direction: column; gap: 24px; }
+.mini-chat { background: #1A2520; border-radius: var(--radius-md); overflow: hidden; border: 1px solid rgba(255,255,255,.06); }
+.mini-chat-label { background: rgba(3,168,96,.15); padding: 8px 16px; font-size: .7rem; font-weight: 600; color: var(--gm-accent); letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,.04); }
+.mini-chat-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.mini-chat-bubble { max-width: 90%; padding: 9px 13px; border-radius: 12px; font-size: .78rem; line-height: 1.55; font-family: 'Inter', sans-serif; }
+.mini-chat-bubble.user { background: rgba(3,168,96,.25); color: rgba(255,255,255,.9); align-self: flex-end; border-bottom-right-radius: 3px; font-weight: 500; }
+.mini-chat-bubble.ai { background: rgba(255,255,255,.06); color: rgba(255,255,255,.8); align-self: flex-start; border-bottom-left-radius: 3px; }
+.personalisation-footer { margin-top: 48px; text-align: center; }
+.personalisation-footer p { color: rgba(255,255,255,.5); font-size: .95rem; margin-bottom: 20px; }
+
+/* ── AI Tutor Showcase ───────────────────────────────────────────────── */
+#tutor-showcase { background: var(--gm-forest); padding: 96px 0; }
+#tutor-showcase .eyebrow { color: rgba(255,255,255,.6); }
+#tutor-showcase h2 { color: #fff; }
+.showcase-sub { color: rgba(255,255,255,.65); font-size: 1.05rem; max-width: 560px; margin-top: 12px; line-height: 1.7; }
+.showcase-chat { background: #1E2D24; border-radius: var(--radius-lg); padding: 40px; margin-top: 48px; border: 1px solid rgba(255,255,255,.06); }
+.showcase-msg { display: flex; flex-direction: column; gap: 20px; }
+.showcase-bubble { max-width: 85%; padding: 16px 20px; border-radius: 18px; font-family: 'Inter', sans-serif; font-size: .92rem; line-height: 1.65; }
+.showcase-bubble.user { background: var(--gm-accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 6px; font-weight: 500; }
+.showcase-bubble.ai { background: rgba(255,255,255,.06); color: rgba(255,255,255,.88); align-self: flex-start; border-bottom-left-radius: 6px; border: 1px solid rgba(255,255,255,.08); white-space: pre-line; }
+.showcase-caption { text-align: center; margin-top: 28px; color: rgba(255,255,255,.45); font-style: italic; font-size: .88rem; }
+
+/* ── What's Inside ───────────────────────────────────────────────────── */
+#whats-inside { background: var(--gm-off); }
+.tab-buttons { display: flex; gap: 8px; justify-content: center; margin: 40px 0 48px; flex-wrap: wrap; }
+.tab-btn { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .9rem; padding: 11px 28px; border-radius: 999px; border: 2px solid var(--gm-border); background: #fff; color: var(--gm-muted); cursor: pointer; transition: all .2s; }
+.tab-btn.active { background: var(--gm-forest); color: #fff; border-color: var(--gm-forest); }
+.tab-btn:hover:not(.active) { border-color: var(--gm-forest); color: var(--gm-forest); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+.feature-card { background: #fff; border-radius: var(--radius-md); padding: 28px; box-shadow: var(--shadow-sm); border: 1px solid var(--gm-border); transition: all .25s; }
+.feature-card:hover { box-shadow: var(--shadow-md); border-color: rgba(3,168,96,.25); transform: translateY(-2px); }
+.feature-icon { font-size: 1.8rem; margin-bottom: 14px; display: block; }
+.feature-card h4 { margin-bottom: 8px; color: var(--gm-text); }
+.feature-card p { font-size: .88rem; color: var(--gm-muted); line-height: 1.65; }
+
+/* ── Parent Teacher ──────────────────────────────────────────────────── */
+#parent-teacher { background: #fff; }
+.pt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; margin-top: 56px; }
+.pt-col h3 { margin-bottom: 12px; }
+.pt-col .pt-desc { color: var(--gm-muted); font-size: .95rem; line-height: 1.7; margin-bottom: 32px; }
+.pt-feature { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 24px; }
+.pt-feature-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+.pt-feature-content strong { display: block; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .95rem; color: var(--gm-text); margin-bottom: 4px; }
+.pt-feature-content span { font-size: .875rem; color: var(--gm-muted); line-height: 1.6; }
+.pt-divider { width: 1px; background: var(--gm-border); }
+
+/* ── Video ───────────────────────────────────────────────────────────── */
+#video { background: var(--gm-dark); }
+#video .eyebrow { color: var(--gm-accent); }
+#video h2 { color: #fff; }
+.video-sub { color: var(--gm-muted); font-size: 1.05rem; max-width: 500px; margin: 12px auto 40px; text-align: center; }
+.video-frame { position: relative; width: 100%; aspect-ratio: 16/9; background: #1E2D24; border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,.08); overflow: hidden; max-width: 900px; margin: 0 auto; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
+.video-play { width: 80px; height: 80px; background: var(--gm-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; box-shadow: 0 8px 32px rgba(3,168,96,.4); }
+.video-play:hover { transform: scale(1.08); box-shadow: 0 12px 40px rgba(3,168,96,.5); }
+.video-play svg { width: 32px; height: 32px; fill: #fff; margin-left: 4px; }
+.video-coming-soon { color: rgba(255,255,255,.4); font-size: .9rem; font-weight: 500; }
+.video-caption { text-align: center; margin-top: 20px; color: rgba(255,255,255,.4); font-size: .85rem; }
+.video-caption a { color: var(--gm-accent); }
+
+/* ── Science ─────────────────────────────────────────────────────────── */
+#science { background: var(--gm-off); }
+.science-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin: 48px 0 40px; }
+.science-card { background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm); border: 1px solid var(--gm-border); }
+.science-ref { font-size: .72rem; color: var(--gm-muted); font-style: italic; margin-bottom: 10px; display: block; }
+.science-card h4 { margin-bottom: 12px; color: var(--gm-text); font-size: 1.05rem; }
+.science-card .plain { font-size: .9rem; color: var(--gm-muted); line-height: 1.65; margin-bottom: 16px; }
+.science-application { background: var(--gm-off); border-radius: var(--radius-sm); padding: 12px 14px; font-size: .83rem; color: var(--gm-forest); font-weight: 500; line-height: 1.5; border-left: 3px solid var(--gm-accent); }
+.science-application strong { display: inline; }
+.science-statement { text-align: center; font-size: 1.1rem; font-weight: 600; color: var(--gm-text); margin-bottom: 20px; max-width: 700px; margin-left: auto; margin-right: auto; }
+.science-refs { text-align: center; font-size: .75rem; color: var(--gm-muted); }
+
+/* ── Pricing ─────────────────────────────────────────────────────────── */
+#pricing { background: #fff; }
+.pricing-toggle { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 40px 0 48px; }
+.pricing-toggle-label { font-weight: 600; font-size: .9rem; color: var(--gm-muted); }
+.pricing-toggle-label.active { color: var(--gm-text); }
+.toggle-switch { position: relative; width: 52px; height: 28px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: var(--gm-forest); border-radius: 999px; cursor: pointer; transition: background .2s; }
+.toggle-slider::before { content: ''; position: absolute; width: 20px; height: 20px; left: 4px; top: 4px; background: #fff; border-radius: 50%; transition: transform .2s; }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(24px); }
+.annual-badge { background: rgba(3,168,96,.12); color: var(--gm-accent); font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(3,168,96,.25); }
+.pricing-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.pricing-card { border: 1.5px solid var(--gm-border); border-radius: var(--radius-lg); padding: 28px 24px; display: flex; flex-direction: column; gap: 0; transition: all .2s; }
+.pricing-card:hover { box-shadow: var(--shadow-md); }
+.pricing-card.popular { border-color: var(--gm-forest); border-width: 2px; box-shadow: var(--shadow-lg); position: relative; }
+.pricing-card.popular::before { content: 'Most Popular'; position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--gm-orange); color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .72rem; padding: 4px 14px; border-radius: 999px; white-space: nowrap; letter-spacing: .04em; }
+.pricing-card-name { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: .85rem; color: var(--gm-muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; display: block; }
+.pricing-price { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2rem; color: var(--gm-text); line-height: 1; margin-bottom: 4px; }
+.pricing-price sup { font-size: 1rem; vertical-align: super; }
+.pricing-price .period { font-size: .85rem; font-weight: 600; color: var(--gm-muted); }
+.pricing-subtitle { font-size: .78rem; color: var(--gm-muted); margin-bottom: 24px; margin-top: 4px; }
+.pricing-divider { height: 1px; background: var(--gm-border); margin-bottom: 20px; }
+.pricing-features { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-bottom: 28px; flex: 1; }
+.pricing-features li { font-size: .8rem; line-height: 1.5; color: var(--gm-text); display: flex; gap: 8px; align-items: flex-start; }
+.pricing-features li.no { color: var(--gm-muted); }
+.pricing-features li span { font-size: .8rem; }
+.pricing-cta { margin-top: auto; }
+.pricing-cta a { display: block; text-align: center; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .875rem; padding: 12px 16px; border-radius: 999px; text-decoration: none; border: 2px solid; transition: all .2s; }
+.pricing-cta a:hover { transform: translateY(-1px); }
+.pricing-footer { text-align: center; margin-top: 40px; }
+.pricing-footer p { font-size: .88rem; color: var(--gm-muted); margin-bottom: 8px; }
+.pricing-footer a { color: var(--gm-forest); font-weight: 600; }
+
+/* ── Scholarships ────────────────────────────────────────────────────── */
+#scholarships { background: var(--gm-forest); padding: 96px 0; }
+#scholarships .eyebrow { color: rgba(255,255,255,.6); }
+#scholarships h2 { color: #fff; }
+.scholar-body { color: rgba(255,255,255,.7); font-size: 1rem; max-width: 640px; margin: 16px auto 48px; text-align: center; line-height: 1.75; }
+.scholar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; max-width: 800px; margin: 0 auto 48px; }
+.scholar-col h4 { color: #fff; font-size: 1.05rem; margin-bottom: 16px; }
+.scholar-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.scholar-col ul li { color: rgba(255,255,255,.75); font-size: .9rem; display: flex; gap: 10px; align-items: flex-start; }
+.scholar-col ul li::before { content: '✓'; color: var(--gm-accent); font-weight: 700; flex-shrink: 0; }
+.scholar-col p { color: rgba(255,255,255,.7); font-size: .9rem; line-height: 1.7; }
+.scholar-col a { color: var(--gm-accent); font-weight: 600; }
+
+/* ── FAQ ─────────────────────────────────────────────────────────────── */
+#faq { background: var(--gm-off); }
+.faq-list { max-width: 760px; margin: 48px auto 0; display: flex; flex-direction: column; gap: 0; border: 1px solid var(--gm-border); border-radius: var(--radius-lg); overflow: hidden; background: #fff; }
+.faq-item { border-bottom: 1px solid var(--gm-border); }
+.faq-item:last-child { border-bottom: none; }
+.faq-question { width: 100%; text-align: left; padding: 22px 28px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 1rem; color: var(--gm-text); background: none; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; transition: background .15s; }
+.faq-question:hover { background: var(--gm-off); }
+.faq-question .faq-arrow { width: 20px; height: 20px; flex-shrink: 0; color: var(--gm-muted); transition: transform .3s; }
+.faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--gm-forest); }
+.faq-answer { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+.faq-answer-inner { padding: 0 28px 22px; font-size: .92rem; color: var(--gm-muted); line-height: 1.75; }
+
+/* ── Final CTA ───────────────────────────────────────────────────────── */
+#final-cta { background: var(--gm-dark); padding: 120px 0; text-align: center; }
+#final-cta h2 { color: #fff; margin-bottom: 16px; }
+#final-cta p { color: var(--gm-muted); font-size: 1.05rem; margin-bottom: 40px; }
+.final-cta-email { margin-top: 20px; font-size: .85rem; color: rgba(255,255,255,.35); }
+.final-cta-email a { color: rgba(255,255,255,.5); }
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+footer { background: var(--gm-text); padding: 56px 0 32px; }
+.footer-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 32px; margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.footer-brand { }
+.footer-wordmark { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.35rem; color: #fff; display: block; margin-bottom: 6px; }
+.footer-tagline { font-size: .83rem; color: rgba(255,255,255,.4); font-weight: 500; }
+.footer-nav-links { display: flex; flex-wrap: wrap; gap: 8px 24px; list-style: none; }
+.footer-nav-links a { color: rgba(255,255,255,.55); text-decoration: none; font-size: .85rem; font-weight: 500; transition: color .2s; }
+.footer-nav-links a:hover { color: #fff; }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-legal { display: flex; gap: 20px; flex-wrap: wrap; }
+.footer-legal a { color: rgba(255,255,255,.35); text-decoration: none; font-size: .78rem; transition: color .2s; }
+.footer-legal a:hover { color: rgba(255,255,255,.65); }
+.footer-copy { font-size: .78rem; color: rgba(255,255,255,.25); }
+.footer-social { display: flex; gap: 16px; }
+.footer-social a { color: rgba(255,255,255,.45); text-decoration: none; font-size: .83rem; font-weight: 600; transition: color .2s; }
+.footer-social a:hover { color: var(--gm-accent); }
+.footer-zeniyth { text-align: center; padding-top: 20px; margin-top: 20px; border-top: 1px solid rgba(255,255,255,.06); font-size: .75rem; color: rgba(255,255,255,.25); }
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .pricing-grid { grid-template-columns: repeat(3, 1fr); }
+  .pricing-grid .pricing-card:nth-child(4),
+  .pricing-grid .pricing-card:nth-child(5) { grid-column: span 1; }
+}
+
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 48px; }
+  .phone-wrap { display: none; }
+  .problem-cards { grid-template-columns: 1fr; }
+  .hiw-grid { grid-template-columns: 1fr; }
+  .personalisation-grid { grid-template-columns: 1fr; gap: 40px; }
+  .pt-grid { grid-template-columns: 1fr; gap: 48px; }
+  .pt-divider { display: none; }
+  .scholar-grid { grid-template-columns: 1fr; }
+  .science-grid { grid-template-columns: 1fr; }
+  .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+  .features-grid { grid-template-columns: 1fr; }
+  .footer-top { flex-direction: column; gap: 24px; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .hamburger { display: flex; }
+  #nav.scrolled .hamburger span { background: var(--gm-text); }
+  .nav-login { display: none; }
+  .hero-cta-row { flex-direction: column; align-items: flex-start; }
+  .hero-cta-row .btn { width: 100%; justify-content: center; max-width: 360px; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .pricing-card { padding: 24px 20px; }
+  .section { padding: 64px 0; }
+}
+
+@media (max-width: 480px) {
+  .container { padding: 0 16px; }
+  h1 { font-size: 2.1rem; }
+  h2 { font-size: 1.7rem; }
+  .hero-trust { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .hero-trust-divider { display: none; }
+  .hero-trust-item { padding: 0; }
+  .showcase-chat { padding: 24px 16px; }
+  .science-card { padding: 24px 20px; }
+  .faq-question { padding: 18px 20px; font-size: .9rem; }
+  .faq-answer-inner { padding: 0 20px 18px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ───────────────────────────────────────────────────── -->
+<nav id="nav">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="#" class="nav-wordmark">GradeMastery</a>
+      <ul class="nav-links">
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#whats-inside">Students</a></li>
+        <li><a href="#parent-teacher">Parents</a></li>
+        <li><a href="#parent-teacher">Teachers</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#scholarships">Scholarships</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="index.html" class="nav-login">Log In</a>
+        <a href="index.html" class="nav-start">Start Free</a>
+        <button class="hamburger" id="hamburger-btn" aria-label="Open menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile nav overlay -->
+<div id="nav-overlay">
+  <button id="nav-close" aria-label="Close menu">✕</button>
+  <a href="#how-it-works" class="overlay-link">How It Works</a>
+  <a href="#whats-inside" class="overlay-link">Students</a>
+  <a href="#parent-teacher" class="overlay-link">Parents</a>
+  <a href="#parent-teacher" class="overlay-link">Teachers</a>
+  <a href="#pricing" class="overlay-link">Pricing</a>
+  <a href="#scholarships" class="overlay-link">Scholarships</a>
+  <a href="index.html" class="btn btn-orange btn-lg" style="margin-top:16px;">Start Free</a>
+</div>
+
+<!-- ── Section 1: Hero ──────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-left">
+        <div class="hero-eyebrow">AQA GCSE Science &nbsp;·&nbsp; Biology &nbsp;·&nbsp; Chemistry &nbsp;·&nbsp; Physics</div>
+        <h1 class="hero-headline">The revision tool that actually <span>knows your child</span></h1>
+        <p class="hero-sub">1,189 AQA-spec flashcards. AI that adapts to your child's target grade, learning style, and dream career. Real progress parents can see.</p>
+        <div class="hero-cta-row">
+          <a href="index.html" class="btn btn-orange btn-lg">Start Free — no card needed</a>
+          <a href="#how-it-works" class="btn btn-ghost-white">See how it works ↓</a>
+        </div>
+        <div class="hero-trust">
+          <span class="hero-trust-item">1,189 AQA cards</span>
+          <div class="hero-trust-divider"></div>
+          <span class="hero-trust-item">Free to start</span>
+          <div class="hero-trust-divider"></div>
+          <span class="hero-trust-item">Works on any device</span>
+        </div>
+      </div>
+      <div class="hero-right phone-wrap">
+        <div class="phone-frame">
+          <div class="phone-notch">
+            <div class="phone-notch-cam"></div>
+            <div class="phone-notch-cam main"></div>
+            <div class="phone-notch-cam"></div>
+          </div>
+          <div class="phone-screen">
+            <div class="phone-header">
+              <div class="phone-header-dot"></div>
+              <div class="phone-header-text">✨ AI Tutor</div>
+            </div>
+            <div class="phone-chat">
+              <div class="phone-bubble user">Hi, do you know what kind of student I am?</div>
+              <div class="phone-bubble ai">Hey! Yes I do! 🙌
+🎯 Target grade: 7 — your starting point, not your ceiling
+🧠 You learn by doing — worked examples incoming
+📝 You like exam-style questions
+😴 You find science boring — my job is to change that
+
+The phone in your pocket? Physics. The food you eat? Chemistry and biology. You're already living science.
+
+So — what are we tackling today? 🔬</div>
+            </div>
+            <div class="phone-input">
+              <span class="phone-input-text">Ask me anything...</span>
+              <div class="phone-input-send">
+                <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 2: Social Proof ──────────────────────────────────────── -->
+<section id="social-proof">
+  <div class="container">
+    <p class="social-proof-label">Trusted by GCSE students and their families</p>
+    <div class="logo-strip">
+      <div class="logo-pill">School partner coming soon</div>
+      <div class="logo-pill">School partner coming soon</div>
+      <div class="logo-pill">School partner coming soon</div>
+      <div class="logo-pill">School partner coming soon</div>
+      <div class="logo-pill">School partner coming soon</div>
+    </div>
+    <p class="social-proof-email">Are you a school? <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a></p>
+  </div>
+</section>
+
+<!-- ── Section 3: The Problem ───────────────────────────────────────── -->
+<section id="problem" class="section">
+  <div class="container">
+    <h2 class="problem-headline">Your child revises. Then forgets. Then panics before the exam.</h2>
+    <p class="problem-sub">It's not their fault. It's the method.</p>
+    <div class="problem-cards">
+      <div class="problem-card">
+        <span class="problem-card-icon">❌</span>
+        <h4>Re-reading notes</h4>
+        <p>Feels productive. Research consistently shows it barely works for long-term memory retention.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-card-icon">❌</span>
+        <h4>Cramming the night before</h4>
+        <p>Gets them through Thursday. Gone by the following week.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-card-icon">❌</span>
+        <h4>Generic revision apps</h4>
+        <p>One-size-fits-all revision for a child who isn't one-size-fits-all.</p>
+      </div>
+    </div>
+    <div class="problem-divider"></div>
+    <div class="problem-solution">
+      <p><span>✅ GradeMastery is built on the three techniques that research actually proves work:</span> spaced repetition, active recall, and AI personalisation calibrated to your child specifically.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 4: How It Works ─────────────────────────────────────── -->
+<section id="how-it-works" class="section">
+  <div class="container text-center">
+    <span class="eyebrow">How It Works</span>
+    <h2>Three things. Daily. That's it.</h2>
+    <p class="text-muted" style="font-size:1.05rem;max-width:520px;margin:12px auto 0;line-height:1.7;">Most students spend 10–15 minutes a day. That consistency is what builds the grade.</p>
+    <div class="hiw-grid">
+      <div class="hiw-card">
+        <div class="hiw-number">01</div>
+        <h3>Do your daily cards</h3>
+        <p>Spaced repetition brings back exactly what needs reviewing at exactly the right moment. Nothing more, nothing less. Cards you know well come back less often. Cards you struggle with come back sooner.</p>
+      </div>
+      <div class="hiw-card">
+        <div class="hiw-number">02</div>
+        <h3>Write real answers. AI marks them.</h3>
+        <p>Not multiple choice. Your child writes answers from memory, in their own words. The AI checks them against AQA mark schemes and tells them exactly what they got right, what they missed, and what an examiner would award marks for.</p>
+      </div>
+      <div class="hiw-card">
+        <div class="hiw-number">03</div>
+        <h3>Your AI Tutor fills the gaps</h3>
+        <p>Ask anything. Get an explanation tailored to your child's target grade, learning style, how they prefer to learn, and what they want to achieve. The AI Tutor knows your child — it doesn't give everyone the same response.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 5: Personalisation ──────────────────────────────────── -->
+<section id="personalisation">
+  <div class="container">
+    <span class="eyebrow">Built for your child specifically</span>
+    <h2 style="color:#fff;">No two students get the same experience</h2>
+    <p class="personalisation-sub">GradeMastery builds a picture of your child from day one — and everything adapts around it.</p>
+    <div class="personalisation-grid">
+      <div>
+        <ul class="personalisation-list">
+          <li>
+            <span class="p-icon">🎯</span>
+            <div class="p-content">
+              <strong>Target grade</strong>
+              <span>Frames every interaction as a floor, never a ceiling</span>
+            </div>
+          </li>
+          <li>
+            <span class="p-icon">📚</span>
+            <div class="p-content">
+              <strong>Year group</strong>
+              <span>Calibrates complexity and urgency appropriately</span>
+            </div>
+          </li>
+          <li>
+            <span class="p-icon">🧠</span>
+            <div class="p-content">
+              <strong>How they learn</strong>
+              <span>Step by step, big picture, examples, or straight facts</span>
+            </div>
+          </li>
+          <li>
+            <span class="p-icon">😴</span>
+            <div class="p-content">
+              <strong>What blocks them</strong>
+              <span>Can't focus, finds it boring, forgets easily, doesn't know where to start</span>
+            </div>
+          </li>
+          <li>
+            <span class="p-icon">🚀</span>
+            <div class="p-content">
+              <strong>Dream career</strong>
+              <span>The AI Tutor references it naturally — "this is directly relevant to medicine…"</span>
+            </div>
+          </li>
+          <li>
+            <span class="p-icon">💰</span>
+            <div class="p-content">
+              <strong>What they want to achieve</strong>
+              <span>Salary, career, ambition — referenced in motivational messages</span>
+            </div>
+          </li>
+          <li>
+            <span class="p-icon">📅</span>
+            <div class="p-content">
+              <strong>Exam dates</strong>
+              <span>AI automatically shifts focus as mocks and GCSEs approach</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="personalisation-chats">
+        <div class="mini-chat">
+          <div class="mini-chat-label">Target grade</div>
+          <div class="mini-chat-body">
+            <div class="mini-chat-bubble user">My target is Grade 5</div>
+            <div class="mini-chat-bubble ai">Grade 5 is your starting point — we're going higher. Let's nail the Foundation content first, then we build from there 💪</div>
+          </div>
+        </div>
+        <div class="mini-chat">
+          <div class="mini-chat-label">Dream career</div>
+          <div class="mini-chat-body">
+            <div class="mini-chat-bubble user">I want to be a nurse</div>
+            <div class="mini-chat-bubble ai">Perfect — understanding osmosis is directly relevant to how IV drips work in nursing. Let's make sure you really get this one 🩺</div>
+          </div>
+        </div>
+        <div class="mini-chat">
+          <div class="mini-chat-label">Finding it boring</div>
+          <div class="mini-chat-body">
+            <div class="mini-chat-bubble user">I find chemistry so boring</div>
+            <div class="mini-chat-bubble ai">Fair enough — chemistry has a reputation. But every explosive, every medicine, every food flavour is chemistry. Give me one topic and I'll show you why it's actually wild.</div>
+          </div>
+        </div>
+        <div class="personalisation-footer">
+          <p>The more your child tells us, the more personal every interaction becomes.</p>
+          <a href="index.html" class="btn btn-ghost-white">Set up your profile →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 6: AI Tutor Showcase ────────────────────────────────── -->
+<section id="tutor-showcase">
+  <div class="container">
+    <div class="text-center">
+      <span class="eyebrow">The AI Tutor</span>
+      <h2 style="color:#fff;">Not a chatbot. A tutor that remembers.</h2>
+      <p class="showcase-sub" style="margin:12px auto 0;">It knows their target grade, how they learn, what bores them, and what they want to achieve. Every response is calibrated to them specifically.</p>
+    </div>
+    <div class="showcase-chat">
+      <div class="showcase-msg">
+        <div class="showcase-bubble user">Hi, do you know the type of student I am?</div>
+        <div class="showcase-bubble ai">Hey! Yes I do! 🙌 Here's what I know about you:
+🎯 Target grade: 7 — that's our starting point, not our ceiling. We're going for higher!
+🧠 You learn by doing — so expect worked examples and practice questions from me
+📝 You like exam-style stuff — so I'll frame things like real exam questions
+😴 You find science a bit boring — so my job is to change that!
+
+Here's the thing though — science is actually everywhere. The phone in your pocket? Physics. The food you eat? Chemistry and biology. The reason you get ill and recover? Biology. It's all connected to real life in ways that are actually pretty wild. 🌍
+
+So — what are we tackling today? Pick a topic and let's make it click:
+🧬 Biology | ⚗️ Chemistry | ⚡ Physics
+Or just throw a specific topic at me! 🔬</div>
+      </div>
+    </div>
+    <p class="showcase-caption">Real response. Real student. No scripts, no templates.</p>
+  </div>
+</section>
+
+<!-- ── Section 7: What's Inside ────────────────────────────────────── -->
+<section id="whats-inside" class="section">
+  <div class="container">
+    <div class="text-center">
+      <span class="eyebrow">Everything in One Place</span>
+      <h2>Built for students, parents, and teachers</h2>
+    </div>
+    <div class="tab-buttons">
+      <button class="tab-btn active" data-tab="students">For Students</button>
+      <button class="tab-btn" data-tab="parents">For Parents</button>
+      <button class="tab-btn" data-tab="teachers">For Teachers</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-students">
+      <div class="features-grid">
+        <div class="feature-card">
+          <span class="feature-icon">🃏</span>
+          <h4>1,189 AQA Flashcards</h4>
+          <p>Every topic across Biology, Chemistry and Physics. Foundation, Higher, and Triple covered, clearly labelled.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🤖</span>
+          <h4>AI Marking</h4>
+          <p>Write real answers from memory. Get specific feedback on exactly what you got right and what the examiner wanted.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🌊</span>
+          <h4>Deep Dive Sessions</h4>
+          <p>Six-phase guided lessons: read the facts, quick check, fill the gaps, brain dump, flashcards, then AQA-style exam questions. The complete learning cycle.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">⚡</span>
+          <h4>Quick Revision</h4>
+          <p>Revise any topic, any time, without affecting your daily streak or SRS schedule. Perfect before a class test.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📊</span>
+          <h4>Progress Tracking</h4>
+          <p>See your mastery percentage per topic. Watch it grow. Get the ⭐ Mastered badge at 80%.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🎯</span>
+          <h4>StudyCoach</h4>
+          <p>Evidence-based study tips written for students. Short, real, and actually useful.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-parents">
+      <div class="features-grid">
+        <div class="feature-card">
+          <span class="feature-icon">📩</span>
+          <h4>Fortnightly Progress Updates</h4>
+          <p>A personalised summary of what your child studied, how their mastery is growing, and a suggested conversation starter. ("Ask them: what does the mitochondria do?")</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">👁️</span>
+          <h4>Real Mastery Data</h4>
+          <p>See which topics your child has mastered and which need work. Colour-coded, clear, no jargon.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🔔</span>
+          <h4>Smart Notifications</h4>
+          <p>You choose how involved you want to be. Get notified when your child completes their daily cards, or when they've been inactive.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">💬</span>
+          <h4>Conversation Starters</h4>
+          <p>We make it easy to engage with your child's learning without needing to be a science expert. Fortnightly suggestions sent directly to you.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🎓</span>
+          <h4>Teacher Connection</h4>
+          <p>If their school uses GradeMastery, their teacher can see progress too. Everyone's working from the same data.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">❤️</span>
+          <h4>Scholarship Access</h4>
+          <p>We believe every child deserves this. FSM and disadvantaged students can access GradeMastery free through Zeniyth CIC.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-teachers">
+      <div class="features-grid">
+        <div class="feature-card">
+          <span class="feature-icon">🟢</span>
+          <h4>Class at a Glance</h4>
+          <p>Green dot = cards done today. Red dot = not yet. See your whole class in one screen without clicking into each student.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📣</span>
+          <h4>Ping Students</h4>
+          <p>Send a personalised reminder to individual students or the whole class. Schedule it to fire automatically at a set time daily.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🔒</span>
+          <h4>Topic Control</h4>
+          <p>Unlock topics as you teach them. Students only study what you've covered. Lock the schedule so students can't change their daily card limits.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📝</span>
+          <h4>Brain Dump Viewer</h4>
+          <p>Read every student's free-recall attempts. Real evidence of understanding — not just what they clicked.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📊</span>
+          <h4>Mastery Heatmap</h4>
+          <p>Topic-by-topic mastery across the whole class. Spot intervention points before mock exams. Ofsted-ready data built in.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📅</span>
+          <h4>Exam Date Setting</h4>
+          <p>Set mock and GCSE dates for your class. The AI Tutor automatically shifts focus as exams approach. Students see a countdown.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 8: Parent and Teacher Engagement ─────────────────────── -->
+<section id="parent-teacher" class="section">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:16px;">
+      <span class="eyebrow">Keeping Everyone Connected</span>
+      <h2>Parents and teachers don't have to guess any more</h2>
+      <p class="text-muted" style="font-size:1.05rem;max-width:580px;margin:12px auto 0;line-height:1.7;">GradeMastery gives parents and teachers the right information at the right time — without overwhelming anyone.</p>
+    </div>
+    <div class="pt-grid">
+      <div class="pt-col">
+        <h3>You don't need to be a science expert</h3>
+        <p class="pt-desc">You just need to show interest. Research consistently shows that parental engagement is one of the strongest predictors of student achievement — and we make it easy.</p>
+        <div class="pt-feature">
+          <span class="pt-feature-icon">🔔</span>
+          <div class="pt-feature-content">
+            <strong>Personalised reminders</strong>
+            <span>You set the level of involvement. Get notified when cards are complete, or when your child has been inactive for too long.</span>
+          </div>
+        </div>
+        <div class="pt-feature">
+          <span class="pt-feature-icon">💬</span>
+          <div class="pt-feature-content">
+            <strong>Conversation starters</strong>
+            <span>Every fortnight we send you one specific question to ask your child based on what they've actually been studying. No awkward "how was school?" needed.</span>
+          </div>
+        </div>
+        <div class="pt-feature">
+          <span class="pt-feature-icon">📊</span>
+          <div class="pt-feature-content">
+            <strong>Plain-English progress</strong>
+            <span>We translate mastery data into what it actually means: "Your child now knows 74% of the B3 Infection topic — up from 41% last month."</span>
+          </div>
+        </div>
+      </div>
+      <div class="pt-divider"></div>
+      <div class="pt-col">
+        <h3>Built for how teachers actually work</h3>
+        <p class="pt-desc">No extra logins, no complex setup. The data you need, in the format you can act on.</p>
+        <div class="pt-feature">
+          <span class="pt-feature-icon">📣</span>
+          <div class="pt-feature-content">
+            <strong>Ping whole class or individuals</strong>
+            <span>One tap sends a personalised reminder: "Your teacher wants you to complete your science cards today!" Students can't turn this off.</span>
+          </div>
+        </div>
+        <div class="pt-feature">
+          <span class="pt-feature-icon">🗓️</span>
+          <div class="pt-feature-content">
+            <strong>Scheduled auto-pings</strong>
+            <span>Set a daily ping time once. It fires automatically to every student who hasn't completed their cards that day. You don't have to remember.</span>
+          </div>
+        </div>
+        <div class="pt-feature">
+          <span class="pt-feature-icon">📋</span>
+          <div class="pt-feature-content">
+            <strong>Lesson Mode</strong>
+            <span>Assign specific Deep Dive sessions as homework. Lock which phases students must complete. See their brain dumps in your dashboard.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 9: Video ─────────────────────────────────────────────── -->
+<section id="video" class="section">
+  <div class="container">
+    <div class="text-center">
+      <span class="eyebrow">See It in Action</span>
+      <h2 style="color:#fff;">Watch GradeMastery work</h2>
+      <p class="video-sub">A 2-minute walkthrough of the AI Tutor, Deep Dive sessions, and the teacher dashboard.</p>
+    </div>
+    <div class="video-frame">
+      <div class="video-play">
+        <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </div>
+      <p class="video-coming-soon">Video walkthrough coming soon</p>
+    </div>
+    <p class="video-caption">Want an early preview? Email <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a> and we'll send you a demo.</p>
+  </div>
+</section>
+
+<!-- ── Section 10: The Science ──────────────────────────────────────── -->
+<section id="science" class="section">
+  <div class="container">
+    <div class="text-center">
+      <span class="eyebrow">The Cognitive Science</span>
+      <h2>Built on how memory actually works</h2>
+      <p class="text-muted" style="font-size:1.05rem;max-width:600px;margin:12px auto 0;line-height:1.7;">Every feature is grounded in peer-reviewed research. No fluff. No busy work. Just the techniques the evidence consistently shows actually improve long-term retention.</p>
+    </div>
+    <div class="science-grid">
+      <div class="science-card">
+        <span class="science-ref">Ebbinghaus (1885); Cepeda et al. (2006)</span>
+        <h4>Spaced Repetition</h4>
+        <p class="plain">Your brain forgets in a predictable curve. Reviewing information at exactly the right interval before you forget it locks it in permanently — far more effectively than re-reading.</p>
+        <div class="science-application"><strong>In GradeMastery:</strong> Our SRS algorithm schedules every card at the optimal interval for each student individually. Cards you know well come back less often. Cards you struggle with come back sooner.</div>
+      </div>
+      <div class="science-card">
+        <span class="science-ref">Roediger &amp; Karpicke (2006) — The Power of Testing Memory</span>
+        <h4>Active Recall</h4>
+        <p class="plain">Trying to retrieve information from memory is far more effective than reading it again. The struggle of remembering is the learning.</p>
+        <div class="science-application"><strong>In GradeMastery:</strong> Students write real answers from memory — not multiple choice, not re-reading. The effort of retrieval is built into every card session.</div>
+      </div>
+      <div class="science-card">
+        <span class="science-ref">Hattie &amp; Timperley (2007) — The Power of Feedback</span>
+        <h4>Specific AI Feedback</h4>
+        <p class="plain">Knowing you got something wrong is not enough. Knowing exactly which keyword was missing and why it matters for the exam is what drives improvement.</p>
+        <div class="science-application"><strong>In GradeMastery:</strong> AI checks every written answer against AQA mark schemes and tells students exactly what they got right, what they missed, and what an examiner would award marks for.</div>
+      </div>
+      <div class="science-card">
+        <span class="science-ref">Rohrer &amp; Taylor (2007); Kornell &amp; Bjork (2008)</span>
+        <h4>Interleaved Practice</h4>
+        <p class="plain">Studying Biology, then Chemistry, then Physics in the same session feels harder — but produces significantly better long-term retention than studying one subject at a time.</p>
+        <div class="science-application"><strong>In GradeMastery:</strong> The daily card queue naturally interleaves subjects. This feels counterintuitive but is one of the most powerful learning techniques available.</div>
+      </div>
+      <div class="science-card">
+        <span class="science-ref">Black &amp; Wiliam (1998) — Inside the Black Box</span>
+        <h4>Formative and Summative Assessment</h4>
+        <p class="plain">Frequent low-stakes testing builds understanding incrementally. High-stakes exam practice consolidates it. Both serve different cognitive functions and both are necessary.</p>
+        <div class="science-application"><strong>In GradeMastery:</strong> Daily flashcards are formative — low pressure, frequent, adaptive. Deep Dive exam questions are summative — AQA-style, marked against real mark schemes.</div>
+      </div>
+      <div class="science-card">
+        <span class="science-ref">Chi et al. (2001) — self-explanation effect; Collins, Brown &amp; Newman (1989)</span>
+        <h4>Socratic AI Tutoring</h4>
+        <p class="plain">Being guided to find an answer yourself produces deeper understanding than being given the answer. The best tutors ask questions rather than lecture.</p>
+        <div class="science-application"><strong>In GradeMastery:</strong> The AI Tutor asks questions, guides thinking, and helps students arrive at answers themselves. It mirrors the evidence-based tutoring approaches used by the best human tutors.</div>
+      </div>
+    </div>
+    <p class="science-statement">"We don't add features because they look good. We add features because the research says they work."</p>
+    <p class="science-refs">References: Ebbinghaus (1885); Roediger &amp; Karpicke (2006); Hattie &amp; Timperley (2007); Black &amp; Wiliam (1998); Rohrer &amp; Taylor (2007); Chi et al. (2001)</p>
+  </div>
+</section>
+
+<!-- ── Section 11: Pricing ───────────────────────────────────────────── -->
+<section id="pricing" class="section">
+  <div class="container">
+    <div class="text-center">
+      <span class="eyebrow">Pricing</span>
+      <h2>Simple, honest pricing</h2>
+      <p class="text-muted" style="font-size:1.05rem;margin-top:12px;">Start free forever. Upgrade when you're ready. Cancel anytime.</p>
+    </div>
+    <div class="pricing-toggle">
+      <span class="pricing-toggle-label active" id="label-monthly">Monthly</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="billing-toggle">
+        <span class="toggle-slider"></span>
+      </label>
+      <span class="pricing-toggle-label" id="label-annual">Annual</span>
+      <span class="annual-badge" id="annual-badge" style="opacity:.5;">Save ~30%</span>
+    </div>
+    <div class="pricing-grid">
+
+      <!-- FREE -->
+      <div class="pricing-card">
+        <span class="pricing-card-name">Free</span>
+        <div class="pricing-price"><sup>£</sup>0<span class="period">/mo</span></div>
+        <p class="pricing-subtitle">Free forever</p>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li><span>✓</span> 6 flashcards per day</li>
+          <li><span>✓</span> B1, C1 and P1 topics unlocked</li>
+          <li><span>✓</span> Basic progress tracking</li>
+          <li><span>✓</span> Earn extra topics with streaks</li>
+          <li class="no"><span style="color:var(--gm-muted)">✗</span> No AI marking</li>
+          <li class="no"><span style="color:var(--gm-muted)">✗</span> No AI Tutor</li>
+        </ul>
+        <div class="pricing-cta">
+          <a href="index.html" style="color:var(--gm-forest);border-color:var(--gm-forest);">Start Free</a>
+        </div>
+      </div>
+
+      <!-- BASIC -->
+      <div class="pricing-card">
+        <span class="pricing-card-name">Basic</span>
+        <div class="pricing-price">
+          <sup>£</sup><span class="price-val" data-monthly="3.99" data-annual="2.92">3.99</span><span class="period">/mo</span>
+        </div>
+        <p class="pricing-subtitle"><span class="billing-note">Billed monthly</span></p>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li><span>✓</span> Full spaced repetition</li>
+          <li><span>✓</span> All topics unlocked</li>
+          <li><span>✓</span> Progress tracking and mastery badges</li>
+          <li><span>✓</span> Quick Revision mode</li>
+          <li><span>✓</span> StudyCoach articles</li>
+          <li class="no"><span style="color:var(--gm-muted)">✗</span> No AI marking</li>
+          <li class="no"><span style="color:var(--gm-muted)">✗</span> No AI Tutor</li>
+        </ul>
+        <div class="pricing-cta">
+          <a href="index.html" style="color:var(--gm-forest);border-color:var(--gm-forest);">Get Basic</a>
+        </div>
+      </div>
+
+      <!-- STANDARD (POPULAR) -->
+      <div class="pricing-card popular">
+        <span class="pricing-card-name">Standard</span>
+        <div class="pricing-price">
+          <sup>£</sup><span class="price-val" data-monthly="14.99" data-annual="10.00">14.99</span><span class="period">/mo</span>
+        </div>
+        <p class="pricing-subtitle">3-day free trial — no card needed</p>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li><span>✓</span> Everything in Basic</li>
+          <li><span>✓</span> AI marking (15 cards/day)</li>
+          <li><span>✓</span> AI Tutor (15 messages/day)</li>
+          <li><span>✓</span> Deep Dive sessions (all 6 phases)</li>
+          <li><span>✓</span> Brain Dump with AI feedback</li>
+          <li><span>✓</span> Fill the Gaps exercises</li>
+          <li><span>✓</span> StudyCoach tips</li>
+        </ul>
+        <div class="pricing-cta">
+          <a href="index.html" style="background:var(--gm-orange);color:#fff;border-color:var(--gm-orange);font-size:1rem;padding:14px 20px;">Start Free Trial</a>
+        </div>
+      </div>
+
+      <!-- PREMIUM -->
+      <div class="pricing-card">
+        <span class="pricing-card-name">Premium</span>
+        <div class="pricing-price">
+          <sup>£</sup><span class="price-val" data-monthly="24.99" data-annual="16.66">24.99</span><span class="period">/mo</span>
+        </div>
+        <p class="pricing-subtitle"><span class="billing-note">Billed monthly</span></p>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li><span>✓</span> Everything in Standard</li>
+          <li><span>✓</span> Unlimited AI marking</li>
+          <li><span>✓</span> Unlimited AI Tutor</li>
+          <li><span>✓</span> Parent portal and progress updates</li>
+          <li><span>✓</span> Conversation starters for parents</li>
+          <li><span>✓</span> Required Practicals fully covered</li>
+          <li><span>✓</span> Teacher portal (if school uses GradeMastery)</li>
+        </ul>
+        <div class="pricing-cta">
+          <a href="index.html" style="background:var(--gm-forest);color:#fff;border-color:var(--gm-forest);">Get Premium</a>
+        </div>
+      </div>
+
+      <!-- PREMIUM PLUS -->
+      <div class="pricing-card">
+        <span class="pricing-card-name">Premium Plus</span>
+        <div class="pricing-price">
+          <sup>£</sup><span class="price-val" data-monthly="44.99" data-annual="29.16">44.99</span><span class="period">/mo</span>
+        </div>
+        <p class="pricing-subtitle"><span class="billing-note">Billed monthly</span></p>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li><span>✓</span> Everything in Premium</li>
+          <li><span>✓</span> Advanced AI Tutor (full Sonnet model)</li>
+          <li><span>✓</span> AI Learning Coach</li>
+          <li><span>✓</span> Every subscription funds a Zeniyth scholarship place</li>
+          <li><span>✓</span> Priority support</li>
+        </ul>
+        <div class="pricing-cta">
+          <a href="index.html" style="color:var(--gm-gold);border-color:var(--gm-gold);">Get Premium Plus</a>
+        </div>
+      </div>
+
+    </div>
+    <div class="pricing-footer">
+      <p>For schools and MATs, we offer per-student pricing. Contact us: <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a></p>
+      <p>Subsidised access available for Free School Meal students through Zeniyth CIC — <a href="mailto:hello@grademastery.co.uk">email us</a>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 12: Scholarships ────────────────────────────────────── -->
+<section id="scholarships">
+  <div class="container text-center">
+    <span class="eyebrow">Zeniyth CIC</span>
+    <h2 style="color:#fff;">Science shouldn't depend on your postcode</h2>
+    <p class="scholar-body">For every Premium Plus subscriber, GradeMastery provides free access to a student on Free School Meals through Zeniyth CIC. We believe the attainment gap between disadvantaged students and their peers is closeable — and we're doing something about it.</p>
+    <div class="scholar-grid">
+      <div class="scholar-col" style="text-align:left;">
+        <h4>Who qualifies</h4>
+        <ul>
+          <li>Free School Meals students</li>
+          <li>Pupil Premium students</li>
+          <li>Universal Credit families</li>
+          <li>Students in care</li>
+        </ul>
+      </div>
+      <div class="scholar-col" style="text-align:left;">
+        <h4>How to apply</h4>
+        <p>Email <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a> with the subject 'Scholarship'. We'll verify eligibility and set up free Premium access within 48 hours. No lengthy forms. No hoops.</p>
+      </div>
+    </div>
+    <a href="mailto:hello@grademastery.co.uk?subject=Scholarship" class="btn btn-white-solid btn-lg">Apply for Free Access</a>
+  </div>
+</section>
+
+<!-- ── Section 13: FAQ ──────────────────────────────────────────────── -->
+<section id="faq" class="section">
+  <div class="container">
+    <div class="text-center">
+      <h2>Questions</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-question">Is this aligned to AQA?<svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes — every one of our 1,189 flashcards is mapped directly to the AQA specification for GCSE Biology, Chemistry and Physics, including all Required Practicals. Foundation, Higher, and Triple content is clearly labelled on every card.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Do you need videos?<svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-inner">No. Our method is built on active recall and spaced repetition — techniques that research consistently shows outperform passive video watching for long-term retention. Great free GCSE science videos already exist on YouTube. GradeMastery is what you use to make sure what you watched actually sticks.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">What year groups is GradeMastery for?<svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Primarily Year 9 to 11 GCSE students. We're building KS3 content for younger students soon.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Is there a free trial?<svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes — Standard tier has a 3-day free trial with no card required. The Free tier is free forever, also with no card needed.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">Can teachers use GradeMastery with their whole class?<svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes — teachers get a full dashboard showing class mastery, can lock and unlock topics, ping individual students or the whole class, and view student brain dumps. Contact us about school pricing.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">My child is on Free School Meals — can they get free access?<svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes. Email hello@grademastery.co.uk with the subject 'Scholarship' and we'll set up free Premium access through Zeniyth CIC, usually within 48 hours.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">What devices does it work on?<svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Any device with a browser — phone, tablet, laptop. It installs as an app on iPhone and Android without needing the App Store. Students just visit grademastery.co.uk and tap "Add to Home Screen."</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">How is GradeMastery different from Seneca or Tassomai?<svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-inner">GradeMastery builds a profile of your child — their target grade, learning style, dream career, upcoming exam dates, and what blocks them from studying. Every AI response, every notification, and every tutoring session adapts to that profile. Other platforms give every student the same experience. We don't.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">What is Zeniyth CIC?<svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Zeniyth is a Community Interest Company founded alongside GradeMastery specifically to provide free and subsidised access to disadvantaged students. Every Premium Plus subscription cross-subsidises a free place.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 14: Final CTA ────────────────────────────────────────── -->
+<section id="final-cta">
+  <div class="container">
+    <h2>Ready to make science stick?</h2>
+    <p>Free to start. No card. Takes 2 minutes.</p>
+    <a href="index.html" class="btn btn-orange btn-xl">Start Free Now →</a>
+    <p class="final-cta-email">Or email us: <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a></p>
+  </div>
+</section>
+
+<!-- ── Footer ───────────────────────────────────────────────────────── -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="footer-wordmark">GradeMastery</span>
+        <span class="footer-tagline">Where Grade 9 starts</span>
+      </div>
+      <ul class="footer-nav-links">
+        <li><a href="#whats-inside">Students</a></li>
+        <li><a href="#parent-teacher">Parents</a></li>
+        <li><a href="#parent-teacher">Teachers</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#scholarships">Scholarships</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+      </ul>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-legal">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Use</a>
+        <a href="mailto:hello@grademastery.co.uk">Contact</a>
+      </div>
+      <div class="footer-social">
+        <a href="#">Instagram</a>
+        <a href="#">TikTok</a>
+      </div>
+      <span class="footer-copy">© 2026 GradeMastery. All rights reserved.</span>
+    </div>
+    <div class="footer-zeniyth">Subsidised access for FSM students available through Zeniyth CIC</div>
+  </div>
+</footer>
+
+<!-- ── JavaScript ────────────────────────────────────────────────────── -->
+<script>
+(function() {
+  'use strict';
+
+  // ── Nav scroll ──────────────────────────────────────────────────────
+  const nav = document.getElementById('nav');
+  let lastScroll = 0;
+  window.addEventListener('scroll', function() {
+    const y = window.scrollY;
+    nav.classList.toggle('scrolled', y > 50);
+    lastScroll = y;
+  }, { passive: true });
+
+  // ── Mobile nav ──────────────────────────────────────────────────────
+  const overlay = document.getElementById('nav-overlay');
+  const hamburger = document.getElementById('hamburger-btn');
+  const navClose = document.getElementById('nav-close');
+
+  function openNav() {
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeNav() {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  hamburger.addEventListener('click', openNav);
+  navClose.addEventListener('click', closeNav);
+  overlay.querySelectorAll('.overlay-link, .btn').forEach(function(link) {
+    link.addEventListener('click', closeNav);
+  });
+
+  // ── Tab switcher ────────────────────────────────────────────────────
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  tabBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var target = btn.dataset.tab;
+      tabBtns.forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+      var panel = document.getElementById('tab-' + target);
+      if (panel) panel.classList.add('active');
+    });
+  });
+
+  // ── FAQ accordion ───────────────────────────────────────────────────
+  document.querySelectorAll('.faq-question').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var item = btn.closest('.faq-item');
+      var answer = item.querySelector('.faq-answer');
+      var isOpen = item.classList.contains('open');
+
+      // Close all
+      document.querySelectorAll('.faq-item').forEach(function(i) {
+        i.classList.remove('open');
+        i.querySelector('.faq-answer').style.maxHeight = '0';
+      });
+
+      // Open this one
+      if (!isOpen) {
+        item.classList.add('open');
+        answer.style.maxHeight = answer.scrollHeight + 'px';
+      }
+    });
+  });
+
+  // ── Pricing toggle ──────────────────────────────────────────────────
+  var toggle = document.getElementById('billing-toggle');
+  var labelMonthly = document.getElementById('label-monthly');
+  var labelAnnual = document.getElementById('label-annual');
+  var badge = document.getElementById('annual-badge');
+
+  var annualPrices = { '3.99': '2.92', '14.99': '10.00', '24.99': '16.66', '44.99': '29.16' };
+  var annualYearly = { '3.99': '34.99', '14.99': '119.99', '24.99': '199.99', '44.99': '349.99' };
+
+  toggle.addEventListener('change', function() {
+    var isAnnual = toggle.checked;
+
+    document.querySelectorAll('.price-val').forEach(function(el) {
+      var monthly = el.dataset.monthly;
+      el.textContent = isAnnual ? (annualPrices[monthly] || monthly) : monthly;
+    });
+
+    document.querySelectorAll('.billing-note').forEach(function(el) {
+      var priceEl = el.closest('.pricing-card').querySelector('.price-val');
+      if (!priceEl) return;
+      var monthly = priceEl.dataset.monthly;
+      if (isAnnual) {
+        el.textContent = '£' + (annualYearly[monthly] || '') + '/year';
+      } else {
+        el.textContent = 'Billed monthly';
+      }
+    });
+
+    labelMonthly.classList.toggle('active', !isAnnual);
+    labelAnnual.classList.toggle('active', isAnnual);
+    badge.style.opacity = isAnnual ? '1' : '.5';
+  });
+
+  // ── Smooth scroll for anchor links ──────────────────────────────────
+  document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+    a.addEventListener('click', function(e) {
+      var target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        var offset = 80;
+        var top = target.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top: top, behavior: 'smooth' });
+      }
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
