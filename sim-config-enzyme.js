@@ -52,9 +52,9 @@ const SimConfigEnzyme = {
         const enz = actors.find(a => a.id === 'enzyme');
         if (!sub || !enz || sub._locked) return;
 
-        // Active site opening: top of the U-shape, centred at enzyme position offset by -52px
+        // Active site opening: top of the U-shape, centred at enzyme position offset by -88px
         const tx = enz.x;
-        const ty = enz.y - 52;
+        const ty = enz.y - 88;
 
         const dx   = tx - sub.x;
         const dy   = ty - sub.y;
@@ -81,7 +81,7 @@ const SimConfigEnzyme = {
         if (spd > 3.5) { sub.vx = (sub.vx / spd) * 3.5; sub.vy = (sub.vy / spd) * 3.5; }
 
         // Form complex when substrate reaches active site
-        if (dist < 16) {
+        if (dist < 22) {
           sub._locked = true;
           sub.x = tx;
           sub.y = ty;
