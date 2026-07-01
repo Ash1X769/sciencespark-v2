@@ -16840,7 +16840,7 @@ function renderLearnPhase() {
     <div id="ko-content">${koHTML}</div>
   </div>
 
-  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;z-index:100;">
     <div style="height:4px;background:#E2E8F0;border-radius:2px;margin-bottom:10px;overflow:hidden;">
       <div id="read-progress-bar" style="height:100%;background:var(--ss-green);border-radius:2px;width:0%;transition:width 1s linear;"></div>
     </div>
@@ -16893,7 +16893,7 @@ function showFullSessionMCQ() {
     <div style="font-size:14px;color:var(--text-secondary);font-weight:600;margin-bottom:20px;">How much did you take in? Answer these four questions! 🧠</div>
     <div id="mcq-container">${renderMCQs()}</div>
   </div>
-  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;z-index:100;">
     <div style="display:flex;gap:6px;">
       <button class="btn btn-ghost btn-sm" onclick="endSession()" style="flex:0 0 auto;padding:8px 12px;">✕</button>
       ${locks.phase2_locked ? '' : `<button class="btn btn-outline btn-sm" onclick="showTransition('mcq-to-gaps')" style="flex:1;">Skip →</button>`}
@@ -22181,7 +22181,7 @@ function renderLearnPhase() {
     <div id="ko-content">${koHTML}</div>
   </div>
 
-  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;z-index:100;">
     <div style="height:4px;background:#E2E8F0;border-radius:2px;margin-bottom:10px;overflow:hidden;">
       <div id="read-progress-bar" style="height:100%;background:var(--ss-green);border-radius:2px;width:0%;transition:width 1s linear;"></div>
     </div>
@@ -22234,7 +22234,7 @@ function showFullSessionMCQ() {
     <div style="font-size:14px;color:var(--text-secondary);font-weight:600;margin-bottom:20px;">How much did you take in? Answer these four questions! 🧠</div>
     <div id="mcq-container">${renderMCQs()}</div>
   </div>
-  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;z-index:100;">
     <div style="display:flex;gap:6px;">
       <button class="btn btn-ghost btn-sm" onclick="endSession()" style="flex:0 0 auto;padding:8px 12px;">✕</button>
       ${locks.phase2_locked ? '' : `<button class="btn btn-outline btn-sm" onclick="showTransition('mcq-to-gaps')" style="flex:1;">Skip →</button>`}
@@ -27224,7 +27224,7 @@ function showDeepDiveFillGaps() {
       <div style="font-size:14px;font-weight:600;line-height:2.8;color:var(--text);">${item.text}</div>
     </div>`).join('')}
   </div>
-  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;z-index:100;">
     <div style="display:flex;gap:6px;">
       <button class="btn btn-ghost btn-sm" onclick="endSession()" style="flex:0 0 auto;padding:8px 12px;">✕</button>
       <button class="btn btn-outline btn-sm" onclick="checkAllGaps()" style="flex:1;">Check Answers</button>
@@ -27349,7 +27349,7 @@ function showDeepDiveBrainDump() {
     <div id="word-count" style="font-size:12px;color:var(--text-secondary);font-weight:600;text-align:right;margin-top:4px;">0 words</div>
     <div id="dump-result" style="display:none;margin-top:16px;"></div>
   </div>
-  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;">
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 16px 14px;z-index:100;">
     <div style="display:flex;gap:6px;">
       <button class="btn btn-ghost btn-sm" onclick="endSession()" style="flex:0 0 auto;padding:8px 12px;">✕</button>
       ${locks.phase3_locked ? '' : `<button class="btn btn-outline btn-sm" onclick="showTransition('dump-to-cards')" style="flex:1;">Skip →</button>`}
