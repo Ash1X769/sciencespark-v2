@@ -1,7 +1,8 @@
-const CACHE_NAME = 'grademastery-v2-3';
+const CACHE_NAME = 'grademastery-v2-4';
 const PRECACHE = [
   '/',
   '/index.html',
+  '/app.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
