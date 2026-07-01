@@ -13676,37 +13676,6 @@ async function callClaude(systemPrompt, userMessage, maxTokens=500) {
   }
 }
 
-async function gradeAnswer(question, correctAnswer, studentAnswer, timeSeconds) {
-  if (!STATE.user?.is_paid) {
-    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
-      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
-      return null;
-    }
-    await incrementAIMarkingCount();
-  }
-  const system = `You are a strict AQA GCSE science marker. Grade the student's answer by counting what percentage of the key concepts from the correct answer are present.
-STRICT RULES:
-- Count how many key concepts from the correct answer appear in the student's answer
-- 0-25% of key concepts present → "again"
-- 26-49% of key concepts present → "hard"
-- 50-99% of key concepts present → "good"
-- 100% of key concepts present → "easy" (spelling mistakes are fine, all concepts must be there)
-- "I don't know", blank answers, or single words always = "again" (0%)
-- Consider time: under 3 seconds = likely copy-paste, flag it
-- Return ONLY valid JSON: {"grade": "again"|"hard"|"good"|"easy", "feedback": "brief specific feedback under 20 words", "copy_paste_suspected": boolean}`;
-
-  const userMsg = `Question: ${question}
-Correct answer: ${correctAnswer}
-Student's answer: ${studentAnswer}
-Time taken: ${timeSeconds} seconds`;
-
-  const raw = await callClaude(system, userMsg, 200);
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return { grade: 'good', feedback: 'Good effort!', copy_paste_suspected: false };
-  }
-}
 
 async function markExamAnswer(question, markScheme, studentAnswer, totalMarks) {
   if (!aiMarkingAvailable()) {
@@ -14947,6 +14916,7 @@ async function startCheckout() {
 }
 
 function showUpgradedCelebration() {
+  if (!STATE.user) return;
   // Clear ?upgraded=true from URL without reload
   if (window.history?.replaceState) window.history.replaceState({}, '', window.location.pathname);
   // Reload paid status silently, then show toast
@@ -16097,44 +16067,6 @@ function selfGrade(cardId, grade) {
   nextCard();
 }
 
-async function submitAIAnswer(cardId) {
-  const card = STATE.cardQueue[STATE.currentCardIndex];
-  const answer = document.getElementById('student-answer')?.value?.trim();
-  if (!answer) { showToast('Please type an answer first'); return; }
-
-  const timeSeconds = Math.round((Date.now() - STATE.pendingAnswerTime) / 1000);
-  const btn = document.querySelector('.ai-answer-input .btn');
-  if (btn) { btn.textContent = 'Grading...'; btn.disabled = true; }
-
-  const result = await gradeAnswer(card.question, card.answer, answer, timeSeconds);
-  if (!result) { if (btn) { btn.textContent = 'Submit for marking'; btn.disabled = false; } return; }
-
-  const gradeNum = { 'again': 0, 'hard': 1, 'good': 2, 'easy': 3 }[result.grade] ?? 2;
-  recordGrade(cardId, gradeNum, true);
-
-  // Show feedback
-  const feedbackArea = document.getElementById('ai-feedback-area');
-  if (feedbackArea) {
-    feedbackArea.classList.remove('hidden');
-    feedbackArea.innerHTML = `
-      <div class="ai-feedback">
-        ${result.copy_paste_suspected ? '⚠️ Looks like a very fast answer — make sure you\'re really thinking it through! ' : ''}
-        ${result.feedback}
-      </div>
-      <div class="flashcard" style="margin-top:0;">
-        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">Correct Answer</div>
-        <div style="font-size:15px;font-weight:600;line-height:1.5;">${card.answer}</div>
-      </div>
-      <div class="grade-buttons">
-        <button class="btn btn-grade-${result.grade}" style="flex:none;width:100%;" onclick="nextCard()">
-          ${result.grade.toUpperCase()} — Next Card →
-        </button>
-      </div>`;
-
-    // Hide AI input
-    document.querySelector('.ai-answer-input')?.classList.add('hidden');
-  }
-}
 
 function syncCardProgress(cardId, prog) {
   const user = STATE.user;
@@ -17132,38 +17064,6 @@ function renderEmbedCard() {
   STATE.examOpen = false;
 }
 
-async function submitEmbedAnswer() {
-  const card = STATE.cardQueue[STATE.currentCardIndex];
-  const answer = document.getElementById('embed-answer')?.value?.trim();
-  if (!answer) { showToast('Please write your answer'); return; }
-
-  const timeSeconds = Math.round((Date.now() - STATE.pendingAnswerTime) / 1000);
-  const btn = document.querySelector('.ai-answer-input .btn');
-  if (btn) { btn.textContent = 'Grading...'; btn.disabled = true; }
-
-  const correctAnswer = Array.isArray(card.a) ? card.a.join('; ') : (card.answer || '');
-  const result = await gradeAnswer(card.q || card.question || '', correctAnswer, answer, timeSeconds);
-  if (!result) { if (btn) { btn.textContent = 'Submit for marking'; btn.disabled = false; } return; }
-  const gradeNum = { 'again': 0, 'hard': 1, 'good': 2, 'easy': 3 }[result.grade] ?? 2;
-  recordGrade(card.id, gradeNum);
-
-  document.querySelector('.ai-answer-input')?.classList.add('hidden');
-  const fb = document.getElementById('embed-feedback');
-  fb?.classList.remove('hidden');
-  fb.style.display = 'flex';
-
-  const gradeColors = { again: 'var(--ss-red)', hard: 'var(--ss-orange)', good: 'var(--ss-blue)', easy: 'var(--ss-green)' };
-  document.getElementById('embed-fb-text').innerHTML = `
-    <div class="ai-feedback" style="border-left-color:${gradeColors[result.grade]};">
-      <strong>${result.grade.toUpperCase()}</strong>: ${result.feedback}
-      ${result.copy_paste_suspected ? ' ⚠️ Very fast — make sure you\'re thinking it through!' : ''}
-    </div>`;
-
-  const displayAnswer = Array.isArray(card.a) ? card.a.join('\n') : (card.answer || '');
-  document.getElementById('embed-correct-answer').textContent = displayAnswer;
-  document.getElementById('exam-q-text').textContent = card.exam_q || '';
-  document.getElementById('exam-q-marks').textContent = card.examA || card.mark_scheme || '';
-}
 
 function toggleExamQ() {
   const body = document.getElementById('exam-q-body');
@@ -18208,9 +18108,10 @@ async function showProgressTracker() {
 }
 
 async function joinClass() {
+  if (!STATE.user) return;
   const code = (document.getElementById('join-class-input')?.value || '').trim().toUpperCase();
   if (!code) { alert('Please enter a class code'); return; }
-  const userId = STATE.user?.id;
+  const userId = STATE.user.id;
   if (!userId) { alert('Not logged in'); return; }
   const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + userId, {
     method: 'PATCH',
@@ -19393,37 +19294,6 @@ async function callClaude(systemPrompt, userMessage, maxTokens=500) {
   }
 }
 
-async function gradeAnswer(question, correctAnswer, studentAnswer, timeSeconds) {
-  if (!STATE.user?.is_paid) {
-    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
-      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
-      return null;
-    }
-    await incrementAIMarkingCount();
-  }
-  const system = `You are a strict AQA GCSE science marker. Grade the student's answer by counting what percentage of the key concepts from the correct answer are present.
-STRICT RULES:
-- Count how many key concepts from the correct answer appear in the student's answer
-- 0-25% of key concepts present → "again"
-- 26-49% of key concepts present → "hard"
-- 50-99% of key concepts present → "good"
-- 100% of key concepts present → "easy" (spelling mistakes are fine, all concepts must be there)
-- "I don't know", blank answers, or single words always = "again" (0%)
-- Consider time: under 3 seconds = likely copy-paste, flag it
-- Return ONLY valid JSON: {"grade": "again"|"hard"|"good"|"easy", "feedback": "brief specific feedback under 20 words", "copy_paste_suspected": boolean}`;
-
-  const userMsg = `Question: ${question}
-Correct answer: ${correctAnswer}
-Student's answer: ${studentAnswer}
-Time taken: ${timeSeconds} seconds`;
-
-  const raw = await callClaude(system, userMsg, 200);
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return { grade: 'good', feedback: 'Good effort!', copy_paste_suspected: false };
-  }
-}
 
 async function markExamAnswer(question, markScheme, studentAnswer, totalMarks) {
   if (!aiMarkingAvailable()) {
@@ -20208,6 +20078,7 @@ async function startCheckout() {
 }
 
 function showUpgradedCelebration() {
+  if (!STATE.user) return;
   // Clear ?upgraded=true from URL without reload
   if (window.history?.replaceState) window.history.replaceState({}, '', window.location.pathname);
   // Reload paid status silently, then show toast
@@ -21358,44 +21229,6 @@ function selfGrade(cardId, grade) {
   nextCard();
 }
 
-async function submitAIAnswer(cardId) {
-  const card = STATE.cardQueue[STATE.currentCardIndex];
-  const answer = document.getElementById('student-answer')?.value?.trim();
-  if (!answer) { showToast('Please type an answer first'); return; }
-
-  const timeSeconds = Math.round((Date.now() - STATE.pendingAnswerTime) / 1000);
-  const btn = document.querySelector('.ai-answer-input .btn');
-  if (btn) { btn.textContent = 'Grading...'; btn.disabled = true; }
-
-  const result = await gradeAnswer(card.question, card.answer, answer, timeSeconds);
-  if (!result) { if (btn) { btn.textContent = 'Submit for marking'; btn.disabled = false; } return; }
-
-  const gradeNum = { 'again': 0, 'hard': 1, 'good': 2, 'easy': 3 }[result.grade] ?? 2;
-  recordGrade(cardId, gradeNum, true);
-
-  // Show feedback
-  const feedbackArea = document.getElementById('ai-feedback-area');
-  if (feedbackArea) {
-    feedbackArea.classList.remove('hidden');
-    feedbackArea.innerHTML = `
-      <div class="ai-feedback">
-        ${result.copy_paste_suspected ? '⚠️ Looks like a very fast answer — make sure you\'re really thinking it through! ' : ''}
-        ${result.feedback}
-      </div>
-      <div class="flashcard" style="margin-top:0;">
-        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">Correct Answer</div>
-        <div style="font-size:15px;font-weight:600;line-height:1.5;">${card.answer}</div>
-      </div>
-      <div class="grade-buttons">
-        <button class="btn btn-grade-${result.grade}" style="flex:none;width:100%;" onclick="nextCard()">
-          ${result.grade.toUpperCase()} — Next Card →
-        </button>
-      </div>`;
-
-    // Hide AI input
-    document.querySelector('.ai-answer-input')?.classList.add('hidden');
-  }
-}
 
 function syncCardProgress(cardId, prog) {
   const user = STATE.user;
@@ -22471,38 +22304,6 @@ function renderEmbedCard() {
   STATE.examOpen = false;
 }
 
-async function submitEmbedAnswer() {
-  const card = STATE.cardQueue[STATE.currentCardIndex];
-  const answer = document.getElementById('embed-answer')?.value?.trim();
-  if (!answer) { showToast('Please write your answer'); return; }
-
-  const timeSeconds = Math.round((Date.now() - STATE.pendingAnswerTime) / 1000);
-  const btn = document.querySelector('.ai-answer-input .btn');
-  if (btn) { btn.textContent = 'Grading...'; btn.disabled = true; }
-
-  const correctAnswer = Array.isArray(card.a) ? card.a.join('; ') : (card.answer || '');
-  const result = await gradeAnswer(card.q || card.question || '', correctAnswer, answer, timeSeconds);
-  if (!result) { if (btn) { btn.textContent = 'Submit for marking'; btn.disabled = false; } return; }
-  const gradeNum = { 'again': 0, 'hard': 1, 'good': 2, 'easy': 3 }[result.grade] ?? 2;
-  recordGrade(card.id, gradeNum);
-
-  document.querySelector('.ai-answer-input')?.classList.add('hidden');
-  const fb = document.getElementById('embed-feedback');
-  fb?.classList.remove('hidden');
-  fb.style.display = 'flex';
-
-  const gradeColors = { again: 'var(--ss-red)', hard: 'var(--ss-orange)', good: 'var(--ss-blue)', easy: 'var(--ss-green)' };
-  document.getElementById('embed-fb-text').innerHTML = `
-    <div class="ai-feedback" style="border-left-color:${gradeColors[result.grade]};">
-      <strong>${result.grade.toUpperCase()}</strong>: ${result.feedback}
-      ${result.copy_paste_suspected ? ' ⚠️ Very fast — make sure you\'re thinking it through!' : ''}
-    </div>`;
-
-  const displayAnswer = Array.isArray(card.a) ? card.a.join('\n') : (card.answer || '');
-  document.getElementById('embed-correct-answer').textContent = displayAnswer;
-  document.getElementById('exam-q-text').textContent = card.exam_q || '';
-  document.getElementById('exam-q-marks').textContent = card.examA || card.mark_scheme || '';
-}
 
 function toggleExamQ() {
   const body = document.getElementById('exam-q-body');
@@ -23547,9 +23348,10 @@ async function showProgressTracker() {
 }
 
 async function joinClass() {
+  if (!STATE.user) return;
   const code = (document.getElementById('join-class-input')?.value || '').trim().toUpperCase();
   if (!code) { alert('Please enter a class code'); return; }
-  const userId = STATE.user?.id;
+  const userId = STATE.user.id;
   if (!userId) { alert('Not logged in'); return; }
   const res = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + userId, {
     method: 'PATCH',
@@ -26443,7 +26245,7 @@ async function init() {
           xp: meta.xp || 0, streak: meta.streak || 0, level: meta.level || 1,
           ai_mode: meta.ai_mode !== false,
         };
-        STATE.role = STATE.user.role;
+        STATE.role = STATE.user?.role || 'student';
         LS.set('demo_user', STATE.user);
         afterLogin(_urlScreen);
         return;
@@ -27438,7 +27240,7 @@ Student's brain dump: ${text}`;
     try {
       const existing = STATE.user.study_notes || [];
       existing.push(note);
-      await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?id=eq.' + STATE.user.id, {
+      await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + STATE.user.id, {
         method: 'PATCH',
         headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + STATE.user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify({ study_notes: existing })
