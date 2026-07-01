@@ -1947,6 +1947,9 @@ const CONFIG = {
   STRIPE_PK: 'pk_test_51Tj1Hd0ZgKdgW0uhukdhCtYtkWuilKof5f5tnUKQuETCsRgmhqhm3Oo5bTMpscnoWQurLoDFZRZTcqKgFbg3Flch00hThqLdl5',
   FREE_CARDS_PER_WEEK: 15,
   FREE_AI_PER_DAY: 2,
+  FREE_AI_TUTOR_DAILY: 3,
+  FREE_AI_TUTOR_WEEKLY: 15,
+  FREE_AI_MARKING_DAILY: 7,
   CLAUDE_API_KEY: '', // Handled securely by Netlify function
   CLAUDE_MODEL: 'claude-sonnet-4-5',
   XP_PER_SESSION: 50,
@@ -13644,6 +13647,13 @@ async function callClaude(systemPrompt, userMessage, maxTokens=500) {
 }
 
 async function gradeAnswer(question, correctAnswer, studentAnswer, timeSeconds) {
+  if (!STATE.user?.is_paid) {
+    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
+      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
+      return null;
+    }
+    await incrementAIMarkingCount();
+  }
   const system = `You are a strict AQA GCSE science marker. Grade the student's answer by counting what percentage of the key concepts from the correct answer are present.
 STRICT RULES:
 - Count how many key concepts from the correct answer appear in the student's answer
@@ -13669,6 +13679,13 @@ Time taken: ${timeSeconds} seconds`;
 }
 
 async function markExamAnswer(question, markScheme, studentAnswer, totalMarks) {
+  if (!STATE.user?.is_paid) {
+    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
+      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
+      return null;
+    }
+    await incrementAIMarkingCount();
+  }
   const system = `You are an AQA GCSE science examiner. Mark the student's exam answer.
 Return ONLY valid JSON: {"marks": number, "total": number, "feedback": "specific actionable feedback 2-3 sentences", "strengths": "one strength", "improve": "one thing to improve"}`;
 
@@ -14733,7 +14750,7 @@ async function loadUserPaidStatus() {
   if (!user?.token || !user?.id) return;
   try {
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id,tier',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id,tier,ai_tutor_daily_count,ai_tutor_weekly_count,ai_marking_daily_count,ai_last_reset_date',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     const profiles = res.ok ? await res.json() : [];
@@ -14762,7 +14779,13 @@ async function loadUserPaidStatus() {
       STATE.user.exam_dates = p.exam_dates || {};
       STATE.user.linked_parent_id = p.linked_parent_id || null;
       if (p.tier) STATE.user.tier = p.tier;
+      STATE.user.ai_tutor_daily_count   = p.ai_tutor_daily_count   || 0;
+      STATE.user.ai_tutor_weekly_count  = p.ai_tutor_weekly_count  || 0;
+      STATE.user.ai_marking_daily_count = p.ai_marking_daily_count || 0;
+      STATE.user.ai_last_reset_date     = p.ai_last_reset_date     || null;
+      _resetAICountsIfNeeded();
       LS.set('demo_user', STATE.user);
+      if (STATE.screen === 'home') showHome();
     }
   } catch(e) {}
 }
@@ -14789,6 +14812,74 @@ function incrementAIDailyCount() {
   LS.set('ai_daily', { date: today, count: (daily.date === today ? daily.count : 0) + 1 });
 }
 
+// ── AI usage limit helpers ────────────────────────────────────────────────────
+function _aiToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function _aiWeekStart() {
+  const d = new Date();
+  const diff = d.getDay() === 0 ? 6 : d.getDay() - 1;
+  const mon = new Date(d); mon.setDate(d.getDate() - diff);
+  return `${mon.getFullYear()}-${String(mon.getMonth()+1).padStart(2,'0')}-${String(mon.getDate()).padStart(2,'0')}`;
+}
+async function _patchAICounts(user) {
+  if (!user?.token || !user?.id) return;
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ ai_tutor_daily_count: user.ai_tutor_daily_count || 0, ai_tutor_weekly_count: user.ai_tutor_weekly_count || 0, ai_marking_daily_count: user.ai_marking_daily_count || 0, ai_last_reset_date: user.ai_last_reset_date })
+    });
+  } catch(e) {}
+}
+function _resetAICountsIfNeeded() {
+  const user = STATE.user;
+  if (!user) return;
+  const today = _aiToday();
+  const weekStart = _aiWeekStart();
+  let needsPatch = false;
+  if (user.ai_last_reset_date !== today) {
+    user.ai_tutor_daily_count = 0;
+    user.ai_marking_daily_count = 0;
+    user.ai_last_reset_date = today;
+    needsPatch = true;
+  }
+  if (!user.ai_week_start || user.ai_week_start !== weekStart) {
+    user.ai_tutor_weekly_count = 0;
+    user.ai_week_start = weekStart;
+    needsPatch = true;
+  }
+  if (needsPatch) _patchAICounts(user);
+}
+function getAITutorDailyCount()  { _resetAICountsIfNeeded(); return STATE.user?.ai_tutor_daily_count  || 0; }
+function getAITutorWeeklyCount() { _resetAICountsIfNeeded(); return STATE.user?.ai_tutor_weekly_count || 0; }
+function getAIMarkingDailyCount(){ _resetAICountsIfNeeded(); return STATE.user?.ai_marking_daily_count|| 0; }
+async function incrementAITutorCount() {
+  const user = STATE.user; if (!user) return;
+  user.ai_tutor_daily_count  = (user.ai_tutor_daily_count  || 0) + 1;
+  user.ai_tutor_weekly_count = (user.ai_tutor_weekly_count || 0) + 1;
+  await _patchAICounts(user);
+}
+async function incrementAIMarkingCount() {
+  const user = STATE.user; if (!user) return;
+  user.ai_marking_daily_count = (user.ai_marking_daily_count || 0) + 1;
+  await _patchAICounts(user);
+}
+function showAILimitModal(message) {
+  showModal(`
+    <div class="modal-handle"></div>
+    <div style="text-align:center;padding:8px 0 0;">
+      <div style="font-size:44px;margin-bottom:10px;">🚀</div>
+      <div class="modal-title" style="font-size:19px;">Free Limit Reached</div>
+      <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;margin:10px 0;">${message}</p>
+      <p style="color:#64748B;font-weight:600;font-size:13px;margin:8px 0;">Upgrade anytime — even during your free trial — to unlock unlimited access 🚀</p>
+      <button class="btn btn-primary btn-full btn-lg" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);font-size:15px;margin-top:8px;" onclick="closeModal();startCheckout()">Upgrade Now →</button>
+      <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Maybe later</button>
+    </div>
+  `);
+}
+
 function showUpgradeModal(reason) {
   showModal(`
     <div class="modal-handle"></div>
@@ -14797,7 +14888,7 @@ function showUpgradeModal(reason) {
       <div class="modal-title" style="font-size:19px;">GradeMastery Premium</div>
       <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;margin:10px 0;">${reason}</p>
       <div style="background:#F8FAFC;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:left;">
-        ${['✅ Unlimited cards — all 3 subjects','✅ AI marking on every answer','✅ Deep Dive Sessions','✅ Unlimited AI Tutor','✅ Parent progress portal'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
+        ${['✅ Unlimited cards — all 3 subjects','✅ Unlimited AI Tutor access','✅ Unlimited AI marking','✅ Deep Dive Sessions','✅ Parent progress portal'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
       </div>
       <button class="btn btn-primary btn-full btn-lg" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);font-size:15px;" onclick="closeModal();startCheckout()">Upgrade — £12.99/month →</button>
       <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Maybe later</button>
@@ -15718,7 +15809,7 @@ function renderFlashcard() {
       <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
       ${hintHTML}
     </div>
-    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea><button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for marking</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
+    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${!STATE.user?.is_paid ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${CONFIG.FREE_AI_MARKING_DAILY} AI marks used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for marking</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
 
     <div id="answer-sec" style="display:none;">
       <div class="card" style="padding:16px;">
@@ -15799,6 +15890,13 @@ async function submitFlashcardAI() {
     : [];
   const blankPhrases = ['', 'i dont know', "i don't know", 'idk', 'no idea', 'not sure', 'dont know', 'dunno'];
   if (blankPhrases.includes(studentAnswer)) { showAIResult('again', 'No answer given.', false); recordAndAdvance(card.id, 'again'); return; }
+  if (!STATE.user?.is_paid) {
+    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
+      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
+      return;
+    }
+    await incrementAIMarkingCount();
+  }
   const btn = document.querySelector('#ai-input-area button');
   if (btn) { btn.disabled = true; btn.textContent = 'Marking...'; }
   const keyWordList = keyWords.join(', ');
@@ -15981,6 +16079,7 @@ async function submitAIAnswer(cardId) {
   if (btn) { btn.textContent = 'Grading...'; btn.disabled = true; }
 
   const result = await gradeAnswer(card.question, card.answer, answer, timeSeconds);
+  if (!result) { if (btn) { btn.textContent = 'Submit for marking'; btn.disabled = false; } return; }
 
   const gradeNum = { 'again': 0, 'hard': 1, 'good': 2, 'easy': 3 }[result.grade] ?? 2;
   recordGrade(cardId, gradeNum, true);
@@ -16956,7 +17055,7 @@ function renderEmbedCard() {
       </div>
       <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
     </div>
-    <div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea><button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for marking</button></div>
+    <div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${!STATE.user?.is_paid ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${CONFIG.FREE_AI_MARKING_DAILY} AI marks used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for marking</button></div>
     <div id="ai-result" style="display:none;"></div>
 
     <div id="answer-sec" style="display:none;">
@@ -17008,6 +17107,7 @@ async function submitEmbedAnswer() {
 
   const correctAnswer = Array.isArray(card.a) ? card.a.join('; ') : (card.answer || '');
   const result = await gradeAnswer(card.q || card.question || '', correctAnswer, answer, timeSeconds);
+  if (!result) { if (btn) { btn.textContent = 'Submit for marking'; btn.disabled = false; } return; }
   const gradeNum = { 'again': 0, 'hard': 1, 'good': 2, 'easy': 3 }[result.grade] ?? 2;
   recordGrade(card.id, gradeNum);
 
@@ -17128,6 +17228,7 @@ async function submitApplyAnswer() {
   const marks = parseInt(card?.examMarks) || 3;
 
   const result = await markExamAnswer(examQ, ms, answer, marks);
+  if (!result) { if (btn) { btn.textContent = 'Mark Answer'; btn.disabled = false; } return; }
 
   document.getElementById('apply-input-area')?.classList.add('hidden');
   const resultDiv = document.getElementById('apply-result');
@@ -17432,6 +17533,8 @@ ${renderNavBar('tutor')}
     `).join('')}
   </div>` : ''}
 
+  ${!STATE.user?.is_paid ? `<div style="text-align:center;font-size:12px;color:#64748B;font-weight:700;padding:4px 16px 2px;">💬 ${getAITutorDailyCount()}/${CONFIG.FREE_AI_TUTOR_DAILY} messages used today · ${getAITutorWeeklyCount()}/${CONFIG.FREE_AI_TUTOR_WEEKLY} this week</div>` : ''}
+
   <div class="tutor-input-bar">
     <textarea class="tutor-input" id="tutor-input" placeholder="Ask about any science topic..." rows="1"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTutorFromInput();}"></textarea>
@@ -17457,6 +17560,18 @@ function sendTutorFromInput() {
 }
 
 async function sendTutorMessage(message) {
+  if (!STATE.user?.is_paid) {
+    const daily = getAITutorDailyCount();
+    const weekly = getAITutorWeeklyCount();
+    if (daily >= CONFIG.FREE_AI_TUTOR_DAILY) {
+      showAILimitModal(`You've used your ${CONFIG.FREE_AI_TUTOR_DAILY} free AI Tutor messages for today. Come back tomorrow or upgrade for unlimited access!`);
+      return;
+    }
+    if (weekly >= CONFIG.FREE_AI_TUTOR_WEEKLY) {
+      showAILimitModal(`You've used your ${CONFIG.FREE_AI_TUTOR_WEEKLY} free AI Tutor messages for this week. Your limit resets Monday, or upgrade for unlimited access!`);
+      return;
+    }
+  }
   STATE.tutorHistory.push({ role: 'user', content: message });
   showAITutor();
 
@@ -17479,7 +17594,7 @@ async function sendTutorMessage(message) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: CONFIG.CLAUDE_MODEL,
+        model: 'claude-sonnet-4-6',
         max_tokens: 600,
         system: getTutorSystem(),
         messages,
@@ -17490,6 +17605,7 @@ async function sendTutorMessage(message) {
 
     document.getElementById('tutor-loading')?.remove();
     STATE.tutorHistory.push({ role: 'ai', content: reply });
+    if (!STATE.user?.is_paid) await incrementAITutorCount();
     showAITutor();
   } catch (e) {
     document.getElementById('tutor-loading')?.remove();
@@ -19236,6 +19352,13 @@ async function callClaude(systemPrompt, userMessage, maxTokens=500) {
 }
 
 async function gradeAnswer(question, correctAnswer, studentAnswer, timeSeconds) {
+  if (!STATE.user?.is_paid) {
+    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
+      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
+      return null;
+    }
+    await incrementAIMarkingCount();
+  }
   const system = `You are a strict AQA GCSE science marker. Grade the student's answer by counting what percentage of the key concepts from the correct answer are present.
 STRICT RULES:
 - Count how many key concepts from the correct answer appear in the student's answer
@@ -19261,6 +19384,13 @@ Time taken: ${timeSeconds} seconds`;
 }
 
 async function markExamAnswer(question, markScheme, studentAnswer, totalMarks) {
+  if (!STATE.user?.is_paid) {
+    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
+      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
+      return null;
+    }
+    await incrementAIMarkingCount();
+  }
   const system = `You are an AQA GCSE science examiner. Mark the student's exam answer.
 Return ONLY valid JSON: {"marks": number, "total": number, "feedback": "specific actionable feedback 2-3 sentences", "strengths": "one strength", "improve": "one thing to improve"}`;
 
@@ -19869,7 +19999,7 @@ async function loadUserPaidStatus() {
   if (!user?.token || !user?.id) return;
   try {
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id,tier',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id,tier,ai_tutor_daily_count,ai_tutor_weekly_count,ai_marking_daily_count,ai_last_reset_date',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     const profiles = res.ok ? await res.json() : [];
@@ -19898,7 +20028,13 @@ async function loadUserPaidStatus() {
       STATE.user.exam_dates = p.exam_dates || {};
       STATE.user.linked_parent_id = p.linked_parent_id || null;
       if (p.tier) STATE.user.tier = p.tier;
+      STATE.user.ai_tutor_daily_count   = p.ai_tutor_daily_count   || 0;
+      STATE.user.ai_tutor_weekly_count  = p.ai_tutor_weekly_count  || 0;
+      STATE.user.ai_marking_daily_count = p.ai_marking_daily_count || 0;
+      STATE.user.ai_last_reset_date     = p.ai_last_reset_date     || null;
+      _resetAICountsIfNeeded();
       LS.set('demo_user', STATE.user);
+      if (STATE.screen === 'home') showHome();
     }
   } catch(e) {}
 }
@@ -19925,6 +20061,74 @@ function incrementAIDailyCount() {
   LS.set('ai_daily', { date: today, count: (daily.date === today ? daily.count : 0) + 1 });
 }
 
+// ── AI usage limit helpers ────────────────────────────────────────────────────
+function _aiToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function _aiWeekStart() {
+  const d = new Date();
+  const diff = d.getDay() === 0 ? 6 : d.getDay() - 1;
+  const mon = new Date(d); mon.setDate(d.getDate() - diff);
+  return `${mon.getFullYear()}-${String(mon.getMonth()+1).padStart(2,'0')}-${String(mon.getDate()).padStart(2,'0')}`;
+}
+async function _patchAICounts(user) {
+  if (!user?.token || !user?.id) return;
+  try {
+    await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ ai_tutor_daily_count: user.ai_tutor_daily_count || 0, ai_tutor_weekly_count: user.ai_tutor_weekly_count || 0, ai_marking_daily_count: user.ai_marking_daily_count || 0, ai_last_reset_date: user.ai_last_reset_date })
+    });
+  } catch(e) {}
+}
+function _resetAICountsIfNeeded() {
+  const user = STATE.user;
+  if (!user) return;
+  const today = _aiToday();
+  const weekStart = _aiWeekStart();
+  let needsPatch = false;
+  if (user.ai_last_reset_date !== today) {
+    user.ai_tutor_daily_count = 0;
+    user.ai_marking_daily_count = 0;
+    user.ai_last_reset_date = today;
+    needsPatch = true;
+  }
+  if (!user.ai_week_start || user.ai_week_start !== weekStart) {
+    user.ai_tutor_weekly_count = 0;
+    user.ai_week_start = weekStart;
+    needsPatch = true;
+  }
+  if (needsPatch) _patchAICounts(user);
+}
+function getAITutorDailyCount()  { _resetAICountsIfNeeded(); return STATE.user?.ai_tutor_daily_count  || 0; }
+function getAITutorWeeklyCount() { _resetAICountsIfNeeded(); return STATE.user?.ai_tutor_weekly_count || 0; }
+function getAIMarkingDailyCount(){ _resetAICountsIfNeeded(); return STATE.user?.ai_marking_daily_count|| 0; }
+async function incrementAITutorCount() {
+  const user = STATE.user; if (!user) return;
+  user.ai_tutor_daily_count  = (user.ai_tutor_daily_count  || 0) + 1;
+  user.ai_tutor_weekly_count = (user.ai_tutor_weekly_count || 0) + 1;
+  await _patchAICounts(user);
+}
+async function incrementAIMarkingCount() {
+  const user = STATE.user; if (!user) return;
+  user.ai_marking_daily_count = (user.ai_marking_daily_count || 0) + 1;
+  await _patchAICounts(user);
+}
+function showAILimitModal(message) {
+  showModal(`
+    <div class="modal-handle"></div>
+    <div style="text-align:center;padding:8px 0 0;">
+      <div style="font-size:44px;margin-bottom:10px;">🚀</div>
+      <div class="modal-title" style="font-size:19px;">Free Limit Reached</div>
+      <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;margin:10px 0;">${message}</p>
+      <p style="color:#64748B;font-weight:600;font-size:13px;margin:8px 0;">Upgrade anytime — even during your free trial — to unlock unlimited access 🚀</p>
+      <button class="btn btn-primary btn-full btn-lg" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);font-size:15px;margin-top:8px;" onclick="closeModal();startCheckout()">Upgrade Now →</button>
+      <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Maybe later</button>
+    </div>
+  `);
+}
+
 function showUpgradeModal(reason) {
   showModal(`
     <div class="modal-handle"></div>
@@ -19933,7 +20137,7 @@ function showUpgradeModal(reason) {
       <div class="modal-title" style="font-size:19px;">GradeMastery Premium</div>
       <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;margin:10px 0;">${reason}</p>
       <div style="background:#F8FAFC;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:left;">
-        ${['✅ Unlimited cards — all 3 subjects','✅ AI marking on every answer','✅ Deep Dive Sessions','✅ Unlimited AI Tutor','✅ Parent progress portal'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
+        ${['✅ Unlimited cards — all 3 subjects','✅ Unlimited AI Tutor access','✅ Unlimited AI marking','✅ Deep Dive Sessions','✅ Parent progress portal'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
       </div>
       <button class="btn btn-primary btn-full btn-lg" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);font-size:15px;" onclick="closeModal();startCheckout()">Upgrade — £12.99/month →</button>
       <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Maybe later</button>
@@ -20854,7 +21058,7 @@ function renderFlashcard() {
       <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
       ${hintHTML}
     </div>
-    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea><button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for marking</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
+    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${!STATE.user?.is_paid ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${CONFIG.FREE_AI_MARKING_DAILY} AI marks used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for marking</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
 
     <div id="answer-sec" style="display:none;">
       <div class="card" style="padding:16px;">
@@ -20935,6 +21139,13 @@ async function submitFlashcardAI() {
     : [];
   const blankPhrases = ['', 'i dont know', "i don't know", 'idk', 'no idea', 'not sure', 'dont know', 'dunno'];
   if (blankPhrases.includes(studentAnswer)) { showAIResult('again', 'No answer given.', false); recordAndAdvance(card.id, 'again'); return; }
+  if (!STATE.user?.is_paid) {
+    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
+      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
+      return;
+    }
+    await incrementAIMarkingCount();
+  }
   const btn = document.querySelector('#ai-input-area button');
   if (btn) { btn.disabled = true; btn.textContent = 'Marking...'; }
   const keyWordList = keyWords.join(', ');
@@ -21117,6 +21328,7 @@ async function submitAIAnswer(cardId) {
   if (btn) { btn.textContent = 'Grading...'; btn.disabled = true; }
 
   const result = await gradeAnswer(card.question, card.answer, answer, timeSeconds);
+  if (!result) { if (btn) { btn.textContent = 'Submit for marking'; btn.disabled = false; } return; }
 
   const gradeNum = { 'again': 0, 'hard': 1, 'good': 2, 'easy': 3 }[result.grade] ?? 2;
   recordGrade(cardId, gradeNum, true);
@@ -22170,7 +22382,7 @@ function renderEmbedCard() {
       </div>
       <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
     </div>
-    <div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea><button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for marking</button></div>
+    <div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${!STATE.user?.is_paid ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${CONFIG.FREE_AI_MARKING_DAILY} AI marks used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for marking</button></div>
     <div id="ai-result" style="display:none;"></div>
 
     <div id="answer-sec" style="display:none;">
@@ -22222,6 +22434,7 @@ async function submitEmbedAnswer() {
 
   const correctAnswer = Array.isArray(card.a) ? card.a.join('; ') : (card.answer || '');
   const result = await gradeAnswer(card.q || card.question || '', correctAnswer, answer, timeSeconds);
+  if (!result) { if (btn) { btn.textContent = 'Submit for marking'; btn.disabled = false; } return; }
   const gradeNum = { 'again': 0, 'hard': 1, 'good': 2, 'easy': 3 }[result.grade] ?? 2;
   recordGrade(card.id, gradeNum);
 
@@ -22342,6 +22555,7 @@ async function submitApplyAnswer() {
   const marks = parseInt(card?.examMarks) || 3;
 
   const result = await markExamAnswer(examQ, ms, answer, marks);
+  if (!result) { if (btn) { btn.textContent = 'Mark Answer'; btn.disabled = false; } return; }
 
   document.getElementById('apply-input-area')?.classList.add('hidden');
   const resultDiv = document.getElementById('apply-result');
@@ -22646,6 +22860,8 @@ ${renderNavBar('tutor')}
     `).join('')}
   </div>` : ''}
 
+  ${!STATE.user?.is_paid ? `<div style="text-align:center;font-size:12px;color:#64748B;font-weight:700;padding:4px 16px 2px;">💬 ${getAITutorDailyCount()}/${CONFIG.FREE_AI_TUTOR_DAILY} messages used today · ${getAITutorWeeklyCount()}/${CONFIG.FREE_AI_TUTOR_WEEKLY} this week</div>` : ''}
+
   <div class="tutor-input-bar">
     <textarea class="tutor-input" id="tutor-input" placeholder="Ask about any science topic..." rows="1"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTutorFromInput();}"></textarea>
@@ -22671,6 +22887,18 @@ function sendTutorFromInput() {
 }
 
 async function sendTutorMessage(message) {
+  if (!STATE.user?.is_paid) {
+    const daily = getAITutorDailyCount();
+    const weekly = getAITutorWeeklyCount();
+    if (daily >= CONFIG.FREE_AI_TUTOR_DAILY) {
+      showAILimitModal(`You've used your ${CONFIG.FREE_AI_TUTOR_DAILY} free AI Tutor messages for today. Come back tomorrow or upgrade for unlimited access!`);
+      return;
+    }
+    if (weekly >= CONFIG.FREE_AI_TUTOR_WEEKLY) {
+      showAILimitModal(`You've used your ${CONFIG.FREE_AI_TUTOR_WEEKLY} free AI Tutor messages for this week. Your limit resets Monday, or upgrade for unlimited access!`);
+      return;
+    }
+  }
   STATE.tutorHistory.push({ role: 'user', content: message });
   showAITutor();
 
@@ -22693,7 +22921,7 @@ async function sendTutorMessage(message) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: CONFIG.CLAUDE_MODEL,
+        model: 'claude-sonnet-4-6',
         max_tokens: 600,
         system: getTutorSystem(),
         messages,
@@ -22704,6 +22932,7 @@ async function sendTutorMessage(message) {
 
     document.getElementById('tutor-loading')?.remove();
     STATE.tutorHistory.push({ role: 'ai', content: reply });
+    if (!STATE.user?.is_paid) await incrementAITutorCount();
     showAITutor();
   } catch (e) {
     document.getElementById('tutor-loading')?.remove();
@@ -27005,6 +27234,15 @@ async function submitBrainDump() {
 
   const btn = document.getElementById('submit-dump-btn');
   if (btn) { btn.textContent = 'Marking...'; btn.disabled = true; }
+
+  if (!STATE.user?.is_paid) {
+    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
+      if (btn) { btn.textContent = 'Analyse Brain Dump'; btn.disabled = false; }
+      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
+      return;
+    }
+    await incrementAIMarkingCount();
+  }
 
   // Build reference content from cardQueue
   const referenceContent = STATE.cardQueue.map(c => {
