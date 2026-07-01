@@ -97,50 +97,50 @@ const SimulationEngine = (() => {
     ctx.translate(actor.x, actor.y);
 
     if (actor.type === 'complex-path') {
-      // Enzyme: U-shape, active site opening at top
+      // Enzyme: U-shape, active site opening at top (scaled ~1.8x from original)
       if (m && m.shapeAltered) {
         // Denatured — irregular blob, no proper cleft
         ctx.beginPath();
-        ctx.moveTo(-38, -8);
-        ctx.bezierCurveTo(-52, -38, -4, -52, 18, -28);
-        ctx.bezierCurveTo(46, -4, 48, 30, 22, 44);
-        ctx.bezierCurveTo(-2, 58, -36, 44, -44, 20);
-        ctx.bezierCurveTo(-60, -4, -24, 16, -38, -8);
+        ctx.moveTo(-67, -14);
+        ctx.bezierCurveTo(-91, -67, -7, -91, 32, -49);
+        ctx.bezierCurveTo(81, -7, 84, 53, 39, 77);
+        ctx.bezierCurveTo(-4, 102, -63, 77, -77, 35);
+        ctx.bezierCurveTo(-105, -7, -42, 28, -67, -14);
         ctx.closePath();
         ctx.fillStyle = c + '28';
         ctx.fill();
         ctx.strokeStyle = c;
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 4;
         ctx.stroke();
-        drawText(ctx, 'denatured', 0, 2, 70, { color: c, size: 10, weight: '700' });
+        drawText(ctx, 'denatured', 0, 4, 110, { color: c, size: 12, weight: '700' });
       } else {
-        // U-shape: arms at x ± 26, active site cleft open at top
+        // U-shape: arms at x ± 47, active site cleft open at top
         ctx.beginPath();
-        ctx.moveTo(-26, -52);
-        ctx.lineTo(-26, 18);
+        ctx.moveTo(-47, -88);
+        ctx.lineTo(-47, 32);
         // Bottom arc
-        ctx.arc(0, 18, 26, Math.PI, 0, false);
-        ctx.lineTo(26, -52);
+        ctx.arc(0, 32, 47, Math.PI, 0, false);
+        ctx.lineTo(47, -88);
         ctx.strokeStyle = c;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4;
         ctx.stroke();
         // Fill interior
-        ctx.lineTo(-26, -52);
+        ctx.lineTo(-47, -88);
         ctx.fillStyle = c + '18';
         ctx.fill();
         // Label and active-site markers
-        drawText(ctx, 'enzyme', 0, 36, 60, { color: c, size: 10, weight: '700' });
-        drawText(ctx, '▼ ▼', 0, -60, 60, { color: c, size: 9, weight: '700' });
-        drawText(ctx, 'active site', 0, -68, 80, { color: c, size: 9, weight: '600' });
+        drawText(ctx, 'enzyme', 0, 64, 90, { color: c, size: 12, weight: '700' });
+        drawText(ctx, '▼ ▼', 0, -100, 90, { color: c, size: 11, weight: '700' });
+        drawText(ctx, 'active site', 0, -112, 100, { color: c, size: 11, weight: '600' });
       }
     } else if (actor.type === 'rect') {
-      // Substrate: rounded rectangle
+      // Substrate: rounded rectangle (scaled ~1.65x from original)
       if (m && m.hidden) { ctx.restore(); return; }
-      const w = 34, h = 22;
-      roundRect(ctx, -w / 2, -h / 2, w, h, 5);
+      const w = 56, h = 36;
+      roundRect(ctx, -w / 2, -h / 2, w, h, 8);
       ctx.fillStyle = c;
       ctx.fill();
-      drawText(ctx, actor.label || actor.id, 0, 0, w - 6, { color: '#fff', size: 9, weight: '700' });
+      drawText(ctx, actor.label || actor.id, 0, 0, w - 8, { color: '#fff', size: 11, weight: '700' });
     }
 
     ctx.restore();
