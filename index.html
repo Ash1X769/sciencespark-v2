@@ -1949,7 +1949,11 @@ const CONFIG = {
   FREE_AI_PER_DAY: 2,
   FREE_AI_TUTOR_DAILY: 3,
   FREE_AI_TUTOR_WEEKLY: 15,
-  FREE_AI_MARKING_DAILY: 7,
+  FREE_AI_MARKING_DAILY: 0,
+  STANDARD_AI_MARKING_DAILY: 40,
+  STANDARD_AI_TUTOR_DAILY: 10,
+  STANDARD_BRAIN_DUMP_WEEKLY: 2,
+  PREMIUM_AI_TUTOR_DAILY: 20,
   CLAUDE_API_KEY: '', // Handled securely by Netlify function
   CLAUDE_MODEL: 'claude-sonnet-4-5',
   XP_PER_SESSION: 50,
@@ -13679,13 +13683,15 @@ Time taken: ${timeSeconds} seconds`;
 }
 
 async function markExamAnswer(question, markScheme, studentAnswer, totalMarks) {
-  if (!STATE.user?.is_paid) {
-    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
-      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
-      return null;
-    }
-    await incrementAIMarkingCount();
+  if (!aiMarkingAvailable()) {
+    const msTerms = (markScheme || '').match(/\*\*([^*]+)\*\*/g)?.map(m => m.replace(/\*\*/g,'').trim().toLowerCase()) || [];
+    const text = studentAnswer.toLowerCase();
+    const matched = msTerms.filter(t => _smTermMatch(text, t));
+    const pct = msTerms.length > 0 ? matched.length / msTerms.length : 0.5;
+    const marks = Math.round(totalMarks * pct);
+    return { marks, total: totalMarks, feedback: `Smart Mark: ${matched.length}/${msTerms.length} key terms found. Check the mark scheme below for full details.`, strengths: matched.length > 0 ? matched.slice(0,2).join(', ') : 'Attempted', improve: 'Review the mark scheme for precise terminology', isSmartMark: true };
   }
+  await incrementAIMarkingCount();
   const system = `You are an AQA GCSE science examiner. Mark the student's exam answer.
 Return ONLY valid JSON: {"marks": number, "total": number, "feedback": "specific actionable feedback 2-3 sentences", "strengths": "one strength", "improve": "one thing to improve"}`;
 
@@ -15724,7 +15730,8 @@ function renderFlashcard() {
   const current = STATE.currentCardIndex;
   STATE.flashcardFlipped = false;
   STATE.pendingAnswerTime = Date.now();
-  const aiMode = (user.is_paid) ? (STATE.aiMode !== false) : false;
+  const aiMode = STATE.aiMode !== false;
+  const aiLimitReached = !aiMarkingAvailable();
 
   // Build answer bullets - support both old (string) and V1 (array) format
   let answerBullets;
@@ -15782,24 +15789,18 @@ function renderFlashcard() {
 
   <div class="flashcard-area">
 <!-- AI Toggle -->
-    ${user.is_paid
-      ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;margin-bottom:8px;">
-          <div>
-            <div style="font-size:13px;font-weight:800;">${aiMode ? '✨ AI Marking ON' : '🙋 Self Rate ON'}</div>
-            <div style="font-size:11px;color:#64748B;font-weight:600;">${aiMode ? 'Type your answer — marked against key terms' : 'Reveal and rate yourself honestly'}</div>
-          </div>
-          <div onclick="toggleAIMode()" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:${aiMode ? '#22C55E' : '#E2E8F0'};position:relative;transition:background 0.2s;flex-shrink:0;">
-            <div style="position:absolute;top:3px;${aiMode ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>
-          </div>
-        </div>`
-      : `<div onclick="showUpgradeModal('AI marking grades every answer instantly — upgrade to Premium to unlock it ✨')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#FAFAFA;border-radius:12px;border:1.5px dashed #CBD5E1;margin-bottom:8px;cursor:pointer;">
-          <div>
-            <div style="font-size:13px;font-weight:800;color:#64748B;">🙋 Self Rate (free plan)</div>
-            <div style="font-size:11px;color:#94A3B8;font-weight:600;">Tap to unlock AI marking ✨</div>
-          </div>
-          <div style="font-size:11px;font-weight:800;color:#4F46E5;background:#EEF2FF;padding:4px 10px;border-radius:20px;">UPGRADE</div>
-        </div>`
-    }
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
+        <div>
+          <div style="font-size:13px;font-weight:800;">${!aiMode ? '🙋 Self Grade' : aiLimitReached ? '🔬 Smart Mark ✨' : '✨ AI Marking ON'}</div>
+          <div style="font-size:11px;color:#64748B;font-weight:600;">${!aiMode ? 'Reveal and rate yourself honestly' : aiLimitReached ? 'Keyword matching — AI quota used' : 'Write your answer — AI marks it'}</div>
+        </div>
+        <div onclick="toggleAIMode()" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:${aiMode ? '#22C55E' : '#E2E8F0'};position:relative;transition:background 0.2s;flex-shrink:0;">
+          <div style="position:absolute;top:3px;${aiMode ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>
+        </div>
+      </div>
+      ${aiMode ? `<div style="text-align:center;"><span onclick="toggleAIMode()" style="font-size:11px;color:#94A3B8;font-weight:600;cursor:pointer;text-decoration:underline;">Grade yourself instead</span></div>` : ''}
+    </div>
 
         <div class="card" id="question-card" style="padding:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -15809,7 +15810,7 @@ function renderFlashcard() {
       <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
       ${hintHTML}
     </div>
-    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${!STATE.user?.is_paid ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${CONFIG.FREE_AI_MARKING_DAILY} AI marks used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for marking</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
+    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${aiLimitReached ? `<div style="text-align:right;font-size:11px;color:#7C3AED;font-weight:700;margin-bottom:6px;">🔬 Smart Mark active</div>` : getAIMarkingLimit() > 0 ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${getAIMarkingLimit()} AI marks used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">${aiLimitReached ? '🔬 Smart Mark' : 'Submit for marking'}</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
 
     <div id="answer-sec" style="display:none;">
       <div class="card" style="padding:16px;">
@@ -15890,13 +15891,13 @@ async function submitFlashcardAI() {
     : [];
   const blankPhrases = ['', 'i dont know', "i don't know", 'idk', 'no idea', 'not sure', 'dont know', 'dunno'];
   if (blankPhrases.includes(studentAnswer)) { showAIResult('again', 'No answer given.', false); recordAndAdvance(card.id, 'again'); return; }
-  if (!STATE.user?.is_paid) {
-    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
-      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
-      return;
-    }
-    await incrementAIMarkingCount();
+  if (!aiMarkingAvailable()) {
+    const smResult = runSmartMarkCard(card, studentAnswer);
+    showSmartMarkCardResult(smResult);
+    recordAndAdvance(card.id, smResult.grade);
+    return;
   }
+  await incrementAIMarkingCount();
   const btn = document.querySelector('#ai-input-area button');
   if (btn) { btn.disabled = true; btn.textContent = 'Marking...'; }
   const keyWordList = keyWords.join(', ');
@@ -19384,13 +19385,15 @@ Time taken: ${timeSeconds} seconds`;
 }
 
 async function markExamAnswer(question, markScheme, studentAnswer, totalMarks) {
-  if (!STATE.user?.is_paid) {
-    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
-      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
-      return null;
-    }
-    await incrementAIMarkingCount();
+  if (!aiMarkingAvailable()) {
+    const msTerms = (markScheme || '').match(/\*\*([^*]+)\*\*/g)?.map(m => m.replace(/\*\*/g,'').trim().toLowerCase()) || [];
+    const text = studentAnswer.toLowerCase();
+    const matched = msTerms.filter(t => _smTermMatch(text, t));
+    const pct = msTerms.length > 0 ? matched.length / msTerms.length : 0.5;
+    const marks = Math.round(totalMarks * pct);
+    return { marks, total: totalMarks, feedback: `Smart Mark: ${matched.length}/${msTerms.length} key terms found. Check the mark scheme below for full details.`, strengths: matched.length > 0 ? matched.slice(0,2).join(', ') : 'Attempted', improve: 'Review the mark scheme for precise terminology', isSmartMark: true };
   }
+  await incrementAIMarkingCount();
   const system = `You are an AQA GCSE science examiner. Mark the student's exam answer.
 Return ONLY valid JSON: {"marks": number, "total": number, "feedback": "specific actionable feedback 2-3 sentences", "strengths": "one strength", "improve": "one thing to improve"}`;
 
@@ -20973,7 +20976,8 @@ function renderFlashcard() {
   const current = STATE.currentCardIndex;
   STATE.flashcardFlipped = false;
   STATE.pendingAnswerTime = Date.now();
-  const aiMode = (user.is_paid) ? (STATE.aiMode !== false) : false;
+  const aiMode = STATE.aiMode !== false;
+  const aiLimitReached = !aiMarkingAvailable();
 
   // Build answer bullets - support both old (string) and V1 (array) format
   let answerBullets;
@@ -21031,24 +21035,18 @@ function renderFlashcard() {
 
   <div class="flashcard-area">
 <!-- AI Toggle -->
-    ${user.is_paid
-      ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;margin-bottom:8px;">
-          <div>
-            <div style="font-size:13px;font-weight:800;">${aiMode ? '✨ AI Marking ON' : '🙋 Self Rate ON'}</div>
-            <div style="font-size:11px;color:#64748B;font-weight:600;">${aiMode ? 'Type your answer — marked against key terms' : 'Reveal and rate yourself honestly'}</div>
-          </div>
-          <div onclick="toggleAIMode()" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:${aiMode ? '#22C55E' : '#E2E8F0'};position:relative;transition:background 0.2s;flex-shrink:0;">
-            <div style="position:absolute;top:3px;${aiMode ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>
-          </div>
-        </div>`
-      : `<div onclick="showUpgradeModal('AI marking grades every answer instantly — upgrade to Premium to unlock it ✨')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#FAFAFA;border-radius:12px;border:1.5px dashed #CBD5E1;margin-bottom:8px;cursor:pointer;">
-          <div>
-            <div style="font-size:13px;font-weight:800;color:#64748B;">🙋 Self Rate (free plan)</div>
-            <div style="font-size:11px;color:#94A3B8;font-weight:600;">Tap to unlock AI marking ✨</div>
-          </div>
-          <div style="font-size:11px;font-weight:800;color:#4F46E5;background:#EEF2FF;padding:4px 10px;border-radius:20px;">UPGRADE</div>
-        </div>`
-    }
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
+        <div>
+          <div style="font-size:13px;font-weight:800;">${!aiMode ? '🙋 Self Grade' : aiLimitReached ? '🔬 Smart Mark ✨' : '✨ AI Marking ON'}</div>
+          <div style="font-size:11px;color:#64748B;font-weight:600;">${!aiMode ? 'Reveal and rate yourself honestly' : aiLimitReached ? 'Keyword matching — AI quota used' : 'Write your answer — AI marks it'}</div>
+        </div>
+        <div onclick="toggleAIMode()" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:${aiMode ? '#22C55E' : '#E2E8F0'};position:relative;transition:background 0.2s;flex-shrink:0;">
+          <div style="position:absolute;top:3px;${aiMode ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>
+        </div>
+      </div>
+      ${aiMode ? `<div style="text-align:center;"><span onclick="toggleAIMode()" style="font-size:11px;color:#94A3B8;font-weight:600;cursor:pointer;text-decoration:underline;">Grade yourself instead</span></div>` : ''}
+    </div>
 
         <div class="card" id="question-card" style="padding:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -21058,7 +21056,7 @@ function renderFlashcard() {
       <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
       ${hintHTML}
     </div>
-    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${!STATE.user?.is_paid ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${CONFIG.FREE_AI_MARKING_DAILY} AI marks used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for marking</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
+    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${aiLimitReached ? `<div style="text-align:right;font-size:11px;color:#7C3AED;font-weight:700;margin-bottom:6px;">🔬 Smart Mark active</div>` : getAIMarkingLimit() > 0 ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${getAIMarkingLimit()} AI marks used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">${aiLimitReached ? '🔬 Smart Mark' : 'Submit for marking'}</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
 
     <div id="answer-sec" style="display:none;">
       <div class="card" style="padding:16px;">
@@ -21139,13 +21137,13 @@ async function submitFlashcardAI() {
     : [];
   const blankPhrases = ['', 'i dont know', "i don't know", 'idk', 'no idea', 'not sure', 'dont know', 'dunno'];
   if (blankPhrases.includes(studentAnswer)) { showAIResult('again', 'No answer given.', false); recordAndAdvance(card.id, 'again'); return; }
-  if (!STATE.user?.is_paid) {
-    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
-      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
-      return;
-    }
-    await incrementAIMarkingCount();
+  if (!aiMarkingAvailable()) {
+    const smResult = runSmartMarkCard(card, studentAnswer);
+    showSmartMarkCardResult(smResult);
+    recordAndAdvance(card.id, smResult.grade);
+    return;
   }
+  await incrementAIMarkingCount();
   const btn = document.querySelector('#ai-input-area button');
   if (btn) { btn.disabled = true; btn.textContent = 'Marking...'; }
   const keyWordList = keyWords.join(', ');
@@ -26704,6 +26702,92 @@ window.addEventListener('appinstalled', () => dismissInstallBanner());
 
 
 // ============================================================
+// SMART MARK — KEYWORD-BASED AUTO-GRADING
+// ============================================================
+
+function getAIMarkingLimit() {
+  const user = STATE.user;
+  if (!user) return 0;
+  if (!user.is_paid) return CONFIG.FREE_AI_MARKING_DAILY;
+  return CONFIG.STANDARD_AI_MARKING_DAILY;
+}
+function aiMarkingAvailable() {
+  return getAIMarkingDailyCount() < getAIMarkingLimit();
+}
+function _lev(a, b) {
+  const dp = Array.from({length: a.length + 1}, (_, i) => [i]);
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[a.length][b.length];
+}
+function _smTermMatch(text, term) {
+  term = term.toLowerCase().trim();
+  text = text.toLowerCase();
+  if (text.includes(term)) return true;
+  const tw = term.split(/\s+/);
+  const txw = text.split(/\s+/);
+  return tw.every(t => {
+    const threshold = t.length <= 5 ? 1 : t.length <= 10 ? 2 : 3;
+    return txw.some(w => w === t || (t.length >= 3 && _lev(w, t) <= threshold));
+  });
+}
+function extractKeyTerms(a) {
+  if (!Array.isArray(a)) return [];
+  return a.flatMap(line => {
+    const matches = line.match(/\*\*([^*]+)\*\*/g) || [];
+    return matches.map(m => m.replace(/\*\*/g, '').trim().toLowerCase());
+  }).filter(Boolean);
+}
+function runSmartMarkCard(card, studentAnswer) {
+  const terms = extractKeyTerms(card.a);
+  if (!terms.length) return { grade: 'hard', matched: [], missed: [], pct: 0.5, isSmartMark: true };
+  const text = studentAnswer.toLowerCase();
+  const matched = [], missed = [];
+  terms.forEach(t => (_smTermMatch(text, t) ? matched : missed).push(t));
+  const pct = matched.length / terms.length;
+  const grade = pct >= 0.8 ? 'good' : pct >= 0.4 ? 'hard' : 'again';
+  return { grade, matched, missed, pct, isSmartMark: true };
+}
+function runSmartMarkBrainDump(cardQueue, text) {
+  const allTerms = cardQueue.flatMap(c => extractKeyTerms(c.a));
+  const uniq = [...new Set(allTerms)];
+  const matched = [], missed = [];
+  uniq.forEach(t => (_smTermMatch(text, t) ? matched : missed).push(t));
+  const pct = uniq.length > 0 ? matched.length / uniq.length : 0;
+  const grade = pct >= 0.8 ? 'good' : pct >= 0.4 ? 'hard' : 'again';
+  return { grade, matched, missed, total: uniq.length, pct, isSmartMark: true };
+}
+function showSmartMarkCardResult(result) {
+  const colors = { again: '#DC2626', hard: '#D97706', good: '#16A34A' };
+  const emojis = { again: '😵', hard: '😰', good: '🙂' };
+  const col = colors[result.grade] || '#64748B';
+  const inputArea = document.getElementById('ai-input-area');
+  if (inputArea) inputArea.style.display = 'none';
+  const matchedHTML = result.matched.map(t => `<span style="font-size:11px;background:#DCFCE7;color:#16A34A;padding:2px 8px;border-radius:99px;font-weight:700;">✅ ${t}</span>`).join(' ');
+  const missedHTML = result.missed.map(t => `<span style="font-size:11px;background:#FEE2E2;color:#DC2626;padding:2px 8px;border-radius:99px;font-weight:700;">❌ ${t}</span>`).join(' ');
+  const termsHTML = (matchedHTML || missedHTML) ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">${matchedHTML}${missedHTML}</div>` : '';
+  const resultDiv = document.getElementById('ai-result');
+  if (resultDiv) {
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `<div style="background:white;border-radius:12px;padding:14px 16px;border-left:4px solid ${col};margin-bottom:8px;">
+      <div style="font-size:15px;font-weight:900;color:${col};">${emojis[result.grade] || ''} ${result.grade.charAt(0).toUpperCase() + result.grade.slice(1)}</div>
+      <div style="font-size:11px;color:#94A3B8;font-weight:600;margin-top:2px;">🔬 Smart Mark — keyword check</div>
+      ${termsHTML}
+    </div>`;
+  }
+  const answerSec = document.getElementById('answer-sec');
+  const ratingWrap = document.getElementById('rating-wrap');
+  if (answerSec) answerSec.style.display = 'block';
+  if (ratingWrap) ratingWrap.style.display = 'block';
+  const ratingGrid = document.querySelector('#rating-wrap .rating-grid');
+  const ratingPrompt = document.querySelector('#rating-wrap .rating-prompt');
+  if (ratingGrid) ratingGrid.style.display = 'none';
+  if (ratingPrompt) ratingPrompt.style.display = 'none';
+}
+
+// ============================================================
 // DEEP DIVE — SINGLETON HELPER FUNCTIONS
 // ============================================================
 
@@ -27137,7 +27221,7 @@ function gapAnswerMatches(given, correct) {
   if (correct.startsWith(given) && given.length >= Math.min(4, correct.length)) return true;
   // Levenshtein: 1 typo for short words, 2 for medium, 3 for long
   if (given.length >= 3 && correct.length >= 3) {
-    const threshold = correct.length <= 5 ? 1 : correct.length <= 9 ? 2 : 3;
+    const threshold = correct.length <= 5 ? 1 : correct.length <= 10 ? 2 : 3;
     if (levenshtein(given, correct) <= threshold) return true;
   }
   // Plural / stem tolerance
@@ -27235,14 +27319,26 @@ async function submitBrainDump() {
   const btn = document.getElementById('submit-dump-btn');
   if (btn) { btn.textContent = 'Marking...'; btn.disabled = true; }
 
-  if (!STATE.user?.is_paid) {
-    if (getAIMarkingDailyCount() >= CONFIG.FREE_AI_MARKING_DAILY) {
-      if (btn) { btn.textContent = 'Analyse Brain Dump'; btn.disabled = false; }
-      showAILimitModal(`You've used your ${CONFIG.FREE_AI_MARKING_DAILY} free AI marks for today. Come back tomorrow or upgrade for unlimited AI marking!`);
-      return;
+  if (!aiMarkingAvailable()) {
+    const smBD = runSmartMarkBrainDump(STATE.cardQueue, text);
+    const smPct = Math.round(smBD.pct * 100);
+    if (btn) { btn.textContent = 'Analyse Brain Dump'; btn.disabled = false; }
+    const resultDiv = document.getElementById('dump-result');
+    if (resultDiv) {
+      resultDiv.style.display = 'block';
+      const color = smPct >= 70 ? 'var(--ss-green)' : smPct >= 40 ? 'var(--ss-blue)' : 'var(--ss-orange)';
+      const matchedHTML = smBD.matched.slice(0,8).map(t => `<span style="font-size:11px;background:#DCFCE7;color:#16A34A;padding:2px 8px;border-radius:99px;font-weight:700;">✅ ${t}</span>`).join(' ');
+      const missedHTML = smBD.missed.slice(0,5).map(t => `<span style="font-size:11px;background:#FEE2E2;color:#DC2626;padding:2px 8px;border-radius:99px;font-weight:700;">❌ ${t}</span>`).join(' ');
+      resultDiv.innerHTML = `<div class="card" style="border-top:4px solid ${color};">
+        <div style="font-size:13px;font-weight:800;margin-bottom:8px;">🔬 Smart Mark</div>
+        <div style="font-size:14px;font-weight:600;line-height:1.6;color:var(--text);">You mentioned ${smBD.matched.length} of ${smBD.total} key terms (${smPct}%).</div>
+        ${matchedHTML || missedHTML ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">${matchedHTML}${missedHTML}</div>` : ''}
+        <div style="margin-top:12px;font-size:13px;color:var(--text-secondary);font-weight:600;">Review the flashcards to check any terms you missed! 🧠</div>
+      </div>`;
     }
-    await incrementAIMarkingCount();
+    return;
   }
+  await incrementAIMarkingCount();
 
   // Build reference content from cardQueue
   const referenceContent = STATE.cardQueue.map(c => {
