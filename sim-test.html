@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simulation Engine — Mount Test</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Inter", "Segoe UI", sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    padding: 24px 16px 80px;
+  }
+  h1 { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #64748b; font-weight: 500; margin-bottom: 32px; }
+
+  /* ── Section headings ── */
+  .section-label {
+    font-size: 11px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #64748b; margin-bottom: 6px;
+  }
+  .section-desc { font-size: 12px; color: #94a3b8; font-weight: 500; margin-bottom: 10px; }
+
+  /* ── Mount 1: Knowledge Organiser ── */
+  .ko-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+  .ko-header {
+    background: #6366f1;
+    color: #fff;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .ko-body { padding: 16px; }
+  .ko-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .ko-cell {
+    background: #fff;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .ko-cell.q { color: #64748b; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+  #sim-mount-ko { margin-top: 16px; }
+
+  /* ── Mount 2: Deep Dive phase ── */
+  .dd-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    margin-bottom: 32px;
+    overflow: hidden;
+  }
+  .dd-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .dd-topbar-title { font-size: 15px; font-weight: 800; }
+  .dd-phase-pill {
+    font-size: 11px; font-weight: 700; color: #6366f1;
+    background: #eef2ff; padding: 3px 10px; border-radius: 20px;
+  }
+  .dd-body { padding: 16px; }
+  #sim-mount-dd { /* engine injects here */ }
+
+  /* ── Mount 3: Flashcard ── */
+  .flashcard-wrap {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    padding: 16px;
+    margin-bottom: 32px;
+  }
+  .card-chip {
+    display: inline-block;
+    font-size: 11px; font-weight: 800;
+    color: #6366f1; background: #eef2ff;
+    padding: 3px 10px; border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .card-q {
+    font-size: 16px; font-weight: 800; line-height: 1.5; margin-bottom: 14px;
+  }
+  .watch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px; font-weight: 700;
+    color: #6366f1;
+    background: none; border: 1.5px solid #c7d2fe;
+    border-radius: 8px; padding: 5px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .watch-btn:hover { background: #eef2ff; }
+
+  /* ── Pass / fail indicator ── */
+  .test-badge {
+    display: inline-block;
+    font-size: 11px; font-weight: 800; padding: 2px 8px;
+    border-radius: 6px; margin-bottom: 8px;
+    background: #dcfce7; color: #16a34a;
+  }
+</style>
+</head>
+<body>
+
+<h1>Simulation Engine — Mount Test</h1>
+<p class="subtitle">All three mount wrappers using the enzyme config as the proof case. Open browser console to confirm no errors.</p>
+
+<!-- ══════════════════════════════════════════════════════════
+     MOUNT 1: Knowledge Organiser inline
+═══════════════════════════════════════════════════════════ -->
+<p class="section-label">Mount 1 — Knowledge Organiser (inline)</p>
+<p class="section-desc">SimulationEngine.mount(el, config, { mode: "inline", tier: "higher" })</p>
+
+<div class="ko-card">
+  <div class="ko-header">🧬 Enzymes — Biology</div>
+  <div class="ko-body">
+    <div class="ko-row">
+      <div class="ko-cell q">Key concept</div>
+      <div class="ko-cell q">Definition</div>
+    </div>
+    <div class="ko-row">
+      <div class="ko-cell">Enzyme</div>
+      <div class="ko-cell">Biological catalyst — speeds up reactions without being used up</div>
+    </div>
+    <div class="ko-row">
+      <div class="ko-cell">Active site</div>
+      <div class="ko-cell">Region of enzyme with specific shape; substrate must be complementary</div>
+    </div>
+    <div class="ko-row">
+      <div class="ko-cell">Denaturation</div>
+      <div class="ko-cell">Permanent change to active site shape caused by high temperature or extreme pH</div>
+    </div>
+
+    <!-- Simulation mounts here -->
+    <div id="sim-mount-ko"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MOUNT 2: Deep Dive phase (inline)
+═══════════════════════════════════════════════════════════ -->
+<p class="section-label">Mount 2 — Deep Dive phase (inline)</p>
+<p class="section-desc">SimulationEngine.mount(el, config, { mode: "inline", tier: "foundation" }) — foundation tier text</p>
+
+<div class="dd-card">
+  <div class="dd-topbar">
+    <button style="background:none;border:none;font-size:14px;font-weight:700;color:#64748b;cursor:pointer;font-family:inherit;">✕</button>
+    <div class="dd-topbar-title">📖 Read &amp; Learn</div>
+    <div class="dd-phase-pill">Step 2 of 6</div>
+  </div>
+  <div class="dd-body">
+    <p style="font-size:13px;font-weight:600;color:#64748b;margin-bottom:12px;">Watch the simulation, then continue to the quiz.</p>
+    <!-- Simulation mounts here -->
+    <div id="sim-mount-dd"></div>
+    <button style="width:100%;margin-top:14px;padding:11px;border-radius:10px;border:none;background:#6366f1;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Continue to Quiz →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MOUNT 3: Flashcard modal trigger
+═══════════════════════════════════════════════════════════ -->
+<p class="section-label">Mount 3 — Flashcard "Watch it" trigger (modal)</p>
+<p class="section-desc">SimulationEngine.mount(null, config, { mode: "modal", tier: "higher" }) — opens on top, unmounts on close</p>
+
+<div class="flashcard-wrap">
+  <div class="card-chip">Biology · Enzymes</div>
+  <div class="card-q">What happens to an enzyme when the temperature rises above its optimum?</div>
+  <button class="watch-btn" id="watch-btn">▶ Watch it</button>
+</div>
+
+<!-- Test result badge (updated by JS below) -->
+<div id="test-result"></div>
+
+<!-- ── Load engine and config ── -->
+<script src="simulation-engine.js"></script>
+<script src="sim-config-enzyme.js"></script>
+<script>
+  // Track instances for cleanup
+  let koInstance = null;
+  let ddInstance = null;
+  let modalInstance = null;
+
+  function runTests() {
+    const results = [];
+
+    // ── Mount 1: KO inline, Higher tier ──────────────────────────────────────
+    try {
+      const koEl = document.getElementById('sim-mount-ko');
+      koInstance = SimulationEngine.mount(koEl, SimConfigEnzyme, { mode: 'inline', tier: 'higher' });
+      results.push({ label: 'Mount 1 (KO inline)', ok: typeof koInstance.unmount === 'function' });
+    } catch(e) {
+      results.push({ label: 'Mount 1 (KO inline)', ok: false, err: e.message });
+    }
+
+    // ── Mount 2: Deep Dive inline, Foundation tier ────────────────────────────
+    try {
+      const ddEl = document.getElementById('sim-mount-dd');
+      ddInstance = SimulationEngine.mount(ddEl, SimConfigEnzyme, { mode: 'inline', tier: 'foundation' });
+      results.push({ label: 'Mount 2 (DD inline)', ok: typeof ddInstance.unmount === 'function' });
+    } catch(e) {
+      results.push({ label: 'Mount 2 (DD inline)', ok: false, err: e.message });
+    }
+
+    // ── Mount 3: Modal trigger ────────────────────────────────────────────────
+    const watchBtn = document.getElementById('watch-btn');
+    watchBtn.addEventListener('click', () => {
+      if (modalInstance) { modalInstance.unmount(); modalInstance = null; return; }
+      try {
+        modalInstance = SimulationEngine.mount(null, SimConfigEnzyme, { mode: 'modal', tier: 'higher' });
+        // Clean up reference when user closes modal from inside
+        const orig = modalInstance.unmount;
+        modalInstance.unmount = () => { orig(); modalInstance = null; };
+      } catch(e) {
+        console.error('Modal mount failed:', e);
+      }
+    });
+    results.push({ label: 'Mount 3 (modal trigger)', ok: true, note: 'Click "▶ Watch it" above to test' });
+
+    // ── Render results ────────────────────────────────────────────────────────
+    const el = document.getElementById('test-result');
+    el.style.cssText = 'margin-top:16px;display:flex;flex-direction:column;gap:6px;';
+    results.forEach(r => {
+      const row = document.createElement('div');
+      row.style.cssText = `font-size:12px;font-weight:700;padding:6px 12px;border-radius:8px;background:${r.ok ? '#dcfce7' : '#fee2e2'};color:${r.ok ? '#16a34a' : '#dc2626'};`;
+      row.textContent = (r.ok ? '✅ ' : '❌ ') + r.label + (r.note ? ' — ' + r.note : '') + (r.err ? ' — ' + r.err : '');
+      el.appendChild(row);
+    });
+  }
+
+  runTests();
+</script>
+</body>
+</html>
