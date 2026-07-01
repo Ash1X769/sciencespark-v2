@@ -1936,7 +1936,33 @@ textarea.input { resize: vertical; min-height: 100px; }
   <!-- Screens are injected here by JS -->
 </div>
 
+<script src="simulation-engine.js"></script>
+<script src="sim-config-enzyme.js"></script>
 <script>
+// Simulation registry — add new configs here when they exist
+function _getSimConfig(topicKey) {
+  if (typeof SimConfigEnzyme === 'undefined') return null;
+  if (topicKey && topicKey.toLowerCase().includes('enzyme')) return SimConfigEnzyme;
+  return null;
+}
+
+// Active simulation instances — unmounted on page transitions
+const _simInstances = {};
+function _mountSim(id, targetEl, config, options) {
+  if (_simInstances[id]) { try { _simInstances[id].unmount(); } catch(e) {} }
+  _simInstances[id] = SimulationEngine.mount(targetEl, config, options);
+  return _simInstances[id];
+}
+function _unmountSim(id) {
+  if (_simInstances[id]) { try { _simInstances[id].unmount(); } catch(e) {} delete _simInstances[id]; }
+}
+function showSimulationModal(topicKey) {
+  const cfg = _getSimConfig(topicKey);
+  if (!cfg) return;
+  const tier = STATE.user?.tier?.includes('higher') ? 'higher' : 'foundation';
+  _mountSim('modal', null, cfg, { mode: 'modal', tier });
+}
+
 // ============================================================
 // CONFIGURATION
 // ============================================================
@@ -15809,6 +15835,7 @@ function renderFlashcard() {
       </div>
       <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
       ${hintHTML}
+      ${_getSimConfig(card.topic_name || card.topic || '') ? `<button onclick="showSimulationModal('${(card.topic_name || card.topic || '').replace(/'/g,"\\'")}'')" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#6366f1;background:none;border:1.5px solid #c7d2fe;border-radius:8px;padding:4px 10px;cursor:pointer;font-family:inherit;margin-top:2px;">▶ Watch it</button>` : ''}
     </div>
     ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${!aiLimitReached && getAIMarkingLimit() > 0 ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${getAIMarkingLimit()} used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for grading</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
 
@@ -16794,6 +16821,7 @@ function renderLearnPhase() {
   <div style="flex:1;overflow-y:auto;padding:14px 18px 150px;" id="ko-scroll">
     <div style="font-size:17px;font-weight:900;margin-bottom:2px;color:${subColor};">${topicName}</div>
     <div style="font-size:12px;color:var(--text-secondary);font-weight:600;margin-bottom:10px;">Read carefully — you'll be quizzed on this! 🧠</div>
+    ${_getSimConfig(STATE.cardQueue[0]?.topic_name || '') ? `<div id="sim-mount-dd" style="margin-bottom:14px;"></div>` : ''}
 
     <!-- View-mode toggle pill -->
     <div style="display:flex;gap:4px;background:#F1F5F9;border-radius:10px;padding:4px;margin-bottom:14px;">
@@ -16825,6 +16853,13 @@ function renderLearnPhase() {
 </div>`;
 
   render(html);
+
+  // Simulation mount — inline in Deep Dive learn phase
+  const _ddSimEl = document.getElementById('sim-mount-dd');
+  if (_ddSimEl) {
+    const _ddTier = STATE.user?.tier?.includes('higher') ? 'higher' : 'foundation';
+    _mountSim('dd', _ddSimEl, _getSimConfig(STATE.cardQueue[0]?.topic_name || ''), { mode: 'inline', tier: _ddTier });
+  }
 
   // 30-second read progress bar + enable continue
   let elapsed = 0;
@@ -17709,13 +17744,19 @@ function showKnowledgeOrganiser(key) {
       `).join('')}
     </div>
 
-    <button class="btn btn-primary btn-full" style="margin-top:20px;" onclick="startFlashcardsForTopic('${key}')">
+    ${_getSimConfig(key) ? `<div id="sim-mount-ko" style="margin-top:16px;"></div>` : ''}
+    <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="startFlashcardsForTopic('${key}')">
       📚 Study These Cards
     </button>
   </div>
 </div>`;
 
   render(html);
+  const _koSimEl = document.getElementById('sim-mount-ko');
+  if (_koSimEl) {
+    const _koTier = STATE.user?.tier?.includes('higher') ? 'higher' : 'foundation';
+    _mountSim('ko', _koSimEl, _getSimConfig(key), { mode: 'inline', tier: _koTier });
+  }
 }
 
 function resumeMidSession() {
@@ -21055,6 +21096,7 @@ function renderFlashcard() {
       </div>
       <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
       ${hintHTML}
+      ${_getSimConfig(card.topic_name || card.topic || '') ? `<button onclick="showSimulationModal('${(card.topic_name || card.topic || '').replace(/'/g,"\\'")}'')" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#6366f1;background:none;border:1.5px solid #c7d2fe;border-radius:8px;padding:4px 10px;cursor:pointer;font-family:inherit;margin-top:2px;">▶ Watch it</button>` : ''}
     </div>
     ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${!aiLimitReached && getAIMarkingLimit() > 0 ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${getAIMarkingLimit()} used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for grading</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
 
@@ -22120,6 +22162,7 @@ function renderLearnPhase() {
   <div style="flex:1;overflow-y:auto;padding:14px 18px 150px;" id="ko-scroll">
     <div style="font-size:17px;font-weight:900;margin-bottom:2px;color:${subColor};">${topicName}</div>
     <div style="font-size:12px;color:var(--text-secondary);font-weight:600;margin-bottom:10px;">Read carefully — you'll be quizzed on this! 🧠</div>
+    ${_getSimConfig(STATE.cardQueue[0]?.topic_name || '') ? `<div id="sim-mount-dd" style="margin-bottom:14px;"></div>` : ''}
 
     <!-- View-mode toggle pill -->
     <div style="display:flex;gap:4px;background:#F1F5F9;border-radius:10px;padding:4px;margin-bottom:14px;">
@@ -22151,6 +22194,13 @@ function renderLearnPhase() {
 </div>`;
 
   render(html);
+
+  // Simulation mount — inline in Deep Dive learn phase
+  const _ddSimEl = document.getElementById('sim-mount-dd');
+  if (_ddSimEl) {
+    const _ddTier = STATE.user?.tier?.includes('higher') ? 'higher' : 'foundation';
+    _mountSim('dd', _ddSimEl, _getSimConfig(STATE.cardQueue[0]?.topic_name || ''), { mode: 'inline', tier: _ddTier });
+  }
 
   // 30-second read progress bar + enable continue
   let elapsed = 0;
@@ -23033,13 +23083,19 @@ function showKnowledgeOrganiser(key) {
       `).join('')}
     </div>
 
-    <button class="btn btn-primary btn-full" style="margin-top:20px;" onclick="startFlashcardsForTopic('${key}')">
+    ${_getSimConfig(key) ? `<div id="sim-mount-ko" style="margin-top:16px;"></div>` : ''}
+    <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="startFlashcardsForTopic('${key}')">
       📚 Study These Cards
     </button>
   </div>
 </div>`;
 
   render(html);
+  const _koSimEl = document.getElementById('sim-mount-ko');
+  if (_koSimEl) {
+    const _koTier = STATE.user?.tier?.includes('higher') ? 'higher' : 'foundation';
+    _mountSim('ko', _koSimEl, _getSimConfig(key), { mode: 'inline', tier: _koTier });
+  }
 }
 
 function resumeMidSession() {
