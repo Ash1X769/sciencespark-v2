@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — GradeMastery</title>
+<meta name="description" content="GradeMastery Terms of Service — governing the use of our AQA GCSE revision platform.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body { font-family: 'Inter', sans-serif; font-weight: 400; color: var(--gm-text); background: #fff; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+:root {
+  --gm-dark:   #0F1A14;
+  --gm-forest: #216D39;
+  --gm-accent: #03A860;
+  --gm-orange: #F97316;
+  --gm-gold:   #F5B100;
+  --gm-white:  #FFFFFF;
+  --gm-off:    #F7FAF8;
+  --gm-text:   #1A2E22;
+  --gm-muted:  #64748B;
+  --gm-border: #E2E8F0;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 1px 4px rgba(0,0,0,.04);
+}
+
+h1,h2,h3,h4,h5 { font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.2; }
+p { line-height: 1.75; }
+
+/* ── Nav ── */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+#nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 20px 0; transition: all .3s ease; }
+#nav.scrolled { background: rgba(255,255,255,.97); backdrop-filter: blur(12px); padding: 12px 0; box-shadow: 0 1px 0 var(--gm-border); }
+.nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+.nav-wordmark { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.35rem; color: var(--gm-forest); text-decoration: none; letter-spacing: -.02em; }
+.nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+.nav-links a { font-family: 'Inter', sans-serif; font-weight: 500; font-size: .875rem; color: var(--gm-muted); text-decoration: none; transition: color .2s; }
+.nav-links a:hover { color: var(--gm-text); }
+.nav-cta { display: flex; align-items: center; gap: 12px; }
+.nav-login { font-family: 'Inter', sans-serif; font-weight: 600; font-size: .875rem; color: var(--gm-forest); text-decoration: none; padding: 8px 16px; border: 1.5px solid var(--gm-forest); border-radius: 999px; transition: all .2s; }
+.nav-login:hover { background: var(--gm-forest); color: #fff; }
+.nav-start { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .875rem; background: var(--gm-orange); color: #fff; text-decoration: none; padding: 9px 20px; border-radius: 999px; transition: all .2s; }
+.nav-start:hover { background: #c43515; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(218,59,24,.35); }
+.hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; }
+.hamburger span { display: block; width: 24px; height: 2px; background: var(--gm-text); border-radius: 2px; transition: all .3s; }
+#nav-overlay { display: none; position: fixed; inset: 0; background: var(--gm-dark); z-index: 999; flex-direction: column; align-items: center; justify-content: center; gap: 40px; }
+#nav-overlay.open { display: flex; }
+#nav-overlay a { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 1.6rem; color: #fff; text-decoration: none; transition: color .2s; }
+#nav-overlay a:hover { color: var(--gm-accent); }
+#nav-close { position: absolute; top: 24px; right: 24px; background: none; border: none; color: #fff; font-size: 2rem; cursor: pointer; line-height: 1; }
+
+/* ── Page hero ── */
+.page-hero { background: var(--gm-dark); padding: 140px 0 72px; text-align: center; }
+.page-hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; color: #fff; margin-bottom: 12px; }
+.page-hero .meta { font-size: .88rem; color: rgba(255,255,255,.45); font-weight: 500; }
+
+/* ── Layout ── */
+.legal-wrap { max-width: 800px; margin: 0 auto; padding: 64px 24px 96px; }
+
+/* ── Table of contents ── */
+.toc { background: var(--gm-off); border: 1px solid var(--gm-border); border-radius: var(--radius-md); padding: 28px 32px; margin-bottom: 56px; }
+.toc h2 { font-size: 1rem; font-weight: 800; color: var(--gm-text); margin-bottom: 16px; letter-spacing: -.01em; }
+.toc ol { padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+.toc li { font-size: .88rem; line-height: 1.5; }
+.toc a { color: var(--gm-forest); text-decoration: none; font-weight: 500; transition: color .15s; }
+.toc a:hover { color: var(--gm-accent); text-decoration: underline; }
+
+/* ── Sections ── */
+.legal-section { margin-bottom: 52px; scroll-margin-top: 96px; }
+.section-number { display: inline-block; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--gm-forest); background: rgba(33,109,57,.09); padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; }
+.legal-section h2 { font-size: 1.35rem; font-weight: 800; color: var(--gm-text); margin-bottom: 18px; letter-spacing: -.02em; }
+.legal-section h3 { font-size: 1rem; font-weight: 700; color: var(--gm-text); margin: 20px 0 8px; }
+.legal-section p { font-size: .95rem; color: #334155; margin-bottom: 14px; }
+.legal-section ul, .legal-section ol { padding-left: 20px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.legal-section li { font-size: .95rem; color: #334155; line-height: 1.65; }
+.legal-section a { color: var(--gm-forest); font-weight: 500; }
+.legal-section a:hover { color: var(--gm-accent); }
+.divider { border: none; border-top: 1px solid var(--gm-border); margin: 0 0 52px; }
+
+/* ── Callout box ── */
+.callout { background: rgba(33,109,57,.06); border-left: 3px solid var(--gm-forest); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 16px 20px; margin: 16px 0; }
+.callout p { font-size: .9rem; color: var(--gm-text); margin: 0; }
+
+/* ── Footer ── */
+footer { background: var(--gm-text); padding: 56px 0 32px; }
+.footer-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 32px; margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.footer-brand { }
+.footer-wordmark { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.35rem; color: #fff; display: block; margin-bottom: 6px; }
+.footer-tagline { font-size: .83rem; color: rgba(255,255,255,.4); font-weight: 500; }
+.footer-nav-links { display: flex; flex-wrap: wrap; gap: 8px 24px; list-style: none; }
+.footer-nav-links a { color: rgba(255,255,255,.55); text-decoration: none; font-size: .85rem; font-weight: 500; transition: color .2s; }
+.footer-nav-links a:hover { color: #fff; }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-legal { display: flex; gap: 20px; flex-wrap: wrap; }
+.footer-legal a { color: rgba(255,255,255,.35); text-decoration: none; font-size: .78rem; transition: color .2s; }
+.footer-legal a:hover { color: rgba(255,255,255,.65); }
+.footer-copy { font-size: .78rem; color: rgba(255,255,255,.25); }
+.footer-scholar { text-align: center; padding-top: 20px; margin-top: 20px; border-top: 1px solid rgba(255,255,255,.06); font-size: .75rem; color: rgba(255,255,255,.25); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-login { display: none; }
+  .hamburger { display: flex; }
+  .legal-wrap { padding: 48px 20px 72px; }
+  .toc { padding: 20px; }
+  .footer-top { flex-direction: column; gap: 24px; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav id="nav">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-wordmark">GradeMastery</a>
+      <ul class="nav-links">
+        <li><a href="index.html#how-it-works">How It Works</a></li>
+        <li><a href="index.html#whats-inside">Students</a></li>
+        <li><a href="index.html#parent-teacher">Parents</a></li>
+        <li><a href="index.html#pricing">Pricing</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="app.html" class="nav-login">Log In</a>
+        <a href="app.html" class="nav-start">Start Free</a>
+        <button class="hamburger" id="hamburger-btn" aria-label="Open menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile nav overlay -->
+<div id="nav-overlay">
+  <button id="nav-close" aria-label="Close menu">✕</button>
+  <a href="index.html">Home</a>
+  <a href="index.html#pricing">Pricing</a>
+  <a href="privacy.html">Privacy Policy</a>
+  <a href="app.html" class="btn btn-orange" style="margin-top:16px;">Start Free</a>
+</div>
+
+<!-- ── Page header ── -->
+<div class="page-hero">
+  <div class="container">
+    <h1>Terms of Service</h1>
+    <p class="meta">Last updated: 1 July 2026 &nbsp;·&nbsp; Effective date: 1 July 2026</p>
+  </div>
+</div>
+
+<!-- ── Content ── -->
+<div class="legal-wrap">
+
+  <!-- Table of contents -->
+  <nav class="toc" aria-label="Contents">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#s1">About Us</a></li>
+      <li><a href="#s2">Acceptance of Terms</a></li>
+      <li><a href="#s3">Eligibility and Age Requirements</a></li>
+      <li><a href="#s4">Description of Service</a></li>
+      <li><a href="#s5">Subscription and Payment</a></li>
+      <li><a href="#s6">Scholarship Access</a></li>
+      <li><a href="#s7">Acceptable Use</a></li>
+      <li><a href="#s8">Intellectual Property</a></li>
+      <li><a href="#s9">AI Features</a></li>
+      <li><a href="#s10">Disclaimers and Limitation of Liability</a></li>
+      <li><a href="#s11">Third-Party Services</a></li>
+      <li><a href="#s12">Termination</a></li>
+      <li><a href="#s13">Governing Law</a></li>
+      <li><a href="#s14">Contact</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1. About Us -->
+  <section class="legal-section" id="s1">
+    <span class="section-number">Section 1</span>
+    <h2>About Us</h2>
+    <p>GradeMastery is an educational technology platform operated as a trading name. Our registered contact address for legal purposes is <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a>.</p>
+    <p>In these Terms, "we", "us", and "our" mean GradeMastery. "You" means the person agreeing to these Terms, whether a student, parent, guardian, or teacher.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 2. Acceptance -->
+  <section class="legal-section" id="s2">
+    <span class="section-number">Section 2</span>
+    <h2>Acceptance of Terms</h2>
+    <p>By creating an account or using GradeMastery, you confirm you have read, understood, and agree to these Terms. If you are under 18, a parent or guardian must agree on your behalf.</p>
+    <p>We may update these Terms from time to time. We will notify you of material changes by email or by displaying a notice on the platform. Continued use of the Service after notification of changes constitutes your acceptance of the updated Terms.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 3. Eligibility -->
+  <section class="legal-section" id="s3">
+    <span class="section-number">Section 3</span>
+    <h2>Eligibility and Age Requirements</h2>
+    <p>GradeMastery serves students from Year 7 (age 11) upwards. We take the protection of younger users very seriously and apply the following rules:</p>
+    <ul>
+      <li><strong>Minimum age for self-registration:</strong> 13 years old, or the minimum age of digital consent in your country.</li>
+      <li><strong>Under-13 users</strong> may only access the platform through a parent-created account or a school or teacher account. Under-13 users cannot self-register.</li>
+      <li><strong>Users aged 13–17</strong> require parental or guardian consent. By registering, you confirm that consent has been obtained.</li>
+      <li><strong>Parents</strong> creating accounts for children under 13 provide consent on their child's behalf.</li>
+      <li><strong>Schools and teachers</strong> adding students under 13 must have appropriate data processing agreements in place and must ensure parental consent mechanisms exist at the school level before adding students.</li>
+    </ul>
+
+    <h3>Additional protections for under-13 accounts</h3>
+    <ul>
+      <li>We process under-13 user data only to the minimum extent necessary to provide the educational service.</li>
+      <li>No marketing communications will be sent to under-13 users.</li>
+      <li>AI personalisation for under-13 users is limited to what is strictly necessary for the learning service — no broader profiling.</li>
+      <li>Under-13 data will not be used for any purpose other than delivering the learning service.</li>
+      <li>AI Tutor interactions for under-13 users are subject to additional content filtering.</li>
+    </ul>
+
+    <p>We reserve the right to verify age and to refuse or terminate accounts that do not meet these eligibility requirements.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 4. Service -->
+  <section class="legal-section" id="s4">
+    <span class="section-number">Section 4</span>
+    <h2>Description of Service</h2>
+    <p>GradeMastery provides:</p>
+    <ul>
+      <li>AQA GCSE Science revision flashcards and spaced repetition learning</li>
+      <li>AI-powered tutoring and marking features</li>
+      <li>Progress tracking for students, parents, and teachers</li>
+      <li>Deep Dive learning sessions</li>
+      <li>StudyCoach educational content</li>
+    </ul>
+    <p>The Service is provided for personal, non-commercial educational use only, unless you have entered into a separate school or institutional agreement with us.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 5. Subscription -->
+  <section class="legal-section" id="s5">
+    <span class="section-number">Section 5</span>
+    <h2>Subscription and Payment</h2>
+
+    <h3>5.1 Free Tier</h3>
+    <p>Available to all users. Includes limited daily cards and AI features as described on our pricing page.</p>
+
+    <h3>5.2 Paid Tiers</h3>
+    <p>Standard, Premium, and Premium Plus subscriptions are available on monthly or annual billing cycles as described at <a href="index.html#pricing">grademastery.co.uk/pricing</a>.</p>
+
+    <h3>5.3 Free Trial</h3>
+    <p>The Standard tier includes a 3-day free trial. No payment card is required for the free trial. At the end of the trial period, access reverts to the Free tier unless you choose to subscribe.</p>
+
+    <h3>5.4 Payment</h3>
+    <p>All payments are processed securely through Stripe. We do not store your payment card details — these are handled entirely by Stripe.</p>
+
+    <h3>5.5 Cancellation</h3>
+    <p>You may cancel your subscription at any time. Cancellation takes effect at the end of the current billing period. No refunds are issued for partial billing periods already paid, except where required by law.</p>
+
+    <h3>5.6 Refunds</h3>
+    <p>We do not offer refunds for subscription periods already used. If you believe you have been charged in error, contact <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a> within 14 days of the charge and we will investigate promptly.</p>
+
+    <h3>5.7 Price Changes</h3>
+    <p>We will give you at least 30 days' notice of any price changes. Continued use of the Service after the change date constitutes your acceptance of the new price.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 6. Scholarship -->
+  <section class="legal-section" id="s6">
+    <span class="section-number">Section 6</span>
+    <h2>Scholarship Access</h2>
+    <p>Subsidised access for eligible students — including those receiving Free School Meals, Pupil Premium, and students in other qualifying circumstances — is available through our scholarship programme. Eligibility is assessed on a case-by-case basis at our discretion.</p>
+    <p>We reserve the right to withdraw scholarship access if circumstances change or if the access is misused.</p>
+    <p>To apply, email <a href="mailto:hello@grademastery.co.uk?subject=Scholarship">hello@grademastery.co.uk</a> with the subject line "Scholarship".</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 7. Acceptable Use -->
+  <section class="legal-section" id="s7">
+    <span class="section-number">Section 7</span>
+    <h2>Acceptable Use</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>Use the Service for any purpose other than personal educational use</li>
+      <li>Share your account credentials with others</li>
+      <li>Attempt to reverse engineer, copy, or redistribute any part of our content or software</li>
+      <li>Use automated tools, bots, or scrapers to access the Service</li>
+      <li>Upload or transmit harmful, offensive, or unlawful content</li>
+      <li>Attempt to circumvent any usage limits or access controls</li>
+      <li>Use the Service to train AI models or for any commercial purpose without our written permission</li>
+    </ul>
+    <div class="callout">
+      <p>Violation of these terms may result in immediate account suspension or termination without refund.</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 8. IP -->
+  <section class="legal-section" id="s8">
+    <span class="section-number">Section 8</span>
+    <h2>Intellectual Property</h2>
+
+    <h3>8.1 Our Content</h3>
+    <p>All flashcard content, Knowledge Organisers, Required Practical materials, AI Tutor responses, and platform design are owned by or licensed to GradeMastery. You may not reproduce, distribute, or commercially exploit any of our content without our prior written permission.</p>
+
+    <h3>8.2 Your Content</h3>
+    <p>Content you create — such as Brain Dump entries and study notes — remains yours. By submitting it, you grant us a limited licence to process it for the purpose of providing the Service (including AI marking and analysis). We will not use your content for any other purpose without your consent.</p>
+
+    <h3>8.3 Feedback</h3>
+    <p>If you send us feedback or suggestions, we may use these to improve the Service. We have no obligation to act on feedback or to compensate you for it.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 9. AI -->
+  <section class="legal-section" id="s9">
+    <span class="section-number">Section 9</span>
+    <h2>AI Features</h2>
+    <p>Our platform includes AI-powered features: AI Tutoring, Smart Grading AI, and AI Learning Coach.</p>
+    <ul>
+      <li>AI responses are generated for educational guidance only. They are not a substitute for teacher advice or official AQA materials.</li>
+      <li>We do not guarantee the accuracy of AI-generated content. Students should cross-reference with their teachers and official AQA resources.</li>
+      <li>AI usage is subject to fair use limits described on our pricing page.</li>
+      <li>We use Anthropic's Claude API to power AI features. Your use of AI features is subject to Anthropic's usage policies as well as these Terms.</li>
+      <li>AI interactions for under-13 users are subject to additional content filtering.</li>
+    </ul>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 10. Liability -->
+  <section class="legal-section" id="s10">
+    <span class="section-number">Section 10</span>
+    <h2>Disclaimers and Limitation of Liability</h2>
+
+    <h3>10.1 Educational Purpose</h3>
+    <p>GradeMastery is a revision aid. We make no guarantee of specific exam results, grade improvements, or academic outcomes. Results depend on individual effort, circumstances, and many factors outside our control.</p>
+
+    <h3>10.2 Service Availability</h3>
+    <p>We aim for high availability but do not guarantee uninterrupted access. We are not liable for any loss arising from temporary unavailability of the Service.</p>
+
+    <h3>10.3 Content Accuracy</h3>
+    <p>We take care to align our content with the AQA GCSE specification but cannot guarantee it is free from errors. Always consult official AQA materials and your teachers.</p>
+
+    <h3>10.4 Limitation of Liability</h3>
+    <p>To the maximum extent permitted by law, our total liability to you for any claim arising from your use of the Service is limited to the amount you paid us in the 12 months preceding the claim.</p>
+
+    <h3>10.5 Excluded Losses</h3>
+    <p>We are not liable for indirect, consequential, or incidental losses, including loss of data, loss of opportunity, or loss of anticipated exam results.</p>
+
+    <h3>10.6 Mandatory Rights</h3>
+    <p>Nothing in these Terms excludes or limits liability for death or personal injury caused by negligence, fraud, fraudulent misrepresentation, or any other matter that cannot be excluded or limited by law. Your statutory rights as a consumer are not affected.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 11. Third parties -->
+  <section class="legal-section" id="s11">
+    <span class="section-number">Section 11</span>
+    <h2>Third-Party Services</h2>
+    <p>We use the following third-party services to operate GradeMastery:</p>
+    <ul>
+      <li><strong>Supabase</strong> — database and authentication. <a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a></li>
+      <li><strong>Anthropic</strong> — AI features. <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">anthropic.com/privacy</a></li>
+      <li><strong>Cloudflare</strong> — infrastructure. <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">cloudflare.com/privacypolicy</a></li>
+      <li><strong>Stripe</strong> — payment processing. <a href="https://stripe.com/gb/privacy" target="_blank" rel="noopener">stripe.com/privacy</a></li>
+    </ul>
+    <p>We are not responsible for the practices of these third parties. Their own terms and privacy policies govern data they process independently.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 12. Termination -->
+  <section class="legal-section" id="s12">
+    <span class="section-number">Section 12</span>
+    <h2>Termination</h2>
+    <p>You may request deletion of your account at any time by emailing <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a>.</p>
+    <p>We may suspend or terminate your account if you breach these Terms, fail to pay, or if we reasonably believe your use is harmful or fraudulent. Where possible, we will give you notice and an opportunity to address the issue before taking action.</p>
+    <p>On termination, your right to access the Service ends immediately. We will retain your data as described in our <a href="privacy.html">Privacy Policy</a>.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 13. Governing Law -->
+  <section class="legal-section" id="s13">
+    <span class="section-number">Section 13</span>
+    <h2>Governing Law</h2>
+    <p>These Terms are governed by the laws of England and Wales. Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts of England and Wales, except where mandatory consumer protection laws in your jurisdiction require otherwise.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 14. Contact -->
+  <section class="legal-section" id="s14">
+    <span class="section-number">Section 14</span>
+    <h2>Contact</h2>
+    <ul>
+      <li><strong>General queries about these Terms:</strong> <a href="mailto:hello@grademastery.co.uk">hello@grademastery.co.uk</a></li>
+      <li><strong>Data protection queries:</strong> <a href="mailto:hello@grademastery.co.uk?subject=Data%20Protection">hello@grademastery.co.uk</a> — subject line: Data Protection</li>
+      <li><strong>School or institutional agreements:</strong> <a href="mailto:hello@grademastery.co.uk?subject=School%20Agreement">hello@grademastery.co.uk</a> — subject line: School Agreement</li>
+      <li><strong>Scholarship applications:</strong> <a href="mailto:hello@grademastery.co.uk?subject=Scholarship">hello@grademastery.co.uk</a> — subject line: Scholarship</li>
+    </ul>
+    <p>Also see our <a href="privacy.html">Privacy Policy</a> for information on how we handle your personal data.</p>
+  </section>
+
+</div><!-- /legal-wrap -->
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="footer-wordmark">GradeMastery</span>
+        <span class="footer-tagline">Where Grade 9 starts</span>
+      </div>
+      <ul class="footer-nav-links">
+        <li><a href="index.html#whats-inside">Students</a></li>
+        <li><a href="index.html#parent-teacher">Parents</a></li>
+        <li><a href="index.html#parent-teacher">Teachers</a></li>
+        <li><a href="index.html#pricing">Pricing</a></li>
+        <li><a href="index.html#scholarships">Scholarships</a></li>
+        <li><a href="index.html#how-it-works">How It Works</a></li>
+      </ul>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="mailto:hello@grademastery.co.uk">Contact</a>
+      </div>
+      <span class="footer-copy">© 2026 GradeMastery. All rights reserved.</span>
+    </div>
+    <div class="footer-scholar">Subsidised access for FSM students available — email us</div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', function() {
+    nav.classList.toggle('scrolled', window.scrollY > 50);
+  }, { passive: true });
+
+  const overlay = document.getElementById('nav-overlay');
+  document.getElementById('hamburger-btn').addEventListener('click', function() {
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  });
+  document.getElementById('nav-close').addEventListener('click', function() {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  });
+})();
+</script>
+</body>
+</html>
