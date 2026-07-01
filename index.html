@@ -26708,6 +26708,8 @@ window.addEventListener('appinstalled', () => dismissInstallBanner());
 function getAIMarkingLimit() {
   const user = STATE.user;
   if (!user) return 0;
+  // DEV TESTING: force Smart Mark for test account — remove before launch
+  if (user.email === 'swifts.59.carnage@icloud.com') return 0;
   if (!user.is_paid) return CONFIG.FREE_AI_MARKING_DAILY;
   return CONFIG.STANDARD_AI_MARKING_DAILY;
 }
