@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <script src="https://js.stripe.com/v3/"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    V1 CSS FOUNDATION — exact copy from ash1x769.github.io
@@ -1832,6 +1833,7 @@ textarea.input { resize: vertical; min-height: 100px; }
 /* ── Student StudyCoach ────────────────────────────────────────────────── */
 .studycoach-screen { min-height: 100vh; background: #F0FDF4; padding-bottom: 100px; }
 .studycoach-hdr { background: linear-gradient(135deg,#16A34A,#15803D); padding: 22px 20px 18px; color: white; display: flex; align-items: center; gap: 12px; }
+.gm-journal-ta::placeholder { color: #B8A88A; font-family: 'Caveat', cursive; }
 
   /* ─── DEEP DIVE / AQA EXAM PAPER ─── */
   .aqa-paper {
@@ -16180,7 +16182,7 @@ ${renderNavBar('home')}
     <div class="v3-feature-card" onclick="startFullSession()"><div class="v3-feature-icon">\uD83C\uDF0A</div><div class="v3-feature-title">Deep Dive</div><div class="v3-feature-desc">Read, practise, brain dump & exam</div></div>
     <div class="v3-feature-card" onclick="startQuickRevision()"><div class="v3-feature-icon">\u26A1</div><div class="v3-feature-title">Quick Revision</div><div class="v3-feature-desc">Browse all cards at your own pace</div></div>
     <div class="v3-feature-card" onclick="showStudyHistory()"><div class="v3-feature-icon">\uD83D\uDCCA</div><div class="v3-feature-title">Progress</div><div class="v3-feature-desc">See your mastery by topic</div></div>
-    <div class="v3-feature-card" onclick="showStudyCoachFeed()"><div class="v3-feature-icon">\uD83D\uDCA1</div><div class="v3-feature-title">StudyCoach</div><div class="v3-feature-desc">Brain science revision tips</div></div>
+    <div class="v3-feature-card" onclick="showStudyCoachFeed()"><div class="v3-feature-icon">\uD83D\uDCA1</div><div class="v3-feature-title">Feed</div><div class="v3-feature-desc">Brain science revision tips</div></div>
   </div>
 
   <div class="v3-section-label">Badges</div>
@@ -18495,6 +18497,25 @@ ${renderNavBar('profile')}
 
     <!-- Notifications -->
     <div id="student-notif-section">${buildNotifSectionHTML('student', null)}</div>
+
+    <!-- Study Coach Journal -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <div style="font-size:15px;font-weight:800;">✨ Study Coach</div>
+        <span style="background:var(--gm-accent,#03A860);color:white;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;letter-spacing:0.04em;">NEW</span>
+      </div>
+      <div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:12px;">Reflect on today's revision — what clicked, what's still tricky</div>
+      <div style="font-family:'Caveat',cursive;font-size:14px;font-weight:600;color:#B8A88A;margin-bottom:8px;">${new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</div>
+      <textarea class="gm-journal-ta" id="journal-entry-text" placeholder="How did today's revision go? What clicked? What's still tricky?..." style="width:100%;box-sizing:border-box;background:#FFFEF0;border:1px solid #E8E0C8;border-radius:8px;font-family:'Caveat',cursive;font-size:18px;line-height:2;background-image:repeating-linear-gradient(transparent,transparent 31px,#E8E0C8 31px,#E8E0C8 32px);padding:16px;min-height:200px;resize:vertical;outline:none;color:#3D2B0A;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';"></textarea>
+      <button onclick="saveJournalEntry()" style="margin-top:10px;width:100%;padding:12px;background:var(--gm-forest,#216D39);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Save Entry 📓</button>
+      ${buildJournalEntriesHTML(user.study_notes || [])}
+    </div>
+
+    ${!user.is_paid ? `<div class="card" style="margin-bottom:16px;background:#FDE68A;border:1.5px solid #F59E0B;">
+      <div style="font-size:14px;font-weight:800;color:#B45309;margin-bottom:6px;">✨ Unlock AI Study Coach — Premium</div>
+      <div style="font-size:13px;color:#92400E;font-weight:600;line-height:1.5;margin-bottom:12px;">Get personalised coaching based on your journal entries. Your AI coach reads your reflections and helps you study smarter.</div>
+      <button onclick="showUpgradeModal('AI Study Coach')" style="background:transparent;border:1.5px solid #B45309;color:#B45309;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;">Upgrade to Premium →</button>
+    </div>` : ''}
 
     <!-- Badges -->
     <div class="card" style="margin-bottom:16px;">
@@ -21371,7 +21392,7 @@ ${renderNavBar('home')}
     <div class="v3-feature-card" onclick="startFullSession()"><div class="v3-feature-icon">\uD83C\uDF0A</div><div class="v3-feature-title">Deep Dive</div><div class="v3-feature-desc">Read, practise, brain dump & exam</div></div>
     <div class="v3-feature-card" onclick="startQuickRevision()"><div class="v3-feature-icon">\u26A1</div><div class="v3-feature-title">Quick Revision</div><div class="v3-feature-desc">Browse all cards at your own pace</div></div>
     <div class="v3-feature-card" onclick="showStudyHistory()"><div class="v3-feature-icon">\uD83D\uDCCA</div><div class="v3-feature-title">Progress</div><div class="v3-feature-desc">See your mastery by topic</div></div>
-    <div class="v3-feature-card" onclick="showStudyCoachFeed()"><div class="v3-feature-icon">\uD83D\uDCA1</div><div class="v3-feature-title">StudyCoach</div><div class="v3-feature-desc">Brain science revision tips</div></div>
+    <div class="v3-feature-card" onclick="showStudyCoachFeed()"><div class="v3-feature-icon">\uD83D\uDCA1</div><div class="v3-feature-title">Feed</div><div class="v3-feature-desc">Brain science revision tips</div></div>
   </div>
 
   <div class="v3-section-label">Badges</div>
@@ -23770,6 +23791,25 @@ ${renderNavBar('profile')}
     <!-- Notifications -->
     <div id="student-notif-section">${buildNotifSectionHTML('student', null)}</div>
 
+    <!-- Study Coach Journal -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <div style="font-size:15px;font-weight:800;">✨ Study Coach</div>
+        <span style="background:var(--gm-accent,#03A860);color:white;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;letter-spacing:0.04em;">NEW</span>
+      </div>
+      <div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:12px;">Reflect on today's revision — what clicked, what's still tricky</div>
+      <div style="font-family:'Caveat',cursive;font-size:14px;font-weight:600;color:#B8A88A;margin-bottom:8px;">${new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</div>
+      <textarea class="gm-journal-ta" id="journal-entry-text" placeholder="How did today's revision go? What clicked? What's still tricky?..." style="width:100%;box-sizing:border-box;background:#FFFEF0;border:1px solid #E8E0C8;border-radius:8px;font-family:'Caveat',cursive;font-size:18px;line-height:2;background-image:repeating-linear-gradient(transparent,transparent 31px,#E8E0C8 31px,#E8E0C8 32px);padding:16px;min-height:200px;resize:vertical;outline:none;color:#3D2B0A;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';"></textarea>
+      <button onclick="saveJournalEntry()" style="margin-top:10px;width:100%;padding:12px;background:var(--gm-forest,#216D39);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Save Entry 📓</button>
+      ${buildJournalEntriesHTML(user.study_notes || [])}
+    </div>
+
+    ${!user.is_paid ? `<div class="card" style="margin-bottom:16px;background:#FDE68A;border:1.5px solid #F59E0B;">
+      <div style="font-size:14px;font-weight:800;color:#B45309;margin-bottom:6px;">✨ Unlock AI Study Coach — Premium</div>
+      <div style="font-size:13px;color:#92400E;font-weight:600;line-height:1.5;margin-bottom:12px;">Get personalised coaching based on your journal entries. Your AI coach reads your reflections and helps you study smarter.</div>
+      <button onclick="showUpgradeModal('AI Study Coach')" style="background:transparent;border:1.5px solid #B45309;color:#B45309;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;">Upgrade to Premium →</button>
+    </div>` : ''}
+
     <!-- Badges -->
     <div class="card" style="margin-bottom:16px;">
       <div style="font-size:15px;font-weight:800;margin-bottom:16px;">🏅 Badges</div>
@@ -25533,7 +25573,7 @@ async function loadStudentFeedContent(showSavedOnly) {
     const isSaved = savedSet.has(t.id);
     const shareText = (t.headline + '\n\n' + t.body).replace(/'/g, '&#39;');
     return '<div class="feed-card" id="studycoach-' + t.id + '" style="background:#F0FDF4;">'
-      + '<div class="feed-hdr-green">StudyCoach 💡</div>'
+      + '<div class="feed-hdr-green">Feed 💡</div>'
       + '<div class="feed-card-body">'
       + '<div class="feed-card-headline" style="color:#14532D;">' + t.headline + '</div>'
       + '<div class="feed-card-text" style="color:#166534;">' + t.body + '</div>'
@@ -25577,7 +25617,7 @@ function showStudyCoachFeed() {
   const html = '<div class="studycoach-screen">'
     + '<div class="studycoach-hdr">'
     + '<button onclick="showHome()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">← Back</button>'
-    + '<div style="flex:1;"><div style="font-size:18px;font-weight:900;">StudyCoach 💡</div><div style="font-size:12px;opacity:0.85;font-weight:600;">Brain science for GCSE students</div></div>'
+    + '<div style="flex:1;"><div style="font-size:18px;font-weight:900;">Feed 💡</div><div style="font-size:12px;opacity:0.85;font-weight:600;">Brain science for GCSE students</div></div>'
     + '</div>'
     + '<div style="display:flex;gap:8px;padding:16px 20px 8px;">'
     + '<button onclick="loadStudentFeedContent(false)" style="flex:1;padding:9px;border-radius:8px;border:none;background:#16A34A;color:white;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">All Tips</button>'
@@ -25587,6 +25627,67 @@ function showStudyCoachFeed() {
     + '</div>';
   render(html);
   loadStudentFeedContent(false);
+}
+
+
+function toggleJournalEntry(el) {
+  var uid = el.getAttribute('data-jid');
+  var f = document.getElementById(uid);
+  if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+function buildJournalEntriesHTML(notes) {
+  var entries = (notes || []).filter(function(n) { return n.text; }).slice(-3).reverse();
+  if (!entries.length) return '';
+  var safe = function(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  var h = '<div id="journal-prev-entries" style="margin-top:16px;border-top:1px solid #E8E0C8;padding-top:12px;">';
+  h += '<div style="font-size:11px;font-weight:800;color:#B8A88A;letter-spacing:0.08em;margin-bottom:10px;">PREVIOUS ENTRIES</div>';
+  entries.forEach(function(entry) {
+    var dateStr = entry.date ? new Date(entry.date).toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'}) : '';
+    var preview = safe((entry.text || '').slice(0, 100)) + ((entry.text || '').length > 100 ? '…' : '');
+    var full = safe(entry.text || '');
+    var uid = 'je-' + Math.random().toString(36).slice(2, 7);
+    var hasMore = (entry.text || '').length > 100;
+    h += '<div style="background:#FFFEF0;border:1px solid #E8E0C8;border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;" data-jid="' + uid + '" onclick="toggleJournalEntry(this)">';
+    h += '<div style="font-family:\'Caveat\',cursive;font-size:13px;font-weight:600;color:#B8A88A;margin-bottom:4px;">' + safe(dateStr) + '</div>';
+    h += '<div style="font-family:\'Caveat\',cursive;font-size:16px;color:#3D2B0A;line-height:1.5;">' + preview + '</div>';
+    if (hasMore) {
+      h += '<div id="' + uid + '" style="display:none;font-family:\'Caveat\',cursive;font-size:16px;color:#3D2B0A;line-height:1.5;margin-top:8px;border-top:1px solid #E8E0C8;padding-top:8px;">' + full + '</div>';
+    }
+    h += '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+async function saveJournalEntry() {
+  var ta = document.getElementById('journal-entry-text');
+  if (!ta) return;
+  var text = (ta.value || '').trim();
+  if (!text) { showToast('Write something first!'); return; }
+  var user = STATE.user;
+  if (!user || !user.id || !user.token) { showToast('Not logged in'); return; }
+  var entry = { date: new Date().toISOString(), text: text };
+  var existing = Array.isArray(user.study_notes) ? user.study_notes.slice() : [];
+  existing.push(entry);
+  try {
+    var r = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { apikey: CONFIG.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + user.token, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ study_notes: existing })
+    });
+    if (r.ok) {
+      STATE.user.study_notes = existing;
+      showToast('Entry saved \u{1F4D3}');
+      showProfile();
+    } else {
+      r.text().then(function(b) { console.error('journal save failed:', r.status, b); });
+      showToast('Could not save — try again');
+    }
+  } catch(e) {
+    console.error('journal save error:', e);
+    showToast('Could not save — try again');
+  }
 }
 
 async function showParentPortal() {
