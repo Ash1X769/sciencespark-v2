@@ -11,6 +11,10 @@
 <meta name="apple-mobile-web-app-title" content="GradeMastery">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="https://js.stripe.com/v3/"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    V1 CSS FOUNDATION — exact copy from ash1x769.github.io
@@ -1929,6 +1933,561 @@ textarea.input { resize: vertical; min-height: 100px; }
   .keyword-chip:active { background: #BBF7D0 !important; transform: scale(0.95); }
 
 </style>
+
+<!-- ============================================================
+     V3 DESIGN SYSTEM — GradeMastery modern redesign
+============================================================ -->
+<style>
+/* ── V3 Tokens ────────────────────────────────────────────── */
+:root {
+  --gm-dark:     #0F1A14;
+  --gm-forest:   #216D39;
+  --gm-accent:   #03A860;
+  --gm-orange:   #F97316;
+  --gm-gold:     #F5B100;
+  --gm-white:    #FFFFFF;
+  --gm-off:      #F7FAF8;
+  --gm-text:     #1A2E22;
+  --gm-muted:    #64748B;
+  --gm-border:   #E2E8F0;
+  --gm-surface:  #FFFFFF;
+  --gm-surface2: #F8FAFC;
+  --gm-shadow:   0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+  --gm-shadow-lg:0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+  --gm-r-card:   12px;
+  --gm-r-input:  8px;
+  --gm-r-btn:    24px;
+  --gm-transition: 0.2s ease;
+}
+
+/* ── Base overrides ────────────────────────────────────────── */
+body { font-family: 'Inter', 'Nunito', sans-serif; background: var(--gm-off); }
+* { -webkit-font-smoothing: antialiased; }
+
+/* ── Typography ───────────────────────────────────────────── */
+.gm-heading { font-family: 'Plus Jakarta Sans', 'Nunito', sans-serif; font-weight: 800; color: var(--gm-text); letter-spacing: -0.02em; }
+
+/* ── V3 AUTH — split panel ────────────────────────────────── */
+.v3-auth-wrap {
+  display: flex; min-height: 100vh; background: var(--gm-white);
+}
+.v3-auth-left {
+  flex: 1; background: var(--gm-dark); display: flex; flex-direction: column;
+  padding: 36px; position: relative; overflow: hidden;
+}
+.v3-auth-left::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(3,168,96,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.v3-auth-wordmark {
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif; font-weight: 900;
+  font-size: 1.3rem; color: var(--gm-accent); letter-spacing: -0.02em; text-decoration: none;
+}
+.v3-auth-showcase {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 24px; padding: 40px 0;
+}
+.v3-chat-bubble {
+  border-radius: 16px; padding: 14px 18px; max-width: 320px; line-height: 1.6;
+}
+.v3-chat-bubble.user {
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9);
+  font-size: 13px; font-weight: 500; align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+.v3-chat-bubble.ai {
+  background: rgba(3,168,96,0.15); border: 1px solid rgba(3,168,96,0.3);
+  color: rgba(255,255,255,0.92); font-size: 13px; font-weight: 500;
+  border-bottom-left-radius: 4px;
+}
+.v3-auth-trust {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: rgba(255,255,255,0.45); font-weight: 500;
+}
+.v3-auth-stars { color: var(--gm-gold); font-size: 13px; letter-spacing: 1px; }
+.v3-auth-right {
+  width: 480px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 48px 48px;
+  background: var(--gm-white); overflow-y: auto;
+}
+.v3-auth-form-wrap { width: 100%; max-width: 380px; }
+.v3-auth-heading {
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif;
+  font-size: 2rem; font-weight: 800; color: var(--gm-text);
+  letter-spacing: -0.03em; margin-bottom: 6px;
+}
+.v3-auth-sub { font-size: 0.9rem; color: var(--gm-muted); font-weight: 500; margin-bottom: 28px; }
+.v3-form-label {
+  display: block; font-size: 0.85rem; font-weight: 600;
+  color: var(--gm-text); margin-bottom: 6px;
+}
+.v3-form-input {
+  width: 100%; height: 48px; padding: 0 14px;
+  border: 1.5px solid var(--gm-border); border-radius: var(--gm-r-input);
+  font-family: 'Inter','Nunito',sans-serif; font-size: 0.95rem;
+  font-weight: 500; color: var(--gm-text); background: var(--gm-white);
+  outline: none; transition: border-color var(--gm-transition), box-shadow var(--gm-transition);
+}
+.v3-form-input:focus {
+  border-color: var(--gm-accent);
+  box-shadow: 0 0 0 3px rgba(3,168,96,0.15);
+}
+.v3-pw-wrap { position: relative; }
+.v3-pw-wrap .v3-form-input { padding-right: 44px; }
+.v3-pw-toggle {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: var(--gm-muted);
+  font-size: 16px; padding: 4px; line-height: 1;
+}
+.v3-form-group { margin-bottom: 16px; }
+.v3-form-group-row { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+.v3-forgot { font-size: 0.82rem; color: var(--gm-accent); font-weight: 600; text-decoration: none; }
+.v3-forgot:hover { text-decoration: underline; }
+.v3-btn-primary {
+  width: 100%; height: 48px; border: none; border-radius: var(--gm-r-btn);
+  background: var(--gm-forest); color: #fff;
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif; font-size: 0.95rem; font-weight: 700;
+  cursor: pointer; transition: background var(--gm-transition), transform var(--gm-transition), box-shadow var(--gm-transition);
+  margin-top: 4px;
+}
+.v3-btn-primary:hover { background: #185228; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(33,109,57,0.3); }
+.v3-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+.v3-btn-orange {
+  width: 100%; height: 48px; border: none; border-radius: var(--gm-r-btn);
+  background: var(--gm-orange); color: #fff;
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif; font-size: 0.95rem; font-weight: 700;
+  cursor: pointer; transition: all var(--gm-transition);
+}
+.v3-btn-orange:hover { background: #e56210; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(249,115,22,0.3); }
+.v3-btn-ghost {
+  width: 100%; height: 48px; border: 1.5px solid var(--gm-border);
+  border-radius: var(--gm-r-btn); background: transparent; color: var(--gm-text);
+  font-family: 'Inter','Nunito',sans-serif; font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; transition: all var(--gm-transition);
+}
+.v3-btn-ghost:hover { border-color: var(--gm-forest); color: var(--gm-forest); background: rgba(33,109,57,0.04); }
+.v3-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 20px 0; color: var(--gm-muted); font-size: 0.82rem; font-weight: 500;
+}
+.v3-divider::before, .v3-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--gm-border);
+}
+.v3-auth-switch {
+  text-align: center; margin-top: 24px; font-size: 0.875rem;
+  color: var(--gm-muted); font-weight: 500;
+}
+.v3-auth-switch a { color: var(--gm-forest); font-weight: 600; text-decoration: none; cursor: pointer; }
+.v3-auth-switch a:hover { text-decoration: underline; }
+.v3-auth-terms {
+  font-size: 0.75rem; color: var(--gm-muted); text-align: center;
+  margin-top: 16px; line-height: 1.6;
+}
+.v3-auth-terms a { color: var(--gm-forest); }
+
+/* Role selector */
+.v3-role-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 18px; }
+.v3-role-btn {
+  padding: 14px 8px; border: 1.5px solid var(--gm-border); border-radius: var(--gm-r-card);
+  background: var(--gm-white); cursor: pointer; text-align: center;
+  transition: all var(--gm-transition); font-family: 'Inter','Nunito',sans-serif;
+}
+.v3-role-btn:hover { border-color: var(--gm-forest); background: rgba(33,109,57,0.04); }
+.v3-role-btn.active { border-color: var(--gm-forest); background: rgba(33,109,57,0.07); }
+.v3-role-icon { font-size: 1.5rem; margin-bottom: 5px; }
+.v3-role-label { font-size: 0.8rem; font-weight: 600; color: var(--gm-text); }
+
+/* Year group pills */
+.v3-year-grid { display: flex; gap: 6px; flex-wrap: wrap; }
+.v3-year-pill {
+  padding: 6px 14px; border: 1.5px solid var(--gm-border);
+  border-radius: 999px; font-size: 0.82rem; font-weight: 600;
+  color: var(--gm-muted); cursor: pointer; background: var(--gm-white);
+  transition: all var(--gm-transition);
+}
+.v3-year-pill:hover, .v3-year-pill.active {
+  border-color: var(--gm-forest); color: var(--gm-forest); background: rgba(33,109,57,0.07);
+}
+
+/* Password strength */
+.v3-pw-strength { height: 3px; border-radius: 999px; background: var(--gm-border); margin-top: 6px; overflow: hidden; }
+.v3-pw-strength-bar { height: 100%; border-radius: 999px; transition: width 0.3s, background 0.3s; }
+
+/* Auth error */
+.v3-auth-error {
+  background: #FEF2F2; border: 1.5px solid #FCA5A5; border-radius: 8px;
+  padding: 10px 14px; font-size: 0.85rem; font-weight: 600; color: #DC2626;
+  margin-bottom: 16px; display: none;
+}
+
+/* Mobile auth */
+@media (max-width: 767px) {
+  .v3-auth-wrap { flex-direction: column; }
+  .v3-auth-left { min-height: 200px; padding: 24px 20px 20px; flex: none; }
+  .v3-auth-showcase { display: none; }
+  .v3-auth-trust { display: none; }
+  .v3-auth-right { width: 100%; padding: 28px 20px; }
+}
+
+/* ── V3 NAVIGATION ─────────────────────────────────────────── */
+.v3-nav {
+  position: sticky; top: 0; z-index: 200;
+  height: 60px; background: var(--gm-white);
+  border-bottom: 1px solid var(--gm-border);
+  display: flex; align-items: center; padding: 0 24px; gap: 0;
+}
+.v3-nav-logo {
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif;
+  font-weight: 900; font-size: 1.15rem; color: var(--gm-forest);
+  letter-spacing: -0.02em; text-decoration: none; flex-shrink: 0;
+}
+.v3-nav-tabs {
+  display: flex; align-items: center; gap: 2px; flex: 1;
+  justify-content: center;
+}
+.v3-nav-tab {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 16px; border-radius: 8px; border: none;
+  background: transparent; font-family: 'Inter','Nunito',sans-serif;
+  font-size: 0.875rem; font-weight: 500; color: var(--gm-muted);
+  cursor: pointer; transition: all var(--gm-transition); white-space: nowrap;
+  position: relative;
+}
+.v3-nav-tab:hover { color: var(--gm-text); background: rgba(0,0,0,0.04); }
+.v3-nav-tab.active { color: var(--gm-forest); font-weight: 600; }
+.v3-nav-tab.active::after {
+  content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+  width: 80%; height: 2px; background: var(--gm-forest); border-radius: 999px;
+}
+.v3-nav-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.v3-streak-pill {
+  display: flex; align-items: center; gap: 4px;
+  background: #FFF7ED; border: 1.5px solid var(--gm-orange);
+  border-radius: 999px; padding: 5px 12px;
+  font-size: 0.82rem; font-weight: 700; color: var(--gm-orange);
+}
+.v3-xp-pill {
+  display: flex; align-items: center; gap: 4px;
+  background: #FFFBEB; border: 1.5px solid var(--gm-gold);
+  border-radius: 999px; padding: 5px 12px;
+  font-size: 0.82rem; font-weight: 700; color: #92660A;
+}
+.v3-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--gm-forest); color: #fff;
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif;
+  font-size: 0.8rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; border: none;
+  transition: box-shadow var(--gm-transition);
+}
+.v3-avatar:hover { box-shadow: 0 0 0 3px rgba(33,109,57,0.25); }
+
+/* Mobile: hide desktop tabs, show bottom nav */
+@media (max-width: 767px) {
+  .v3-nav-tabs { display: none; }
+  .v3-xp-pill { display: none; }
+}
+
+/* ── V3 BOTTOM NAV ─────────────────────────────────────────── */
+.v3-bottom-nav {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  height: calc(64px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--gm-white); border-top: 1px solid var(--gm-border);
+  flex-direction: row; justify-content: space-around; align-items: stretch;
+}
+@media (max-width: 767px) { .v3-bottom-nav { display: flex; } }
+.v3-bnav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  border: none; background: none; cursor: pointer;
+  color: var(--gm-muted); transition: color var(--gm-transition);
+  font-family: 'Inter','Nunito',sans-serif;
+}
+.v3-bnav-item.active { color: var(--gm-forest); }
+.v3-bnav-icon { font-size: 1.25rem; line-height: 1; }
+.v3-bnav-label { font-size: 0.68rem; font-weight: 600; }
+/* Extra padding at bottom of content on mobile */
+@media (max-width: 767px) { .screen { padding-bottom: 80px !important; } }
+
+/* ── V3 HOME ───────────────────────────────────────────────── */
+.v3-home-hero {
+  background: var(--gm-dark); border-radius: 0 0 24px 24px;
+  padding: 24px 20px 20px; margin-bottom: 0;
+}
+.v3-home-greeting {
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif;
+  font-size: 1.2rem; font-weight: 700; color: #fff;
+  margin-bottom: 12px;
+}
+.v3-home-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.v3-home-pill {
+  display: flex; align-items: center; gap: 5px;
+  border-radius: 999px; padding: 5px 12px;
+  font-size: 0.8rem; font-weight: 700;
+}
+.v3-home-pill.streak { background: rgba(249,115,22,0.18); color: #FCA86B; border: 1px solid rgba(249,115,22,0.3); }
+.v3-home-pill.xp { background: rgba(245,177,0,0.15); color: #F5D060; border: 1px solid rgba(245,177,0,0.3); }
+.v3-section-label {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--gm-muted); margin: 20px 0 10px;
+}
+.v3-subject-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+@media (max-width: 480px) { .v3-subject-grid { grid-template-columns: 1fr; } }
+.v3-subject-card {
+  background: var(--gm-white); border-radius: var(--gm-r-card);
+  border: 1.5px solid var(--gm-border); padding: 16px 12px;
+  cursor: pointer; transition: all var(--gm-transition);
+  box-shadow: var(--gm-shadow); position: relative; min-height: 120px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.v3-subject-card:hover { transform: translateY(-2px); box-shadow: var(--gm-shadow-lg); }
+.v3-subject-emoji { font-size: 1.8rem; }
+.v3-subject-name {
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif;
+  font-weight: 700; font-size: 0.95rem; color: var(--gm-text);
+}
+.v3-subject-status { font-size: 0.78rem; font-weight: 600; color: var(--gm-muted); }
+.v3-subject-badge {
+  position: absolute; top: 10px; right: 10px;
+  background: #EF4444; color: #fff; border-radius: 50%;
+  width: 26px; height: 26px; font-size: 0.75rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(239,68,68,0.4);
+}
+.v3-feature-grid {
+  display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-top: 4px;
+}
+@media (min-width: 768px) { .v3-feature-grid { grid-template-columns: repeat(4,1fr); } }
+.v3-feature-card {
+  background: var(--gm-white); border-radius: var(--gm-r-card);
+  border: 1.5px solid var(--gm-border); padding: 16px 14px;
+  cursor: pointer; transition: all var(--gm-transition);
+  box-shadow: var(--gm-shadow);
+}
+.v3-feature-card:hover { border-color: var(--gm-accent); transform: translateY(-2px); }
+.v3-feature-icon { font-size: 1.4rem; margin-bottom: 6px; }
+.v3-feature-title {
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif;
+  font-weight: 700; font-size: 0.88rem; color: var(--gm-text); margin-bottom: 2px;
+}
+.v3-feature-desc { font-size: 0.75rem; color: var(--gm-muted); font-weight: 500; }
+.v3-xp-bar-wrap {
+  background: var(--gm-white); border-radius: var(--gm-r-card);
+  border: 1px solid var(--gm-border); padding: 14px 16px;
+  margin-bottom: 4px;
+}
+.v3-xp-bar-top { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.v3-xp-level { font-size: 0.85rem; font-weight: 700; color: var(--gm-text); }
+.v3-xp-pts { font-size: 0.85rem; font-weight: 700; color: var(--gm-forest); }
+.v3-xp-track { height: 8px; background: var(--gm-border); border-radius: 999px; overflow: hidden; }
+.v3-xp-fill { height: 100%; background: linear-gradient(90deg,var(--gm-accent),var(--gm-forest)); border-radius: 999px; transition: width 0.6s cubic-bezier(.34,1.56,.64,1); }
+
+/* ── V3 FLASHCARD ──────────────────────────────────────────── */
+.v3-fc-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; background: var(--gm-white);
+  border-bottom: 1px solid var(--gm-border); position: sticky; top: 60px; z-index: 100;
+}
+.v3-fc-progress-track {
+  flex: 1; height: 6px; background: var(--gm-border);
+  border-radius: 999px; overflow: hidden;
+}
+.v3-fc-progress-fill {
+  height: 100%; background: var(--gm-accent); border-radius: 999px; transition: width 0.4s ease;
+}
+.v3-fc-counter { font-size: 0.82rem; font-weight: 600; color: var(--gm-muted); white-space: nowrap; }
+.v3-card {
+  background: var(--gm-white); border-radius: 16px;
+  border: 1.5px solid var(--gm-border); padding: 22px;
+  box-shadow: var(--gm-shadow); margin-bottom: 12px;
+}
+.v3-card-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 6px; }
+.v3-card-tag {
+  font-size: 0.75rem; font-weight: 700; padding: 3px 10px;
+  border-radius: 999px;
+}
+.v3-card-question {
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif;
+  font-size: 1.05rem; font-weight: 600; color: var(--gm-text);
+  line-height: 1.55; margin-bottom: 14px;
+}
+.v3-reveal-btn {
+  width: 100%; height: 48px; border: 1.5px dashed var(--gm-border);
+  border-radius: var(--gm-r-card); background: var(--gm-off);
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif;
+  font-size: 0.95rem; font-weight: 700; color: var(--gm-muted);
+  cursor: pointer; transition: all var(--gm-transition);
+}
+.v3-reveal-btn:hover { background: rgba(33,109,57,0.06); border-color: var(--gm-accent); color: var(--gm-forest); }
+.v3-answer-sec { border-top: 1px solid var(--gm-border); padding-top: 16px; margin-top: 4px; animation: fadeUp .28s ease; }
+.v3-answer-label {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--gm-forest); margin-bottom: 10px;
+}
+.v3-answer-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.v3-answer-list li {
+  font-size: 0.92rem; font-weight: 500; color: #334155; line-height: 1.65;
+  padding-left: 14px; position: relative; border-left: 2px solid var(--gm-accent);
+}
+.v3-answer-list li strong { color: var(--gm-forest); font-weight: 700; }
+
+/* AI toggle card */
+.v3-ai-toggle-card {
+  background: var(--gm-white); border-radius: var(--gm-r-card);
+  border: 1px solid var(--gm-border); padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: var(--gm-shadow); margin-bottom: 12px;
+}
+.v3-ai-toggle-info {}
+.v3-ai-toggle-name { font-size: 0.88rem; font-weight: 700; color: var(--gm-text); }
+.v3-ai-toggle-sub { font-size: 0.75rem; color: var(--gm-muted); font-weight: 500; margin-top: 2px; }
+.v3-toggle {
+  width: 44px; height: 24px; border-radius: 999px;
+  background: var(--gm-border); position: relative; cursor: pointer;
+  transition: background var(--gm-transition); flex-shrink: 0; border: none;
+}
+.v3-toggle.on { background: var(--gm-accent); }
+.v3-toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 18px; height: 18px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: left var(--gm-transition);
+}
+.v3-toggle.on::after { left: 23px; }
+.v3-self-grade-link { font-size: 0.78rem; color: var(--gm-muted); font-weight: 500; text-align: center; margin-bottom: 8px; }
+.v3-self-grade-link span { text-decoration: underline; cursor: pointer; }
+.v3-textarea {
+  width: 100%; min-height: 120px; padding: 12px 14px;
+  border: 1.5px solid var(--gm-border); border-radius: var(--gm-r-card);
+  font-family: 'Inter','Nunito',sans-serif; font-size: 0.92rem; font-weight: 500;
+  color: var(--gm-text); resize: vertical; outline: none;
+  transition: border-color var(--gm-transition), box-shadow var(--gm-transition);
+}
+.v3-textarea:focus { border-color: var(--gm-accent); box-shadow: 0 0 0 3px rgba(3,168,96,0.12); }
+.v3-submit-btn {
+  width: 100%; height: 48px; border: none; border-radius: var(--gm-r-btn);
+  background: var(--gm-forest); color: #fff;
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif; font-size: 0.92rem; font-weight: 700;
+  cursor: pointer; transition: all var(--gm-transition); display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.v3-submit-btn:hover { background: #185228; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(33,109,57,0.3); }
+.v3-submit-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+.v3-ai-counter { font-size: 0.75rem; color: var(--gm-muted); text-align: right; font-weight: 500; margin-bottom: 6px; }
+
+/* Grading buttons */
+.v3-rating-prompt { text-align: center; font-size: 0.82rem; font-weight: 600; color: var(--gm-muted); margin-bottom: 10px; }
+.v3-rating-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.v3-rate-btn {
+  height: 56px; border-radius: var(--gm-r-card); border: none;
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif;
+  font-weight: 700; font-size: 0.78rem; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px; transition: all var(--gm-transition);
+}
+.v3-rate-btn:hover { transform: translateY(-2px); }
+.v3-rate-btn .em { font-size: 1.2rem; }
+.v3-rate-btn.again  { background: #FEF2F2; color: #DC2626; }
+.v3-rate-btn.hard   { background: #FFFBEB; color: #D97706; }
+.v3-rate-btn.good   { background: #F0FDF4; color: var(--gm-forest); }
+.v3-rate-btn.easy   { background: rgba(3,168,96,0.08); color: var(--gm-accent); }
+
+/* ── V3 TOAST ──────────────────────────────────────────────── */
+.v3-toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(16px);
+  background: var(--gm-text); color: #fff; border-radius: 10px;
+  padding: 11px 20px; font-size: 0.88rem; font-weight: 600;
+  box-shadow: var(--gm-shadow-lg); z-index: 9999;
+  opacity: 0; animation: v3ToastIn 0.25s ease forwards;
+  white-space: nowrap; max-width: calc(100vw - 40px); overflow: hidden; text-overflow: ellipsis;
+  border-left: 3px solid var(--gm-accent);
+}
+.v3-toast.error { border-left-color: #EF4444; }
+.v3-toast.info  { border-left-color: var(--gm-forest); }
+@keyframes v3ToastIn { to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@media (min-width: 768px) {
+  .v3-toast { left: auto; right: 24px; bottom: 24px; transform: translateY(16px); }
+  @keyframes v3ToastIn { to { opacity: 1; transform: translateY(0); } }
+}
+
+/* ── V3 UPGRADE MODAL ──────────────────────────────────────── */
+.v3-upgrade-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+  z-index: 5000; display: flex; align-items: center; justify-content: center;
+  padding: 16px; animation: fadeIn .2s ease;
+}
+.v3-upgrade-card {
+  background: var(--gm-white); border-radius: 20px;
+  box-shadow: var(--gm-shadow-lg); width: 100%; max-width: 520px;
+  max-height: 90vh; overflow-y: auto; padding: 28px;
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.v3-upgrade-billing-toggle {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.v3-billing-opt {
+  padding: 7px 20px; border-radius: 999px; border: 1.5px solid var(--gm-border);
+  background: var(--gm-white); font-size: 0.85rem; font-weight: 600;
+  color: var(--gm-muted); cursor: pointer; transition: all var(--gm-transition);
+}
+.v3-billing-opt.active { border-color: var(--gm-forest); color: var(--gm-forest); background: rgba(33,109,57,0.07); }
+.v3-save-badge {
+  background: var(--gm-orange); color: #fff;
+  border-radius: 999px; padding: 3px 10px;
+  font-size: 0.72rem; font-weight: 700;
+}
+.v3-tier-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 16px; }
+@media (min-width: 540px) { .v3-tier-grid { grid-template-columns: repeat(4,1fr); } }
+.v3-tier-card {
+  border: 1.5px solid var(--gm-border); border-radius: var(--gm-r-card);
+  padding: 14px 10px; position: relative; transition: all var(--gm-transition);
+}
+.v3-tier-card.current { border-color: var(--gm-forest); background: rgba(33,109,57,0.04); }
+.v3-tier-card.popular { border-color: var(--gm-orange); }
+.v3-tier-badge {
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+  background: var(--gm-orange); color: #fff; border-radius: 999px;
+  padding: 2px 10px; font-size: 0.7rem; font-weight: 700; white-space: nowrap;
+}
+.v3-tier-name {
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif;
+  font-size: 0.85rem; font-weight: 800; color: var(--gm-text); margin-bottom: 6px; text-align: center;
+}
+.v3-tier-price {
+  text-align: center; margin-bottom: 10px;
+}
+.v3-tier-price .amount {
+  font-family: 'Plus Jakarta Sans','Nunito',sans-serif;
+  font-size: 1.3rem; font-weight: 800; color: var(--gm-text);
+}
+.v3-tier-price .period { font-size: 0.75rem; color: var(--gm-muted); font-weight: 500; }
+.v3-tier-features { list-style: none; display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.v3-tier-features li { font-size: 0.75rem; color: var(--gm-text); font-weight: 500; display: flex; gap: 5px; }
+.v3-tier-features li::before { content: '✓'; color: var(--gm-accent); font-weight: 700; flex-shrink: 0; }
+.v3-tier-cta {
+  width: 100%; padding: 8px 4px; border: none; border-radius: 8px;
+  font-family: 'Inter','Nunito',sans-serif; font-size: 0.78rem; font-weight: 700;
+  cursor: pointer; transition: all var(--gm-transition); background: var(--gm-forest); color: #fff;
+}
+.v3-tier-cta.current-plan { background: var(--gm-off); color: var(--gm-muted); cursor: default; }
+.v3-tier-cta.trial { background: var(--gm-orange); color: #fff; }
+.v3-tier-cta:hover:not(.current-plan) { filter: brightness(0.9); }
+.v3-upgrade-footer { font-size: 0.75rem; color: var(--gm-muted); text-align: center; line-height: 1.6; }
+
+/* ── V3 SCREEN WRAPPER ─────────────────────────────────────── */
+.v3-screen { padding: 16px; max-width: 860px; margin: 0 auto; }
+@media (min-width: 768px) { .v3-screen { padding: 24px; } }
+
+/* ── LOADING SKELETON ──────────────────────────────────────── */
+.v3-skeleton { background: linear-gradient(90deg,var(--gm-border) 25%,#F8FAFC 50%,var(--gm-border) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+</style>
+
 </head>
 <body>
 
@@ -1971,6 +2530,7 @@ const CONFIG = {
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFldmFmY3ljYmVodmhjcGxwbW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjU4ODksImV4cCI6MjA5NjE0MTg4OX0.Ai9W5Whwu86YaOGI_2sXazDD2E4jW1p0ZyTET1C8-VM',
   VAPID_PUBLIC_KEY: 'BH7MZHLzPeQLlBlgzePbsFLrdDnvU-pEbJh4CpoAsyRy_63vbLauvsnxZltk-sJR7iei8FJu_5FDGhdwHYykjXM',
   STRIPE_PK: 'pk_test_51Tj1Hd0ZgKdgW0uhukdhCtYtkWuilKof5f5tnUKQuETCsRgmhqhm3Oo5bTMpscnoWQurLoDFZRZTcqKgFbg3Flch00hThqLdl5',
+  STRIPE_PUBLISHABLE_KEY: 'pk_test_51ToibMBeyG4M2T8lVF3BhHOaLzlCR5iJBtRZfmMWH36x6QxYIPLTu9mShLbK2vqDciNPH4K2Bq1Iz4ylfJkk01lO00ljCewpnO',
   FREE_CARDS_PER_WEEK: 15,
   FREE_AI_PER_DAY: 2,
   FREE_AI_TUTOR_DAILY: 3,
@@ -14166,13 +14726,12 @@ function generateCode(len=6) {
 }
 
 function showToast(msg, duration=2500) {
-  const existing = document.querySelector('.toast');
-  if (existing) existing.remove();
+  document.querySelectorAll('.v3-toast,.toast').forEach(e => e.remove());
   const t = document.createElement('div');
-  t.className = 'toast';
+  t.className = 'v3-toast' + (msg.toLowerCase().includes('error') || msg.toLowerCase().includes('fail') || msg.toLowerCase().includes('could not') ? ' error' : '');
   t.textContent = msg;
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), duration);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(8px)'; setTimeout(() => t.remove(), 300); }, duration);
 }
 
 function formatTime(secs) {
@@ -14343,144 +14902,119 @@ function renderScreen(name, content) {
 function showAuth() {
   STATE.screen = 'auth';
   const html = `
-<div class="screen" id="screen-auth" style="background:white;min-height:100vh;">
-  <div class="auth-hero">
-    <div class="auth-logo">⚡ GradeMastery</div>
-    <div class="auth-tagline">GCSE Science — made simple</div>
+<div class="v3-auth-wrap" id="screen-auth">
+  <div class="v3-auth-left">
+    <span class="v3-auth-wordmark">GradeMastery</span>
+    <div class="v3-auth-showcase">
+      <div class="v3-chat-bubble user">What's the role of enzymes in digestion?</div>
+      <div class="v3-chat-bubble ai">Great question! Enzymes are biological <strong>catalysts</strong> that speed up digestion by breaking down large molecules. <strong>Pepsin</strong> breaks proteins in the stomach (pH 2), while <strong>lipase</strong> breaks fats in the small intestine. Each enzyme has a specific <strong>active site</strong> — the lock-and-key model. 🔑</div>
+      <div class="v3-chat-bubble user">How would that appear in an exam question?</div>
+    </div>
+    <div class="v3-auth-trust"><span class="v3-auth-stars">★★★★★</span> Trusted by GCSE students across England</div>
   </div>
-
-  <div class="auth-body">
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuthTab('login')">Log In</button>
-      <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
-    </div>
-
-    <!-- LOGIN -->
-    <div id="auth-login">
-      <div class="form-group">
-        <label class="label">Email</label>
-        <input type="email" id="login-email" class="input" placeholder="your@email.com">
-      </div>
-      <div class="form-group">
-        <label class="label">Password</label>
-        <input type="password" id="login-password" class="input" placeholder="••••••••">
-      </div>
-      <button class="btn btn-primary btn-full btn-lg" onclick="doLogin()" style="margin-top:8px;">Log In</button>
-    </div>
-
-    <!-- SIGNUP (hidden initially) -->
-    <div id="auth-signup" class="hidden">
-      <p style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em;">I am a...</p>
-      <div class="role-selector">
-        <button class="role-btn active" id="role-student" onclick="selectRole('student')">
-          <div class="role-btn-icon">🎓</div>
-          <div class="role-btn-label">Student</div>
-        </button>
-        <button class="role-btn" id="role-teacher" onclick="selectRole('teacher')">
-          <div class="role-btn-icon">📚</div>
-          <div class="role-btn-label">Teacher</div>
-        </button>
-        <button class="role-btn" id="role-parent" onclick="selectRole('parent')">
-          <div class="role-btn-icon">👨‍👩‍👧</div>
-          <div class="role-btn-label">Parent</div>
-        </button>
-      </div>
-
-      <div id="signup-student-fields">
-        <div class="form-group">
-          <label class="label">Your Name</label>
-          <input type="text" id="su-name" class="input" placeholder="First name">
+  <div class="v3-auth-right">
+    <div class="v3-auth-form-wrap">
+      <div id="auth-login">
+        <div class="v3-auth-heading">Welcome back</div>
+        <div class="v3-auth-sub">Sign in to continue your revision</div>
+        <div id="v3-login-error" class="v3-auth-error"></div>
+        <div class="v3-form-group">
+          <label class="v3-form-label">Email</label>
+          <input type="email" id="login-email" class="v3-form-input" placeholder="your@email.com" autocomplete="email">
         </div>
-        <div class="form-group">
-          <label class="label">Email</label>
-          <input type="email" id="su-email" class="input" placeholder="your@email.com">
-        </div>
-        <div class="form-group">
-          <label class="label">Password</label>
-          <input type="password" id="su-password" class="input" placeholder="Create a password">
-        </div>
-        <div class="form-group">
-          <label class="label">Year Group</label>
-          <select id="su-year" class="select">
-            <option value="9">Year 9</option>
-            <option value="10">Year 10</option>
-            <option value="11" selected>Year 11</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="label">Exam Board</label>
-          <input type="hidden" id="su-board" value="AQA">
-          <div class="board-grid">
-            <div class="board-opt active" data-bgrp="su-board" data-bval="AQA" onclick="selectBoard('su-board','AQA')">AQA</div>
-            <div class="board-opt coming" data-bgrp="su-board" data-bval="iGCSE">iGCSE<span class="coming-soon-tag">Coming soon</span></div>
-            <div class="board-opt coming" data-bgrp="su-board" data-bval="OCR">OCR<span class="coming-soon-tag">Coming soon</span></div>
-            <div class="board-opt coming" data-bgrp="su-board" data-bval="Edexcel">Edexcel<span class="coming-soon-tag">Coming soon</span></div>
+        <div class="v3-form-group">
+          <div class="v3-form-group-row"><a href="#" class="v3-forgot" onclick="return false;">Forgot password?</a></div>
+          <div class="v3-pw-wrap">
+            <input type="password" id="login-password" class="v3-form-input" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="v3-pw-toggle" onclick="togglePwVisibility('login-password',this)">👁</button>
           </div>
         </div>
-        <div class="form-group">
-          <label class="label">Exam Tier</label>
-          <select id="su-tier" class="select">
-            <option value="combined_foundation">Combined Foundation</option>
-            <option value="combined_higher" selected>Combined Higher</option>
-            <option value="triple_foundation">Triple Foundation</option>
-            <option value="triple_higher">Triple Higher</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="label">Class Code (optional)</label>
-          <input type="text" id="su-classcode" class="input" placeholder="Ask your teacher for this">
-        </div>
-        <div class="form-group">
-          <label class="label">Primary Subject <span style="color:#64748B;font-size:11px;font-weight:700;">(free plan — upgrade for all 3)</span></label>
-          <select id="su-subject" class="select">
-            <option value="Biology">🌿 Biology</option>
-            <option value="Chemistry">⚗️ Chemistry</option>
-            <option value="Physics">⚡ Physics</option>
-          </select>
-        </div>
+        <button class="v3-btn-primary" onclick="doLogin()">Sign In</button>
+        <div class="v3-divider">or</div>
+        <button class="v3-btn-ghost" onclick="demoLogin()">Continue as Demo</button>
+        <div class="v3-auth-switch">Don't have an account? <a onclick="switchAuthTabV3('signup')">Sign up →</a></div>
       </div>
-
-      <div id="signup-teacher-fields" class="hidden">
-        <div class="form-group">
-          <label class="label">Your Name</label>
-          <input type="text" id="su-teacher-name" class="input" placeholder="Full name">
+      <div id="auth-signup" class="hidden">
+        <div class="v3-auth-heading">Create your account</div>
+        <div class="v3-auth-sub">Join thousands of GCSE students</div>
+        <div id="v3-signup-error" class="v3-auth-error"></div>
+        <div class="v3-role-grid">
+          <button class="v3-role-btn active" id="role-student" onclick="selectRole('student')"><div class="v3-role-icon">🎓</div><div class="v3-role-label">Student</div></button>
+          <button class="v3-role-btn" id="role-parent" onclick="selectRole('parent')"><div class="v3-role-icon">👨‍👩‍👧</div><div class="v3-role-label">Parent</div></button>
+          <button class="v3-role-btn" id="role-teacher" onclick="selectRole('teacher')"><div class="v3-role-icon">🏫</div><div class="v3-role-label">Teacher</div></button>
         </div>
-        <div class="form-group">
-          <label class="label">Email</label>
-          <input type="email" id="su-teacher-email" class="input" placeholder="school@email.com">
+        <div id="signup-student-fields">
+          <div class="v3-form-group"><label class="v3-form-label">Your Name</label><input type="text" id="su-name" class="v3-form-input" placeholder="First name" autocomplete="given-name"></div>
+          <div class="v3-form-group"><label class="v3-form-label">Email</label><input type="email" id="su-email" class="v3-form-input" placeholder="your@email.com" autocomplete="email"></div>
+          <div class="v3-form-group">
+            <label class="v3-form-label">Password</label>
+            <div class="v3-pw-wrap"><input type="password" id="su-password" class="v3-form-input" placeholder="Create a strong password" autocomplete="new-password" oninput="updatePwStrength(this.value)"><button type="button" class="v3-pw-toggle" onclick="togglePwVisibility('su-password',this)">👁</button></div>
+            <div class="v3-pw-strength"><div class="v3-pw-strength-bar" id="pw-strength-bar" style="width:0%;background:#EF4444;"></div></div>
+          </div>
+          <div class="v3-form-group">
+            <label class="v3-form-label">Year Group</label>
+            <div class="v3-year-grid">${[7,8,9,10,11].map(y=>`<button class="v3-year-pill${y===11?' active':''}" onclick="selectYearGroup(${y},this)">Year ${y}</button>`).join('')}</div>
+            <input type="hidden" id="su-year" value="11">
+          </div>
+          <div class="v3-form-group"><label class="v3-form-label">Exam Tier</label><select id="su-tier" class="v3-form-input" style="height:48px;"><option value="combined_foundation">Combined Foundation</option><option value="combined_higher" selected>Combined Higher</option><option value="triple_foundation">Triple Foundation</option><option value="triple_higher">Triple Higher</option></select></div>
+          <div class="v3-form-group"><label class="v3-form-label">Primary Subject <span style="color:var(--gm-muted);font-size:11px;">(free plan)</span></label><select id="su-subject" class="v3-form-input" style="height:48px;"><option value="Biology">🌿 Biology</option><option value="Chemistry">⚗️ Chemistry</option><option value="Physics">⚡ Physics</option></select></div>
+          <div class="v3-form-group"><label class="v3-form-label">Class Code <span style="color:var(--gm-muted);font-size:11px;">(optional)</span></label><input type="text" id="su-classcode" class="v3-form-input" placeholder="Ask your teacher"></div>
+          <input type="hidden" id="su-board" value="AQA">
         </div>
-        <div class="form-group">
-          <label class="label">Password</label>
-          <input type="password" id="su-teacher-password" class="input" placeholder="Create a password">
+        <div id="signup-teacher-fields" class="hidden">
+          <div class="v3-form-group"><label class="v3-form-label">Full Name</label><input type="text" id="su-teacher-name" class="v3-form-input" placeholder="Full name"></div>
+          <div class="v3-form-group"><label class="v3-form-label">School Email</label><input type="email" id="su-teacher-email" class="v3-form-input" placeholder="school@email.com"></div>
+          <div class="v3-form-group"><label class="v3-form-label">Password</label><div class="v3-pw-wrap"><input type="password" id="su-teacher-password" class="v3-form-input" placeholder="Create a password"><button type="button" class="v3-pw-toggle" onclick="togglePwVisibility('su-teacher-password',this)">👁</button></div></div>
         </div>
+        <div id="signup-parent-fields" class="hidden">
+          <div class="v3-form-group"><label class="v3-form-label">Your Name</label><input type="text" id="su-parent-name" class="v3-form-input" placeholder="Your name"></div>
+          <div class="v3-form-group"><label class="v3-form-label">Email</label><input type="email" id="su-parent-email" class="v3-form-input" placeholder="your@email.com"></div>
+          <div class="v3-form-group"><label class="v3-form-label">Password</label><div class="v3-pw-wrap"><input type="password" id="su-parent-password" class="v3-form-input" placeholder="Create a password"><button type="button" class="v3-pw-toggle" onclick="togglePwVisibility('su-parent-password',this)">👁</button></div></div>
+          <div class="v3-form-group"><label class="v3-form-label">Child's Parent Code</label><input type="text" id="su-parent-code" class="v3-form-input" placeholder="Ask your child for this code"></div>
+        </div>
+        <button class="v3-btn-orange" onclick="doSignup()" style="margin-top:4px;">Create Account</button>
+        <div class="v3-auth-terms">By creating an account you agree to our <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>.</div>
+        <div class="v3-auth-switch">Already have an account? <a onclick="switchAuthTabV3('login')">Sign in →</a></div>
       </div>
-
-      <div id="signup-parent-fields" class="hidden">
-        <div class="form-group">
-          <label class="label">Your Name</label>
-          <input type="text" id="su-parent-name" class="input" placeholder="Your name">
-        </div>
-        <div class="form-group">
-          <label class="label">Email</label>
-          <input type="email" id="su-parent-email" class="input" placeholder="your@email.com">
-        </div>
-        <div class="form-group">
-          <label class="label">Password</label>
-          <input type="password" id="su-parent-password" class="input" placeholder="Create a password">
-        </div>
-        <div class="form-group">
-          <label class="label">Child's Parent Code</label>
-          <input type="text" id="su-parent-code" class="input" placeholder="Ask your child for this code">
-        </div>
-      </div>
-
-      <button class="btn btn-primary btn-full btn-lg" onclick="doSignup()" style="margin-top:8px;">Create Account</button>
-      <div style="margin-top:14px;text-align:center;font-size:12px;font-weight:700;color:#16A34A;">🎉 Currently in beta — full Premium access free for all early users.</div>
     </div>
   </div>
 </div>`;
   render(html);
   STATE._currentRole = 'student';
+}
+
+function switchAuthTabV3(tab) {
+  const login = document.getElementById('auth-login');
+  const signup = document.getElementById('auth-signup');
+  if (login) login.classList.toggle('hidden', tab !== 'login');
+  if (signup) signup.classList.toggle('hidden', tab !== 'signup');
+}
+
+function togglePwVisibility(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+function updatePwStrength(pw) {
+  const bar = document.getElementById('pw-strength-bar');
+  if (!bar) return;
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const pct = ['0%','33%','60%','80%','100%'][score];
+  const col = ['#EF4444','#EF4444','#F59E0B','#22C55E','#16A34A'][score];
+  bar.style.width = pct; bar.style.background = col;
+}
+
+function selectYearGroup(year, btn) {
+  document.querySelectorAll('.v3-year-pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const inp = document.getElementById('su-year');
+  if (inp) inp.value = year;
 }
 
 function switchAuthTab(tab) {
@@ -14761,9 +15295,9 @@ async function loadUserPaidStatus() {
       STATE.user.trial_ends_at = p.trial_ends_at || null;
       if (p.display_name) STATE.user.display_name = p.display_name;
       if (p.primary_subject) STATE.user.primary_subject = p.primary_subject;
-      STATE.user.bio_cards_per_day  = p.bio_cards_per_day  || 10;
-      STATE.user.chem_cards_per_day = p.chem_cards_per_day || 10;
-      STATE.user.phys_cards_per_day = p.phys_cards_per_day || 10;
+      STATE.user.bio_cards_per_day  = p.bio_cards_per_day  ?? 10;
+      STATE.user.chem_cards_per_day = p.chem_cards_per_day ?? 10;
+      STATE.user.phys_cards_per_day = p.phys_cards_per_day ?? 10;
       STATE.user.bio_frequency  = p.bio_frequency  || 'daily';
       STATE.user.chem_frequency = p.chem_frequency || 'daily';
       STATE.user.phys_frequency = p.phys_frequency || 'daily';
@@ -14882,37 +15416,89 @@ function showAILimitModal(message) {
 }
 
 function showUpgradeModal(reason) {
-  showModal(`
-    <div class="modal-handle"></div>
-    <div style="text-align:center;padding:8px 0 0;">
-      <div style="font-size:44px;margin-bottom:10px;">⚡</div>
-      <div class="modal-title" style="font-size:19px;">GradeMastery Premium</div>
-      <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;margin:10px 0;">${reason}</p>
-      <div style="background:#F8FAFC;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:left;">
-        ${['✅ Unlimited cards — all 3 subjects','✅ Unlimited AI Tutor access','✅ Unlimited AI marking','✅ Deep Dive Sessions','✅ Parent progress portal'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
+  // Remove any existing upgrade overlay
+  document.querySelectorAll('.v3-upgrade-overlay').forEach(e => e.remove());
+  const TIERS = [
+    { id:'basic',   name:'Basic',   monthly:'price_basic_monthly',   annual:'price_basic_annual',   price:{m:'£4.99',a:'£3.49'},  features:['Unlimited flashcards','🤖 AI Grading','Progress tracking'],      cta:'Upgrade', trial:false },
+    { id:'std',     name:'Standard',monthly:'price_standard_monthly',annual:'price_standard_annual', price:{m:'£9.99',a:'£6.99'},  features:['Everything in Basic','✨ Smart Grading AI (40/day)','AI Tutor (10/day)'], cta:'Start Free Trial', trial:true, popular:true },
+    { id:'premium', name:'Premium', monthly:'price_premium_monthly', annual:'price_premium_annual',  price:{m:'£14.99',a:'£10.49'},features:['Everything in Standard','Smart Grading AI unlimited','AI Tutor (20/day)'], cta:'Upgrade', trial:false },
+    { id:'plus',    name:'Plus',    monthly:'price_premium_plus_monthly',annual:'price_premium_plus_annual',price:{m:'£19.99',a:'£13.99'},features:['Everything in Premium','All 3 subjects','Deep Dive Sessions'],cta:'Upgrade',trial:false },
+  ];
+  const el = document.createElement('div');
+  el.className = 'v3-upgrade-overlay';
+  el.innerHTML = `
+    <div class="v3-upgrade-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-family:'Plus Jakarta Sans','Nunito',sans-serif;font-size:1.15rem;font-weight:800;color:var(--gm-text);">⚡ Upgrade GradeMastery</div>
+        <button onclick="this.closest('.v3-upgrade-overlay').remove()" style="background:none;border:none;color:var(--gm-muted);font-size:1.3rem;cursor:pointer;line-height:1;padding:4px;">×</button>
       </div>
-      <button class="btn btn-primary btn-full btn-lg" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);font-size:15px;" onclick="closeModal();startCheckout()">Upgrade — £12.99/month →</button>
-      <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Maybe later</button>
-      <div style="font-size:11px;color:#94A3B8;font-weight:600;margin-top:10px;">Cancel any time · No commitment</div>
-    </div>
-  `);
+      ${reason ? `<p style="font-size:0.88rem;color:var(--gm-muted);margin-bottom:16px;line-height:1.6;">${reason}</p>` : ''}
+      <div class="v3-upgrade-billing-toggle">
+        <button class="v3-billing-opt active" id="v3-bill-m" onclick="v3SwitchBilling('m')">Monthly</button>
+        <button class="v3-billing-opt" id="v3-bill-a" onclick="v3SwitchBilling('a')">Annual <span class="v3-save-badge">Save ~30%</span></button>
+      </div>
+      <div class="v3-tier-grid" id="v3-tier-grid">
+        ${TIERS.map(t => `
+        <div class="v3-tier-card${t.popular?' popular':''}">
+          ${t.popular ? `<div class="v3-tier-badge">Most Popular</div>` : ''}
+          <div class="v3-tier-name">${t.name}</div>
+          <div class="v3-tier-price"><span class="amount" id="v3-price-${t.id}">${t.price.m}</span><span class="period">/mo</span></div>
+          <ul class="v3-tier-features">${t.features.map(f=>`<li>${f}</li>`).join('')}</ul>
+          <button class="v3-tier-cta${t.trial?' trial':''}" onclick="initiateStripeCheckout('${t.monthly}','${t.id}')">${t.cta}</button>
+        </div>`).join('')}
+      </div>
+      <div class="v3-upgrade-footer">Cancel any time &middot; No commitment &middot; Secure payment via Stripe</div>
+    </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
 }
 
-async function startCheckout() {
-  const token = STATE.user?.token;
-  if (!token) { showAuth(); return; }
+window.v3SwitchBilling = function(period) {
+  document.getElementById('v3-bill-m')?.classList.toggle('active', period==='m');
+  document.getElementById('v3-bill-a')?.classList.toggle('active', period==='a');
+  const PRICES = {basic:{m:'£4.99',a:'£3.49'},std:{m:'£9.99',a:'£6.99'},premium:{m:'£14.99',a:'£10.49'},plus:{m:'£19.99',a:'£13.99'}};
+  const PRICE_IDS = {basic:{m:'price_basic_monthly',a:'price_basic_annual'},std:{m:'price_standard_monthly',a:'price_standard_annual'},premium:{m:'price_premium_monthly',a:'price_premium_annual'},plus:{m:'price_premium_plus_monthly',a:'price_premium_plus_annual'}};
+  Object.entries(PRICES).forEach(([id, p]) => {
+    const el = document.getElementById('v3-price-'+id);
+    if (el) el.textContent = p[period];
+  });
+  document.querySelectorAll('.v3-tier-cta').forEach((btn, i) => {
+    const ids = ['basic','std','premium','plus'];
+    if (!btn.classList.contains('current-plan')) {
+      const pid = PRICE_IDS[ids[i]]?.[period];
+      if (pid) btn.onclick = () => initiateStripeCheckout(pid, ids[i]);
+    }
+  });
+};
+
+async function initiateStripeCheckout(priceId, tier) {
+  const user = STATE.user;
+  if (!user?.token) { showAuth(); return; }
+  document.querySelectorAll('.v3-upgrade-overlay').forEach(e => e.remove());
   showToast('Loading checkout...');
   try {
-    const res = await fetch(CONFIG.SUPABASE_URL + '/functions/v1/create-checkout-session', {
+    const res = await fetch('https://sciencespark-worker.sciencespark.workers.dev/create-checkout-session', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        priceId,
+        userId: user.id,
+        email: user.email,
+        tier,
+        successUrl: window.location.origin + '/app.html?upgraded=true&tier=' + tier,
+        cancelUrl:  window.location.origin + '/app.html'
+      })
     });
     const data = await res.json();
     if (data.url) { window.location.href = data.url; }
     else showToast('Could not start checkout — try again');
   } catch(e) {
-    showToast('Could not start checkout — check connection');
+    showToast('Could not start checkout — check your connection');
   }
+}
+
+async function startCheckout() {
+  initiateStripeCheckout('price_standard_monthly', 'standard');
 }
 
 function showUpgradedCelebration() {
@@ -15526,98 +16112,81 @@ function showHome() {
     '<span>' + b.icon + '</span>' + b.label + '</div>'
   ).join('');
 
+  const v3SubjectCards = subjectData.map(s => {
+    const premiumLocked = !user.is_paid && s.subj !== (user.primary_subject || 'Biology');
+    const dailyLocked  = !premiumLocked && isSubjectLockedToday(s.subj);
+    const doneCount    = STATE.todayDone[s.subj]?.size || 0;
+    let badgeHtml = '', statusText = '', cardOnclick = '', cardStyle = '';
+    if (premiumLocked) {
+      badgeHtml   = `<div class="v3-subject-badge" style="background:#7C3AED;">PRO</div>`;
+      statusText  = `<span style="color:#7C3AED;">Upgrade to unlock</span>`;
+      cardOnclick = `showUpgradeModal('Unlock all subjects with GradeMastery Premium')`;
+      cardStyle   = 'opacity:0.7;';
+    } else if (dailyLocked) {
+      statusText  = `<span style="color:var(--gm-accent);">All done today \u2713</span>`;
+      cardOnclick = `startFlashcardsForSubject('${s.subj}')`;
+    } else if (s.due === 0) {
+      statusText  = `<span style="color:var(--gm-muted);">All caught up \u2713</span>`;
+      cardStyle   = 'opacity:0.55;cursor:default;';
+    } else {
+      badgeHtml   = `<div class="v3-subject-badge">${s.due}</div>`;
+      statusText  = `<span style="color:var(--gm-muted);">${s.due} cards left</span>`;
+      cardOnclick = `startFlashcardsForSubject('${s.subj}')`;
+    }
+    return `<div class="v3-subject-card" style="${cardStyle}" onclick="${cardOnclick}">
+      ${badgeHtml}
+      <div class="v3-subject-emoji">${s.emoji}</div>
+      <div class="v3-subject-name">${s.subj}</div>
+      <div class="v3-subject-status">${statusText}</div>
+    </div>`;
+  }).join('');
+
   const html = `
 ${renderNavBar('home')}
-<div class="screen" id="screen-home">
+<div class="v3-screen" id="screen-home">
   <div id="ping-banner-student"></div>
-  <div class="home-content">
-    <div style="text-align:center;padding:16px 20px 12px;">
-      <div style="font-size:24px;font-weight:900;margin-bottom:6px;">${getSessionStartMessage()}</div>
-      <div style="font-size:14px;color:#64748B;font-weight:600;">Welcome back, ${firstName}! Keep building that habit.</div>
+
+  <div class="v3-home-hero">
+    <div class="v3-home-greeting">${getSessionStartMessage()}, ${firstName}! \uD83C\uDF3F</div>
+    <div class="v3-home-pills">
+      ${streak > 0 ? `<div class="v3-home-pill streak">\uD83D\uDD25 ${streak} day streak</div>` : ''}
+      <div class="v3-home-pill xp">\u26A1 ${xp} XP</div>
     </div>
-    <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-        <div style="font-size:13px;font-weight:800;">Level ${level}</div>
-        <div style="font-size:13px;font-weight:800;color:#4F46E5;">${xp} XP</div>
-      </div>
-      <div style="background:#F0F4F8;border-radius:8px;height:10px;overflow:hidden;">
-        <div style="width:${Math.min(100,(xpInLevel/200)*100)}%;background:linear-gradient(90deg,#818CF8,#6366F1);height:100%;border-radius:8px;"></div>
-      </div>
-    </div>
-    ${new Date().getHours() >= 20 && !studiedToday ? `<div style="background:#FFF7ED;border:1.5px solid #F97316;border-radius:14px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;"><span style="font-size:20px;">⚠️</span><div style="flex:1;font-size:13px;font-weight:800;color:#92400E;">Complete your cards today${streak > 0 ? ' to keep your ' + streak + '-day streak' : ''}!</div><button onclick="startFlashcards()" style="background:#F97316;color:white;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Study →</button></div>` : ''}
-    ${STATE.role === 'student' && getPersonalisationProgress() < 43 ? `<div style="background:linear-gradient(135deg,#EEF2FF,#F0FDF4);border:1.5px solid #A5B4FC;border-radius:14px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="showProfile()">
-      <span style="font-size:20px;">\u2728</span>
-      <div style="flex:1;">
-        <div style="font-size:13px;font-weight:800;color:#3730A3;">Help your AI Tutor know you better</div>
-        <div style="font-size:12px;color:#6366F1;font-weight:600;">Answer a few quick questions \u2192</div>
-      </div>
-    </div>` : ''}
-    ${streak > 0 && !studiedToday ? `<div style="background:linear-gradient(135deg,#DC2626,#F97316);border-radius:16px;padding:18px 20px;margin-bottom:12px;animation:streakPulse 1.5s ease-in-out infinite;">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-        <div style="font-size:36px;">🔥</div>
-        <div style="flex:1;">
-          <div style="font-size:17px;font-weight:900;color:white;">Your ${streak}-day streak is at risk!</div>
-          <div style="font-size:13px;color:rgba(255,255,255,0.9);font-weight:700;">Study now to keep it alive!</div>
-        </div>
-      </div>
-      <button onclick="startFlashcards()" style="width:100%;padding:12px;background:white;color:#DC2626;border:none;border-radius:12px;font-weight:900;font-size:15px;cursor:pointer;font-family:inherit;">⚡ Study now — protect your streak!</button>
-    </div>` : `<div style="background:#F97316;border-radius:16px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;">
-      <div style="font-size:36px;">🔥</div>
-      <div style="flex:1;">
-        <div style="font-size:17px;font-weight:900;color:white;">${streak} Day Streak!</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.85);font-weight:600;margin-bottom:10px;">${streak > 0 ? 'Keep it up — come back tomorrow!' : 'Start your streak today!'}</div>
-        <div style="display:flex;gap:6px;">${dayDots}</div>
-      </div>
-    </div>`}
-    <div style="background:white;border-radius:14px;border:1px solid #FED7AA;margin-bottom:12px;overflow:hidden;">
-      <button onclick="const b=document.getElementById('streak-why-body');const a=document.getElementById('streak-why-arrow');if(b){const open=b.style.display!=='none';b.style.display=open?'none':'block';a.textContent=open?'▼':'▲';}" style="width:100%;padding:14px 16px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:inherit;text-align:left;">
-        <span style="font-size:14px;font-weight:800;color:#92400E;">Why your streak matters 🔥</span>
-        <span id="streak-why-arrow" style="font-size:12px;color:#F97316;font-weight:800;">▼</span>
-      </button>
-      <div id="streak-why-body" style="display:none;padding:0 16px 16px;">
-        <div style="font-size:13px;font-weight:700;color:#374151;line-height:1.7;">
-          <div style="margin-bottom:6px;">📚 10 cards per day × 200 school days = <strong>2,000 card reviews</strong></div>
-          <div style="margin-bottom:6px;">✅ That is the entire AQA spec covered multiple times over</div>
-          <div style="margin-bottom:6px;">❌ Miss 50 days = 500 missed reviews = gaps in knowledge = lost marks</div>
-          <div style="margin-top:10px;padding:10px 12px;background:#FFF7ED;border-radius:10px;border-left:3px solid #F97316;font-size:13px;font-weight:800;color:#92400E;">Your streak is not just a number — it is your exam grade building day by day 📈</div>
-        </div>
-      </div>
-    </div>
-    <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">TODAY'S SESSION</div>
-    <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;">
-      <div>
-        <div style="font-size:15px;font-weight:800;">${totalDue} cards due today</div>
-        <div style="font-size:13px;color:#64748B;font-weight:600;">Across your unlocked subjects</div>
-      </div>
-      <div style="background:#EEF2FF;color:#4F46E5;border-radius:20px;padding:4px 14px;font-size:13px;font-weight:800;">${totalDue} due</div>
-    </div>
-    <div style="background:white;border-radius:16px;padding:18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
-      <div style="font-size:14px;font-weight:900;margin-bottom:14px;">📚 Choose your subject</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">${subjectCards}</div>
-      <button class="btn btn-primary btn-full btn-lg" onclick="startFlashcards()" style="background:linear-gradient(135deg,#818CF8,#4F46E5);font-size:15px;padding:16px;">
-        📚 Start ${primary ? primary.subj : 'Today'} — ${primary ? primary.due : totalDue} cards
-      </button>
-    </div>
-    <div onclick="startFullSession()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
-      <div style="font-size:32px;">🌊</div>
-      <div style="flex:1;">
-        <div style="font-size:16px;font-weight:900;color:white;">Deep Dive</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:600;">Read, practise, brain dump & exam — 5–60 min</div>
-      </div>
-      <div style="font-size:20px;color:rgba(255,255,255,0.7);">→</div>
-    </div>
-    <div onclick="showStudyCoachFeed()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
-      <div style="font-size:32px;">⚡</div>
-      <div style="flex:1;">
-        <div style="font-size:16px;font-weight:900;color:white;">StudyCoach</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:600;">Brain science that actually helps you revise</div>
-      </div>
-      <div style="font-size:20px;color:rgba(255,255,255,0.7);">→</div>
-    </div>
-    <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">BADGES</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;padding:4px;width:100%;">${badgeHTML}</div>
-    <div id="leaderboard-section" style="padding-bottom:100px;"></div>
   </div>
+
+  <div class="v3-xp-bar-wrap" style="margin-top:12px;">
+    <div class="v3-xp-bar-top"><span class="v3-xp-level">Level ${level}</span><span class="v3-xp-pts">${xp} XP</span></div>
+    <div class="v3-xp-track"><div class="v3-xp-fill" style="width:${Math.min(100,(xpInLevel/200)*100)}%;"></div></div>
+  </div>
+
+  ${streak > 0 && !studiedToday ? `<div style="background:linear-gradient(135deg,#DC2626,#F97316);border-radius:var(--gm-r-card);padding:16px 18px;margin-top:12px;display:flex;align-items:center;gap:12px;">
+    <div style="font-size:2rem;">\uD83D\uDD25</div>
+    <div style="flex:1;"><div style="font-size:0.95rem;font-weight:700;color:#fff;">Your ${streak}-day streak is at risk!</div><div style="font-size:0.8rem;color:rgba(255,255,255,0.85);font-weight:500;">Study now to keep it alive</div></div>
+    <button onclick="startFlashcards()" style="background:white;color:#DC2626;border:none;border-radius:8px;padding:8px 14px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">Study \u2192</button>
+  </div>` : ''}
+
+  ${new Date().getHours() >= 20 && !studiedToday && !(streak > 0) ? `<div style="background:#FFF7ED;border:1.5px solid var(--gm-orange);border-radius:var(--gm-r-card);padding:12px 16px;margin-top:12px;display:flex;align-items:center;gap:10px;"><span style="font-size:1.2rem;">\u26A0\uFE0F</span><div style="flex:1;font-size:0.85rem;font-weight:700;color:#92400E;">Complete your cards before midnight!</div><button onclick="startFlashcards()" style="background:var(--gm-orange);color:white;border:none;border-radius:8px;padding:7px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">Study \u2192</button></div>` : ''}
+
+  ${STATE.role === 'student' && getPersonalisationProgress() < 43 ? `<div style="background:rgba(33,109,57,0.06);border:1.5px solid rgba(33,109,57,0.2);border-radius:var(--gm-r-card);padding:12px 16px;margin-top:12px;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="showProfile()"><span style="font-size:1.2rem;">\u2728</span><div style="flex:1;"><div style="font-size:0.85rem;font-weight:700;color:var(--gm-forest);">Help your AI Tutor know you better</div><div style="font-size:0.78rem;color:var(--gm-accent);font-weight:500;">Answer a few quick questions \u2192</div></div></div>` : ''}
+
+  <div class="v3-section-label">Today's Cards</div>
+  <div class="v3-subject-grid">${v3SubjectCards}</div>
+  <button onclick="startFlashcards()" style="width:100%;margin-top:12px;height:48px;border:none;border-radius:var(--gm-r-btn);background:var(--gm-forest);color:#fff;font-family:'Plus Jakarta Sans','Nunito',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+    \uD83D\uDCDA Start ${primary ? primary.subj : 'Today'} \u2014 ${primary ? primary.due : totalDue} cards
+  </button>
+
+  <div class="v3-section-label">More ways to study</div>
+  <div class="v3-feature-grid">
+    <div class="v3-feature-card" onclick="startFullSession()"><div class="v3-feature-icon">\uD83C\uDF0A</div><div class="v3-feature-title">Deep Dive</div><div class="v3-feature-desc">Read, practise, brain dump & exam</div></div>
+    <div class="v3-feature-card" onclick="startQuickRevision()"><div class="v3-feature-icon">\u26A1</div><div class="v3-feature-title">Quick Revision</div><div class="v3-feature-desc">Browse all cards at your own pace</div></div>
+    <div class="v3-feature-card" onclick="showStudyHistory()"><div class="v3-feature-icon">\uD83D\uDCCA</div><div class="v3-feature-title">Progress</div><div class="v3-feature-desc">See your mastery by topic</div></div>
+    <div class="v3-feature-card" onclick="showStudyCoachFeed()"><div class="v3-feature-icon">\uD83D\uDCA1</div><div class="v3-feature-title">StudyCoach</div><div class="v3-feature-desc">Brain science revision tips</div></div>
+  </div>
+
+  <div class="v3-section-label">Badges</div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">${badgeHTML}</div>
+
+  <div id="leaderboard-section" style="padding-bottom:24px;"></div>
 </div>`;
 
   render(html);
@@ -15664,21 +16233,25 @@ async function dismissStudentPing(pingId) {
 
 function renderNavBar(active) {
   const streak = STATE.user?.streak || 0;
+  const xp = STATE.user?.xp || 0;
+  const name = STATE.user?.display_name || '';
+  const initials = name.split(' ').map(w => w[0]).filter(Boolean).slice(0,2).join('').toUpperCase() || '?';
   const tabs = [
-    { id: 'home',    label: 'Learn',    fn: 'showHome()' },
-    { id: 'history', label: 'History',  fn: 'showStudyHistory()' },
-    { id: 'ai-chat', label: 'AI Tutor', fn: 'showAIChatTab()' },
-    { id: 'profile', label: 'Profile',  fn: 'showProfile()' },
+    { id: 'home',    label: 'Learn',    icon: '📚', fn: 'showHome()' },
+    { id: 'history', label: 'History',  icon: '📈', fn: 'showStudyHistory()' },
+    { id: 'ai-chat', label: 'AI Tutor', icon: '✨', fn: 'showAIChatTab()' },
+    { id: 'profile', label: 'Profile',  icon: '👤', fn: 'showProfile()' },
   ];
-  return `<nav class="nav">
-    <div class="logo">⚡<span class="logo-text">GradeMastery</span></div>
-    <div class="nav-tabs">
-      ${tabs.map(t => `<button class="nav-tab${active === t.id ? ' active' : ''}" onclick="${t.fn}">${t.label}</button>`).join('')}
+  return `<nav class="v3-nav">
+    <span class="v3-nav-logo">GradeMastery</span>
+    <div class="v3-nav-tabs">
+      ${tabs.map(t => `<button class="v3-nav-tab${active === t.id ? ' active' : ''}" onclick="${t.fn}">${t.label}</button>`).join('')}
     </div>
-    <div class="nav-right">
-      ${streak > 0 ? `<div class="streak-pill"><span class="fire">🔥</span><span>${streak}</span></div>` : ''}
+    <div class="v3-nav-right">
+      ${streak > 0 ? `<div class="v3-streak-pill"><span class="fire">🔥</span><span>${streak}</span></div>` : ''}
+      ${xp > 0 ? `<div class="v3-xp-pill">⚡ ${xp} XP</div>` : ''}
       <div class="profile-wrap">
-        <button class="profile-btn" onclick="toggleProfileDropdown(event)">👤</button>
+        <button class="v3-avatar" onclick="toggleProfileDropdown(event)" title="Account">${initials}</button>
         <div class="profile-dropdown" id="profile-dropdown">
           <button class="pd-item" onclick="closeProfileDropdown();showProfile()">👤 My Profile</button>
           <div class="pd-sep"></div>
@@ -15688,6 +16261,9 @@ function renderNavBar(active) {
         </div>
       </div>
     </div>
+  </nav>
+  <nav class="v3-bottom-nav" aria-label="Mobile navigation">
+    ${tabs.map(t => `<button class="v3-bnav-item${active === t.id ? ' active' : ''}" onclick="${t.fn}"><span class="v3-bnav-icon">${t.icon}</span><span class="v3-bnav-label">${t.label}</span></button>`).join('')}
   </nav>`;
 }
 
@@ -15768,69 +16344,77 @@ function renderFlashcard() {
   const tierLabel = (card.tier === 'H') ? 'Higher' : 'Foundation';
   const tierClass = (card.tier === 'H') ? 'h' : 'f';
 
+  const _v3AiToggleLabel = !aiMode ? 'Self Grade' : aiLimitReached ? '🤖 AI Grading' : '✨ Smart Grading AI';
+  const _v3AiSubmitLabel = !aiMode ? '' : aiLimitReached ? '🤖 AI Grading — Submit Answer' : '✨ Smart Grading AI — Submit Answer';
+  const _v3HasLimit = getAIMarkingLimit() > 0;
+
   const html = `
-<div class="screen" id="screen-flashcards">
-  <div class="session-header">
-    <button class="btn btn-ghost btn-sm" onclick="showHome()">← Home</button>
-    <div class="progress-dots">${dots}</div>
-    ${STATE.sessionPhase === 'quickRevision'
-      ? `<div style="display:flex;align-items:center;gap:6px;">
-           <button onclick="qrPrev()" ${current === 0 ? 'disabled' : ''} style="width:28px;height:28px;border-radius:50%;border:none;background:${current===0?'#E2E8F0':'#6366F1'};color:${current===0?'#94A3B8':'white'};font-size:16px;cursor:${current===0?'default':'pointer'};display:flex;align-items:center;justify-content:center;font-weight:900;padding:0;">‹</button>
-           <span style="font-size:13px;font-weight:700;color:var(--text-secondary);">${current+1}/${total}</span>
-           <button onclick="qrNext()" ${current>=total-1?'disabled':''} style="width:28px;height:28px;border-radius:50%;border:none;background:${current>=total-1?'#E2E8F0':'#6366F1'};color:${current>=total-1?'#94A3B8':'white'};font-size:16px;cursor:${current>=total-1?'default':'pointer'};display:flex;align-items:center;justify-content:center;font-weight:900;padding:0;">›</button>
-         </div>`
-      : `<div style="font-size:13px;font-weight:700;color:var(--text-secondary);">${current+1}/${total}</div>`
-    }
+<div class="v3-screen" id="screen-flashcards" style="padding-top:0;">
+  <!-- Sticky progress header -->
+  <div class="v3-fc-header">
+    <button onclick="showHome()" style="background:none;border:none;cursor:pointer;color:var(--gm-muted);font-size:1.1rem;padding:4px;line-height:1;" title="Back">←</button>
+    <div class="v3-fc-progress-track">
+      <div class="v3-fc-progress-fill" style="width:${total > 0 ? Math.round((current/total)*100) : 0}%;"></div>
+    </div>
+    <span class="v3-fc-counter">${current+1} / ${total}</span>
+    ${STATE.sessionPhase === 'quickRevision' ? `<button onclick="qrPrev()" ${current===0?'disabled':''} style="width:28px;height:28px;border-radius:50%;border:none;background:${current===0?'var(--gm-border)':'var(--gm-forest)'};color:${current===0?'var(--gm-muted)':'#fff'};font-size:1rem;cursor:${current===0?'default':'pointer'};font-weight:900;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;">\u2039</button><button onclick="qrNext()" ${current>=total-1?'disabled':''} style="width:28px;height:28px;border-radius:50%;border:none;background:${current>=total-1?'var(--gm-border)':'var(--gm-forest)'};color:${current>=total-1?'var(--gm-muted)':'#fff'};font-size:1rem;cursor:${current>=total-1?'default':'pointer'};font-weight:900;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;">\u203A</button>` : ''}
   </div>
 
-  <div class="flashcard-area">
-<!-- AI Toggle -->
-    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
-        <div>
-          <div style="font-size:13px;font-weight:800;">${!aiMode ? '🙋 Self Grade' : aiLimitReached ? 'AI Grading ✨' : '✨ Smart Grading AI'}</div>
-          <div style="font-size:11px;color:#64748B;font-weight:600;">${!aiMode ? 'Reveal and rate yourself honestly' : aiLimitReached ? '' : 'Write your answer — assessed against AQA specification criteria'}</div>
-        </div>
-        <div onclick="toggleAIMode()" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:${aiMode ? '#22C55E' : '#E2E8F0'};position:relative;transition:background 0.2s;flex-shrink:0;">
-          <div style="position:absolute;top:3px;${aiMode ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>
-        </div>
+  <!-- AI mode toggle -->
+  <div style="padding:12px 16px 0;">
+    <div class="v3-ai-toggle-card">
+      <div class="v3-ai-toggle-info">
+        <div class="v3-ai-toggle-name">${_v3AiToggleLabel}</div>
+        <div class="v3-ai-toggle-sub">${!aiMode ? 'Reveal and grade yourself honestly' : aiLimitReached ? '\uD83E\uDD16 Smart matching — no AI calls used' : 'Write your answer — assessed against AQA criteria'}</div>
       </div>
-      ${aiMode ? `<div style="text-align:center;"><span onclick="toggleAIMode()" style="font-size:11px;color:#94A3B8;font-weight:600;cursor:pointer;text-decoration:underline;">Grade yourself instead</span></div>` : ''}
+      <button class="v3-toggle ${aiMode ? 'on' : ''}" onclick="toggleAIMode()" aria-label="Toggle AI mode"></button>
+    </div>
+    ${aiMode ? `<div class="v3-self-grade-link"><span onclick="toggleAIMode()">Grade yourself instead</span></div>` : ''}
+  </div>
+
+  <!-- Card -->
+  <div style="padding:0 16px 12px;">
+    <div class="v3-card">
+      <div class="v3-card-meta">
+        <span class="v3-card-tag" style="color:${subColor};background:${subColor}22;">${card.subject} · ${card.topic_name || card.topic}</span>
+        <span class="v3-card-tag" style="${card.tier === 'H' ? 'background:#FEF3C7;color:#92400E;' : 'background:#F0FDF4;color:#15803D;'}">${card.tier === 'H' ? 'Higher' : 'Foundation'}</span>
+      </div>
+      <div class="v3-card-question">${questionHTML}</div>
+      ${_getSimConfig(card.topic_name || card.topic || '') ? `<button onclick="showSimulationModal('${(card.topic_name||card.topic||'').replace(/'/g,"\'")}'')" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#6366f1;background:none;border:1.5px solid #c7d2fe;border-radius:8px;padding:4px 10px;cursor:pointer;font-family:inherit;margin-bottom:10px;">\u25B6 Watch it</button>` : ''}
     </div>
 
-        <div class="card" id="question-card" style="padding:20px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <span style="font-size:11px;font-weight:800;color:${subColor};background:${subColor}22;padding:3px 10px;border-radius:20px;">${card.subject} · ${card.topic_name || card.topic}</span>
-        <span class="c-tier ${tierClass}">${tierLabel}</span>
-      </div>
-      <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
-      ${hintHTML}
-      ${_getSimConfig(card.topic_name || card.topic || '') ? `<button onclick="showSimulationModal('${(card.topic_name || card.topic || '').replace(/'/g,"\\'")}'')" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#6366f1;background:none;border:1.5px solid #c7d2fe;border-radius:8px;padding:4px 10px;cursor:pointer;font-family:inherit;margin-top:2px;">▶ Watch it</button>` : ''}
+    <!-- Input or reveal -->
+    ${aiMode ? `<div id="ai-input-area">
+      <textarea id="student-answer" class="v3-textarea" placeholder="Write your answer from memory — assessed against AQA specification criteria"></textarea>
+      ${!aiLimitReached && _v3HasLimit ? `<div class="v3-ai-counter">${_v3AiToggleLabel} \u2014 ${getAIMarkingDailyCount()}/${getAIMarkingLimit()} uses today</div>` : ''}
+      <button class="v3-submit-btn" onclick="submitFlashcardAI()">${_v3AiSubmitLabel}</button>
     </div>
-    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${!aiLimitReached && getAIMarkingLimit() > 0 ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${getAIMarkingLimit()} used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for grading</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
+    <div id="ai-result" style="display:none;"></div>` : `<button class="v3-reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">Tap to reveal answer</button>`}
 
+    <!-- Answer section (hidden until revealed) -->
     <div id="answer-sec" style="display:none;">
-      <div class="card" style="padding:16px;">
-        <div class="ans-lbl">✅ Answer</div>
-        <ul class="ans-list">${answerBullets}</ul>
+      <div class="v3-card" style="margin-top:0;">
+        <div class="v3-answer-label">✅ Answer</div>
+        <ul class="v3-answer-list">${answerBullets}</ul>
       </div>
     </div>
 
-    <div id="rating-wrap" style="display:none;">
-      <div class="rating-prompt">How did you find that?</div>
-      <div class="rating-grid">
-        <button class="rate-btn again" onclick="selfGrade('${card.id}',0)"><span class="em">😵</span>Again</button>
-        <button class="rate-btn hard" onclick="selfGrade('${card.id}',1)"><span class="em">😰</span>Hard</button>
-        <button class="rate-btn good" onclick="selfGrade('${card.id}',2)"><span class="em">🙂</span>Good</button>
-        <button class="rate-btn easy" onclick="selfGrade('${card.id}',3)"><span class="em">🌟</span>Easy!</button>
+    <!-- Rating -->
+    <div id="rating-wrap" style="display:none;margin-top:8px;">
+      <div class="v3-rating-prompt">How did you find that?</div>
+      <div class="v3-rating-grid">
+        <button class="v3-rate-btn again" onclick="selfGrade('${card.id}',0)"><span class="em">😵</span>Again</button>
+        <button class="v3-rate-btn hard" onclick="selfGrade('${card.id}',1)"><span class="em">😰</span>Hard</button>
+        <button class="v3-rate-btn good" onclick="selfGrade('${card.id}',2)"><span class="em">😊</span>Good</button>
+        <button class="v3-rate-btn easy" onclick="selfGrade('${card.id}',3)"><span class="em">😄</span>Easy!</button>
       </div>
 
       ${hasExamQ ? `
-      <button class="exam-reveal-btn" id="exam-reveal-btn" onclick="toggleExamCard()">
-        <span>🎯</span><span style="flex:1;">See the exam question this unlocks</span><span id="exam-chev">▼</span>
+      <button class="exam-reveal-btn" id="exam-reveal-btn" onclick="toggleExamCard()" style="margin-top:12px;">
+        <span>\uD83C\uDFAF</span><span style="flex:1;">See the exam question this unlocks</span><span id="exam-chev">\u25BC</span>
       </button>
       <div class="exam-card" id="exam-card">
-        <div class="exam-wow">💡 WOW moment</div>
+        <div class="exam-wow">\uD83D\uDCA1 WOW moment</div>
         <div style="font-size:12px;font-weight:800;color:#4F46E5;margin-bottom:8px;">That fact unlocks this exam question</div>
         <div class="exam-q-box">${examQText}</div>
         <span class="exam-marks-pill">${examMarks} mark${examMarks != 1 ? 's' : ''}</span>
@@ -18019,7 +18603,7 @@ async function showProgressTracker() {
   allCards.forEach(card => {
     const s = card.subject;
     if (!hier[s]) return;
-    const t = card.topic;
+    const t = card.topic.toUpperCase();
     if (!hier[s].topics[t]) {
       hier[s].topics[t] = { name: card.topic_name || t, cards: [], mem: 0, mas: 0 };
     }
@@ -19348,13 +19932,12 @@ function generateCode(len=6) {
 }
 
 function showToast(msg, duration=2500) {
-  const existing = document.querySelector('.toast');
-  if (existing) existing.remove();
+  document.querySelectorAll('.v3-toast,.toast').forEach(e => e.remove());
   const t = document.createElement('div');
-  t.className = 'toast';
+  t.className = 'v3-toast' + (msg.toLowerCase().includes('error') || msg.toLowerCase().includes('fail') || msg.toLowerCase().includes('could not') ? ' error' : '');
   t.textContent = msg;
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), duration);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(8px)'; setTimeout(() => t.remove(), 300); }, duration);
 }
 
 function formatTime(secs) {
@@ -19520,144 +20103,119 @@ function renderScreen(name, content) {
 function showAuth() {
   STATE.screen = 'auth';
   const html = `
-<div class="screen" id="screen-auth" style="background:white;min-height:100vh;">
-  <div class="auth-hero">
-    <div class="auth-logo">⚡ GradeMastery</div>
-    <div class="auth-tagline">GCSE Science — made simple</div>
+<div class="v3-auth-wrap" id="screen-auth">
+  <div class="v3-auth-left">
+    <span class="v3-auth-wordmark">GradeMastery</span>
+    <div class="v3-auth-showcase">
+      <div class="v3-chat-bubble user">What's the role of enzymes in digestion?</div>
+      <div class="v3-chat-bubble ai">Great question! Enzymes are biological <strong>catalysts</strong> that speed up digestion by breaking down large molecules. <strong>Pepsin</strong> breaks proteins in the stomach (pH 2), while <strong>lipase</strong> breaks fats in the small intestine. Each enzyme has a specific <strong>active site</strong> — the lock-and-key model. 🔑</div>
+      <div class="v3-chat-bubble user">How would that appear in an exam question?</div>
+    </div>
+    <div class="v3-auth-trust"><span class="v3-auth-stars">★★★★★</span> Trusted by GCSE students across England</div>
   </div>
-
-  <div class="auth-body">
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuthTab('login')">Log In</button>
-      <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
-    </div>
-
-    <!-- LOGIN -->
-    <div id="auth-login">
-      <div class="form-group">
-        <label class="label">Email</label>
-        <input type="email" id="login-email" class="input" placeholder="your@email.com">
-      </div>
-      <div class="form-group">
-        <label class="label">Password</label>
-        <input type="password" id="login-password" class="input" placeholder="••••••••">
-      </div>
-      <button class="btn btn-primary btn-full btn-lg" onclick="doLogin()" style="margin-top:8px;">Log In</button>
-    </div>
-
-    <!-- SIGNUP (hidden initially) -->
-    <div id="auth-signup" class="hidden">
-      <p style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em;">I am a...</p>
-      <div class="role-selector">
-        <button class="role-btn active" id="role-student" onclick="selectRole('student')">
-          <div class="role-btn-icon">🎓</div>
-          <div class="role-btn-label">Student</div>
-        </button>
-        <button class="role-btn" id="role-teacher" onclick="selectRole('teacher')">
-          <div class="role-btn-icon">📚</div>
-          <div class="role-btn-label">Teacher</div>
-        </button>
-        <button class="role-btn" id="role-parent" onclick="selectRole('parent')">
-          <div class="role-btn-icon">👨‍👩‍👧</div>
-          <div class="role-btn-label">Parent</div>
-        </button>
-      </div>
-
-      <div id="signup-student-fields">
-        <div class="form-group">
-          <label class="label">Your Name</label>
-          <input type="text" id="su-name" class="input" placeholder="First name">
+  <div class="v3-auth-right">
+    <div class="v3-auth-form-wrap">
+      <div id="auth-login">
+        <div class="v3-auth-heading">Welcome back</div>
+        <div class="v3-auth-sub">Sign in to continue your revision</div>
+        <div id="v3-login-error" class="v3-auth-error"></div>
+        <div class="v3-form-group">
+          <label class="v3-form-label">Email</label>
+          <input type="email" id="login-email" class="v3-form-input" placeholder="your@email.com" autocomplete="email">
         </div>
-        <div class="form-group">
-          <label class="label">Email</label>
-          <input type="email" id="su-email" class="input" placeholder="your@email.com">
-        </div>
-        <div class="form-group">
-          <label class="label">Password</label>
-          <input type="password" id="su-password" class="input" placeholder="Create a password">
-        </div>
-        <div class="form-group">
-          <label class="label">Year Group</label>
-          <select id="su-year" class="select">
-            <option value="9">Year 9</option>
-            <option value="10">Year 10</option>
-            <option value="11" selected>Year 11</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="label">Exam Board</label>
-          <input type="hidden" id="su-board" value="AQA">
-          <div class="board-grid">
-            <div class="board-opt active" data-bgrp="su-board" data-bval="AQA" onclick="selectBoard('su-board','AQA')">AQA</div>
-            <div class="board-opt coming" data-bgrp="su-board" data-bval="iGCSE">iGCSE<span class="coming-soon-tag">Coming soon</span></div>
-            <div class="board-opt coming" data-bgrp="su-board" data-bval="OCR">OCR<span class="coming-soon-tag">Coming soon</span></div>
-            <div class="board-opt coming" data-bgrp="su-board" data-bval="Edexcel">Edexcel<span class="coming-soon-tag">Coming soon</span></div>
+        <div class="v3-form-group">
+          <div class="v3-form-group-row"><a href="#" class="v3-forgot" onclick="return false;">Forgot password?</a></div>
+          <div class="v3-pw-wrap">
+            <input type="password" id="login-password" class="v3-form-input" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="v3-pw-toggle" onclick="togglePwVisibility('login-password',this)">👁</button>
           </div>
         </div>
-        <div class="form-group">
-          <label class="label">Exam Tier</label>
-          <select id="su-tier" class="select">
-            <option value="combined_foundation">Combined Foundation</option>
-            <option value="combined_higher" selected>Combined Higher</option>
-            <option value="triple_foundation">Triple Foundation</option>
-            <option value="triple_higher">Triple Higher</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="label">Class Code (optional)</label>
-          <input type="text" id="su-classcode" class="input" placeholder="Ask your teacher for this">
-        </div>
-        <div class="form-group">
-          <label class="label">Primary Subject <span style="color:#64748B;font-size:11px;font-weight:700;">(free plan — upgrade for all 3)</span></label>
-          <select id="su-subject" class="select">
-            <option value="Biology">🌿 Biology</option>
-            <option value="Chemistry">⚗️ Chemistry</option>
-            <option value="Physics">⚡ Physics</option>
-          </select>
-        </div>
+        <button class="v3-btn-primary" onclick="doLogin()">Sign In</button>
+        <div class="v3-divider">or</div>
+        <button class="v3-btn-ghost" onclick="demoLogin()">Continue as Demo</button>
+        <div class="v3-auth-switch">Don't have an account? <a onclick="switchAuthTabV3('signup')">Sign up →</a></div>
       </div>
-
-      <div id="signup-teacher-fields" class="hidden">
-        <div class="form-group">
-          <label class="label">Your Name</label>
-          <input type="text" id="su-teacher-name" class="input" placeholder="Full name">
+      <div id="auth-signup" class="hidden">
+        <div class="v3-auth-heading">Create your account</div>
+        <div class="v3-auth-sub">Join thousands of GCSE students</div>
+        <div id="v3-signup-error" class="v3-auth-error"></div>
+        <div class="v3-role-grid">
+          <button class="v3-role-btn active" id="role-student" onclick="selectRole('student')"><div class="v3-role-icon">🎓</div><div class="v3-role-label">Student</div></button>
+          <button class="v3-role-btn" id="role-parent" onclick="selectRole('parent')"><div class="v3-role-icon">👨‍👩‍👧</div><div class="v3-role-label">Parent</div></button>
+          <button class="v3-role-btn" id="role-teacher" onclick="selectRole('teacher')"><div class="v3-role-icon">🏫</div><div class="v3-role-label">Teacher</div></button>
         </div>
-        <div class="form-group">
-          <label class="label">Email</label>
-          <input type="email" id="su-teacher-email" class="input" placeholder="school@email.com">
+        <div id="signup-student-fields">
+          <div class="v3-form-group"><label class="v3-form-label">Your Name</label><input type="text" id="su-name" class="v3-form-input" placeholder="First name" autocomplete="given-name"></div>
+          <div class="v3-form-group"><label class="v3-form-label">Email</label><input type="email" id="su-email" class="v3-form-input" placeholder="your@email.com" autocomplete="email"></div>
+          <div class="v3-form-group">
+            <label class="v3-form-label">Password</label>
+            <div class="v3-pw-wrap"><input type="password" id="su-password" class="v3-form-input" placeholder="Create a strong password" autocomplete="new-password" oninput="updatePwStrength(this.value)"><button type="button" class="v3-pw-toggle" onclick="togglePwVisibility('su-password',this)">👁</button></div>
+            <div class="v3-pw-strength"><div class="v3-pw-strength-bar" id="pw-strength-bar" style="width:0%;background:#EF4444;"></div></div>
+          </div>
+          <div class="v3-form-group">
+            <label class="v3-form-label">Year Group</label>
+            <div class="v3-year-grid">${[7,8,9,10,11].map(y=>`<button class="v3-year-pill${y===11?' active':''}" onclick="selectYearGroup(${y},this)">Year ${y}</button>`).join('')}</div>
+            <input type="hidden" id="su-year" value="11">
+          </div>
+          <div class="v3-form-group"><label class="v3-form-label">Exam Tier</label><select id="su-tier" class="v3-form-input" style="height:48px;"><option value="combined_foundation">Combined Foundation</option><option value="combined_higher" selected>Combined Higher</option><option value="triple_foundation">Triple Foundation</option><option value="triple_higher">Triple Higher</option></select></div>
+          <div class="v3-form-group"><label class="v3-form-label">Primary Subject <span style="color:var(--gm-muted);font-size:11px;">(free plan)</span></label><select id="su-subject" class="v3-form-input" style="height:48px;"><option value="Biology">🌿 Biology</option><option value="Chemistry">⚗️ Chemistry</option><option value="Physics">⚡ Physics</option></select></div>
+          <div class="v3-form-group"><label class="v3-form-label">Class Code <span style="color:var(--gm-muted);font-size:11px;">(optional)</span></label><input type="text" id="su-classcode" class="v3-form-input" placeholder="Ask your teacher"></div>
+          <input type="hidden" id="su-board" value="AQA">
         </div>
-        <div class="form-group">
-          <label class="label">Password</label>
-          <input type="password" id="su-teacher-password" class="input" placeholder="Create a password">
+        <div id="signup-teacher-fields" class="hidden">
+          <div class="v3-form-group"><label class="v3-form-label">Full Name</label><input type="text" id="su-teacher-name" class="v3-form-input" placeholder="Full name"></div>
+          <div class="v3-form-group"><label class="v3-form-label">School Email</label><input type="email" id="su-teacher-email" class="v3-form-input" placeholder="school@email.com"></div>
+          <div class="v3-form-group"><label class="v3-form-label">Password</label><div class="v3-pw-wrap"><input type="password" id="su-teacher-password" class="v3-form-input" placeholder="Create a password"><button type="button" class="v3-pw-toggle" onclick="togglePwVisibility('su-teacher-password',this)">👁</button></div></div>
         </div>
+        <div id="signup-parent-fields" class="hidden">
+          <div class="v3-form-group"><label class="v3-form-label">Your Name</label><input type="text" id="su-parent-name" class="v3-form-input" placeholder="Your name"></div>
+          <div class="v3-form-group"><label class="v3-form-label">Email</label><input type="email" id="su-parent-email" class="v3-form-input" placeholder="your@email.com"></div>
+          <div class="v3-form-group"><label class="v3-form-label">Password</label><div class="v3-pw-wrap"><input type="password" id="su-parent-password" class="v3-form-input" placeholder="Create a password"><button type="button" class="v3-pw-toggle" onclick="togglePwVisibility('su-parent-password',this)">👁</button></div></div>
+          <div class="v3-form-group"><label class="v3-form-label">Child's Parent Code</label><input type="text" id="su-parent-code" class="v3-form-input" placeholder="Ask your child for this code"></div>
+        </div>
+        <button class="v3-btn-orange" onclick="doSignup()" style="margin-top:4px;">Create Account</button>
+        <div class="v3-auth-terms">By creating an account you agree to our <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>.</div>
+        <div class="v3-auth-switch">Already have an account? <a onclick="switchAuthTabV3('login')">Sign in →</a></div>
       </div>
-
-      <div id="signup-parent-fields" class="hidden">
-        <div class="form-group">
-          <label class="label">Your Name</label>
-          <input type="text" id="su-parent-name" class="input" placeholder="Your name">
-        </div>
-        <div class="form-group">
-          <label class="label">Email</label>
-          <input type="email" id="su-parent-email" class="input" placeholder="your@email.com">
-        </div>
-        <div class="form-group">
-          <label class="label">Password</label>
-          <input type="password" id="su-parent-password" class="input" placeholder="Create a password">
-        </div>
-        <div class="form-group">
-          <label class="label">Child's Parent Code</label>
-          <input type="text" id="su-parent-code" class="input" placeholder="Ask your child for this code">
-        </div>
-      </div>
-
-      <button class="btn btn-primary btn-full btn-lg" onclick="doSignup()" style="margin-top:8px;">Create Account</button>
-      <div style="margin-top:14px;text-align:center;font-size:12px;font-weight:700;color:#16A34A;">🎉 Currently in beta — full Premium access free for all early users.</div>
     </div>
   </div>
 </div>`;
   render(html);
   STATE._currentRole = 'student';
+}
+
+function switchAuthTabV3(tab) {
+  const login = document.getElementById('auth-login');
+  const signup = document.getElementById('auth-signup');
+  if (login) login.classList.toggle('hidden', tab !== 'login');
+  if (signup) signup.classList.toggle('hidden', tab !== 'signup');
+}
+
+function togglePwVisibility(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+function updatePwStrength(pw) {
+  const bar = document.getElementById('pw-strength-bar');
+  if (!bar) return;
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const pct = ['0%','33%','60%','80%','100%'][score];
+  const col = ['#EF4444','#EF4444','#F59E0B','#22C55E','#16A34A'][score];
+  bar.style.width = pct; bar.style.background = col;
+}
+
+function selectYearGroup(year, btn) {
+  document.querySelectorAll('.v3-year-pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const inp = document.getElementById('su-year');
+  if (inp) inp.value = year;
 }
 
 function switchAuthTab(tab) {
@@ -19923,9 +20481,9 @@ async function loadUserPaidStatus() {
       STATE.user.trial_ends_at = p.trial_ends_at || null;
       if (p.display_name) STATE.user.display_name = p.display_name;
       if (p.primary_subject) STATE.user.primary_subject = p.primary_subject;
-      STATE.user.bio_cards_per_day  = p.bio_cards_per_day  || 10;
-      STATE.user.chem_cards_per_day = p.chem_cards_per_day || 10;
-      STATE.user.phys_cards_per_day = p.phys_cards_per_day || 10;
+      STATE.user.bio_cards_per_day  = p.bio_cards_per_day  ?? 10;
+      STATE.user.chem_cards_per_day = p.chem_cards_per_day ?? 10;
+      STATE.user.phys_cards_per_day = p.phys_cards_per_day ?? 10;
       STATE.user.bio_frequency  = p.bio_frequency  || 'daily';
       STATE.user.chem_frequency = p.chem_frequency || 'daily';
       STATE.user.phys_frequency = p.phys_frequency || 'daily';
@@ -20044,37 +20602,89 @@ function showAILimitModal(message) {
 }
 
 function showUpgradeModal(reason) {
-  showModal(`
-    <div class="modal-handle"></div>
-    <div style="text-align:center;padding:8px 0 0;">
-      <div style="font-size:44px;margin-bottom:10px;">⚡</div>
-      <div class="modal-title" style="font-size:19px;">GradeMastery Premium</div>
-      <p style="color:#64748B;font-weight:600;font-size:14px;line-height:1.6;margin:10px 0;">${reason}</p>
-      <div style="background:#F8FAFC;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:left;">
-        ${['✅ Unlimited cards — all 3 subjects','✅ Unlimited AI Tutor access','✅ Unlimited AI marking','✅ Deep Dive Sessions','✅ Parent progress portal'].map(t=>`<div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:7px;">${t}</div>`).join('')}
+  // Remove any existing upgrade overlay
+  document.querySelectorAll('.v3-upgrade-overlay').forEach(e => e.remove());
+  const TIERS = [
+    { id:'basic',   name:'Basic',   monthly:'price_basic_monthly',   annual:'price_basic_annual',   price:{m:'£4.99',a:'£3.49'},  features:['Unlimited flashcards','🤖 AI Grading','Progress tracking'],      cta:'Upgrade', trial:false },
+    { id:'std',     name:'Standard',monthly:'price_standard_monthly',annual:'price_standard_annual', price:{m:'£9.99',a:'£6.99'},  features:['Everything in Basic','✨ Smart Grading AI (40/day)','AI Tutor (10/day)'], cta:'Start Free Trial', trial:true, popular:true },
+    { id:'premium', name:'Premium', monthly:'price_premium_monthly', annual:'price_premium_annual',  price:{m:'£14.99',a:'£10.49'},features:['Everything in Standard','Smart Grading AI unlimited','AI Tutor (20/day)'], cta:'Upgrade', trial:false },
+    { id:'plus',    name:'Plus',    monthly:'price_premium_plus_monthly',annual:'price_premium_plus_annual',price:{m:'£19.99',a:'£13.99'},features:['Everything in Premium','All 3 subjects','Deep Dive Sessions'],cta:'Upgrade',trial:false },
+  ];
+  const el = document.createElement('div');
+  el.className = 'v3-upgrade-overlay';
+  el.innerHTML = `
+    <div class="v3-upgrade-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-family:'Plus Jakarta Sans','Nunito',sans-serif;font-size:1.15rem;font-weight:800;color:var(--gm-text);">⚡ Upgrade GradeMastery</div>
+        <button onclick="this.closest('.v3-upgrade-overlay').remove()" style="background:none;border:none;color:var(--gm-muted);font-size:1.3rem;cursor:pointer;line-height:1;padding:4px;">×</button>
       </div>
-      <button class="btn btn-primary btn-full btn-lg" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);font-size:15px;" onclick="closeModal();startCheckout()">Upgrade — £12.99/month →</button>
-      <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="closeModal()">Maybe later</button>
-      <div style="font-size:11px;color:#94A3B8;font-weight:600;margin-top:10px;">Cancel any time · No commitment</div>
-    </div>
-  `);
+      ${reason ? `<p style="font-size:0.88rem;color:var(--gm-muted);margin-bottom:16px;line-height:1.6;">${reason}</p>` : ''}
+      <div class="v3-upgrade-billing-toggle">
+        <button class="v3-billing-opt active" id="v3-bill-m" onclick="v3SwitchBilling('m')">Monthly</button>
+        <button class="v3-billing-opt" id="v3-bill-a" onclick="v3SwitchBilling('a')">Annual <span class="v3-save-badge">Save ~30%</span></button>
+      </div>
+      <div class="v3-tier-grid" id="v3-tier-grid">
+        ${TIERS.map(t => `
+        <div class="v3-tier-card${t.popular?' popular':''}">
+          ${t.popular ? `<div class="v3-tier-badge">Most Popular</div>` : ''}
+          <div class="v3-tier-name">${t.name}</div>
+          <div class="v3-tier-price"><span class="amount" id="v3-price-${t.id}">${t.price.m}</span><span class="period">/mo</span></div>
+          <ul class="v3-tier-features">${t.features.map(f=>`<li>${f}</li>`).join('')}</ul>
+          <button class="v3-tier-cta${t.trial?' trial':''}" onclick="initiateStripeCheckout('${t.monthly}','${t.id}')">${t.cta}</button>
+        </div>`).join('')}
+      </div>
+      <div class="v3-upgrade-footer">Cancel any time &middot; No commitment &middot; Secure payment via Stripe</div>
+    </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
 }
 
-async function startCheckout() {
-  const token = STATE.user?.token;
-  if (!token) { showAuth(); return; }
+window.v3SwitchBilling = function(period) {
+  document.getElementById('v3-bill-m')?.classList.toggle('active', period==='m');
+  document.getElementById('v3-bill-a')?.classList.toggle('active', period==='a');
+  const PRICES = {basic:{m:'£4.99',a:'£3.49'},std:{m:'£9.99',a:'£6.99'},premium:{m:'£14.99',a:'£10.49'},plus:{m:'£19.99',a:'£13.99'}};
+  const PRICE_IDS = {basic:{m:'price_basic_monthly',a:'price_basic_annual'},std:{m:'price_standard_monthly',a:'price_standard_annual'},premium:{m:'price_premium_monthly',a:'price_premium_annual'},plus:{m:'price_premium_plus_monthly',a:'price_premium_plus_annual'}};
+  Object.entries(PRICES).forEach(([id, p]) => {
+    const el = document.getElementById('v3-price-'+id);
+    if (el) el.textContent = p[period];
+  });
+  document.querySelectorAll('.v3-tier-cta').forEach((btn, i) => {
+    const ids = ['basic','std','premium','plus'];
+    if (!btn.classList.contains('current-plan')) {
+      const pid = PRICE_IDS[ids[i]]?.[period];
+      if (pid) btn.onclick = () => initiateStripeCheckout(pid, ids[i]);
+    }
+  });
+};
+
+async function initiateStripeCheckout(priceId, tier) {
+  const user = STATE.user;
+  if (!user?.token) { showAuth(); return; }
+  document.querySelectorAll('.v3-upgrade-overlay').forEach(e => e.remove());
   showToast('Loading checkout...');
   try {
-    const res = await fetch(CONFIG.SUPABASE_URL + '/functions/v1/create-checkout-session', {
+    const res = await fetch('https://sciencespark-worker.sciencespark.workers.dev/create-checkout-session', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'apikey': CONFIG.SUPABASE_ANON_KEY }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        priceId,
+        userId: user.id,
+        email: user.email,
+        tier,
+        successUrl: window.location.origin + '/app.html?upgraded=true&tier=' + tier,
+        cancelUrl:  window.location.origin + '/app.html'
+      })
     });
     const data = await res.json();
     if (data.url) { window.location.href = data.url; }
     else showToast('Could not start checkout — try again');
   } catch(e) {
-    showToast('Could not start checkout — check connection');
+    showToast('Could not start checkout — check your connection');
   }
+}
+
+async function startCheckout() {
+  initiateStripeCheckout('price_standard_monthly', 'standard');
 }
 
 function showUpgradedCelebration() {
@@ -20688,98 +21298,81 @@ function showHome() {
     '<span>' + b.icon + '</span>' + b.label + '</div>'
   ).join('');
 
+  const v3SubjectCards = subjectData.map(s => {
+    const premiumLocked = !user.is_paid && s.subj !== (user.primary_subject || 'Biology');
+    const dailyLocked  = !premiumLocked && isSubjectLockedToday(s.subj);
+    const doneCount    = STATE.todayDone[s.subj]?.size || 0;
+    let badgeHtml = '', statusText = '', cardOnclick = '', cardStyle = '';
+    if (premiumLocked) {
+      badgeHtml   = `<div class="v3-subject-badge" style="background:#7C3AED;">PRO</div>`;
+      statusText  = `<span style="color:#7C3AED;">Upgrade to unlock</span>`;
+      cardOnclick = `showUpgradeModal('Unlock all subjects with GradeMastery Premium')`;
+      cardStyle   = 'opacity:0.7;';
+    } else if (dailyLocked) {
+      statusText  = `<span style="color:var(--gm-accent);">All done today \u2713</span>`;
+      cardOnclick = `startFlashcardsForSubject('${s.subj}')`;
+    } else if (s.due === 0) {
+      statusText  = `<span style="color:var(--gm-muted);">All caught up \u2713</span>`;
+      cardStyle   = 'opacity:0.55;cursor:default;';
+    } else {
+      badgeHtml   = `<div class="v3-subject-badge">${s.due}</div>`;
+      statusText  = `<span style="color:var(--gm-muted);">${s.due} cards left</span>`;
+      cardOnclick = `startFlashcardsForSubject('${s.subj}')`;
+    }
+    return `<div class="v3-subject-card" style="${cardStyle}" onclick="${cardOnclick}">
+      ${badgeHtml}
+      <div class="v3-subject-emoji">${s.emoji}</div>
+      <div class="v3-subject-name">${s.subj}</div>
+      <div class="v3-subject-status">${statusText}</div>
+    </div>`;
+  }).join('');
+
   const html = `
 ${renderNavBar('home')}
-<div class="screen" id="screen-home">
+<div class="v3-screen" id="screen-home">
   <div id="ping-banner-student"></div>
-  <div class="home-content">
-    <div style="text-align:center;padding:16px 20px 12px;">
-      <div style="font-size:24px;font-weight:900;margin-bottom:6px;">${getSessionStartMessage()}</div>
-      <div style="font-size:14px;color:#64748B;font-weight:600;">Welcome back, ${firstName}! Keep building that habit.</div>
+
+  <div class="v3-home-hero">
+    <div class="v3-home-greeting">${getSessionStartMessage()}, ${firstName}! \uD83C\uDF3F</div>
+    <div class="v3-home-pills">
+      ${streak > 0 ? `<div class="v3-home-pill streak">\uD83D\uDD25 ${streak} day streak</div>` : ''}
+      <div class="v3-home-pill xp">\u26A1 ${xp} XP</div>
     </div>
-    <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-        <div style="font-size:13px;font-weight:800;">Level ${level}</div>
-        <div style="font-size:13px;font-weight:800;color:#4F46E5;">${xp} XP</div>
-      </div>
-      <div style="background:#F0F4F8;border-radius:8px;height:10px;overflow:hidden;">
-        <div style="width:${Math.min(100,(xpInLevel/200)*100)}%;background:linear-gradient(90deg,#818CF8,#6366F1);height:100%;border-radius:8px;"></div>
-      </div>
-    </div>
-    ${new Date().getHours() >= 20 && !studiedToday ? `<div style="background:#FFF7ED;border:1.5px solid #F97316;border-radius:14px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;"><span style="font-size:20px;">⚠️</span><div style="flex:1;font-size:13px;font-weight:800;color:#92400E;">Complete your cards today${streak > 0 ? ' to keep your ' + streak + '-day streak' : ''}!</div><button onclick="startFlashcards()" style="background:#F97316;color:white;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Study →</button></div>` : ''}
-    ${STATE.role === 'student' && getPersonalisationProgress() < 43 ? `<div style="background:linear-gradient(135deg,#EEF2FF,#F0FDF4);border:1.5px solid #A5B4FC;border-radius:14px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="showProfile()">
-      <span style="font-size:20px;">\u2728</span>
-      <div style="flex:1;">
-        <div style="font-size:13px;font-weight:800;color:#3730A3;">Help your AI Tutor know you better</div>
-        <div style="font-size:12px;color:#6366F1;font-weight:600;">Answer a few quick questions \u2192</div>
-      </div>
-    </div>` : ''}
-    ${streak > 0 && !studiedToday ? `<div style="background:linear-gradient(135deg,#DC2626,#F97316);border-radius:16px;padding:18px 20px;margin-bottom:12px;animation:streakPulse 1.5s ease-in-out infinite;">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-        <div style="font-size:36px;">🔥</div>
-        <div style="flex:1;">
-          <div style="font-size:17px;font-weight:900;color:white;">Your ${streak}-day streak is at risk!</div>
-          <div style="font-size:13px;color:rgba(255,255,255,0.9);font-weight:700;">Study now to keep it alive!</div>
-        </div>
-      </div>
-      <button onclick="startFlashcards()" style="width:100%;padding:12px;background:white;color:#DC2626;border:none;border-radius:12px;font-weight:900;font-size:15px;cursor:pointer;font-family:inherit;">⚡ Study now — protect your streak!</button>
-    </div>` : `<div style="background:#F97316;border-radius:16px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;">
-      <div style="font-size:36px;">🔥</div>
-      <div style="flex:1;">
-        <div style="font-size:17px;font-weight:900;color:white;">${streak} Day Streak!</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.85);font-weight:600;margin-bottom:10px;">${streak > 0 ? 'Keep it up — come back tomorrow!' : 'Start your streak today!'}</div>
-        <div style="display:flex;gap:6px;">${dayDots}</div>
-      </div>
-    </div>`}
-    <div style="background:white;border-radius:14px;border:1px solid #FED7AA;margin-bottom:12px;overflow:hidden;">
-      <button onclick="const b=document.getElementById('streak-why-body');const a=document.getElementById('streak-why-arrow');if(b){const open=b.style.display!=='none';b.style.display=open?'none':'block';a.textContent=open?'▼':'▲';}" style="width:100%;padding:14px 16px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:inherit;text-align:left;">
-        <span style="font-size:14px;font-weight:800;color:#92400E;">Why your streak matters 🔥</span>
-        <span id="streak-why-arrow" style="font-size:12px;color:#F97316;font-weight:800;">▼</span>
-      </button>
-      <div id="streak-why-body" style="display:none;padding:0 16px 16px;">
-        <div style="font-size:13px;font-weight:700;color:#374151;line-height:1.7;">
-          <div style="margin-bottom:6px;">📚 10 cards per day × 200 school days = <strong>2,000 card reviews</strong></div>
-          <div style="margin-bottom:6px;">✅ That is the entire AQA spec covered multiple times over</div>
-          <div style="margin-bottom:6px;">❌ Miss 50 days = 500 missed reviews = gaps in knowledge = lost marks</div>
-          <div style="margin-top:10px;padding:10px 12px;background:#FFF7ED;border-radius:10px;border-left:3px solid #F97316;font-size:13px;font-weight:800;color:#92400E;">Your streak is not just a number — it is your exam grade building day by day 📈</div>
-        </div>
-      </div>
-    </div>
-    <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">TODAY'S SESSION</div>
-    <div style="background:white;border-radius:14px;padding:14px 18px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;">
-      <div>
-        <div style="font-size:15px;font-weight:800;">${totalDue} cards due today</div>
-        <div style="font-size:13px;color:#64748B;font-weight:600;">Across your unlocked subjects</div>
-      </div>
-      <div style="background:#EEF2FF;color:#4F46E5;border-radius:20px;padding:4px 14px;font-size:13px;font-weight:800;">${totalDue} due</div>
-    </div>
-    <div style="background:white;border-radius:16px;padding:18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
-      <div style="font-size:14px;font-weight:900;margin-bottom:14px;">📚 Choose your subject</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">${subjectCards}</div>
-      <button class="btn btn-primary btn-full btn-lg" onclick="startFlashcards()" style="background:linear-gradient(135deg,#818CF8,#4F46E5);font-size:15px;padding:16px;">
-        📚 Start ${primary ? primary.subj : 'Today'} — ${primary ? primary.due : totalDue} cards
-      </button>
-    </div>
-    <div onclick="startFullSession()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
-      <div style="font-size:32px;">🌊</div>
-      <div style="flex:1;">
-        <div style="font-size:16px;font-weight:900;color:white;">Deep Dive</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:600;">Read, practise, brain dump & exam — 5–60 min</div>
-      </div>
-      <div style="font-size:20px;color:rgba(255,255,255,0.7);">→</div>
-    </div>
-    <div onclick="showStudyCoachFeed()" style="background:linear-gradient(135deg,#16A34A,#15803D);border-radius:16px;padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;">
-      <div style="font-size:32px;">⚡</div>
-      <div style="flex:1;">
-        <div style="font-size:16px;font-weight:900;color:white;">StudyCoach</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:600;">Brain science that actually helps you revise</div>
-      </div>
-      <div style="font-size:20px;color:rgba(255,255,255,0.7);">→</div>
-    </div>
-    <div style="font-size:12px;font-weight:800;color:#64748B;letter-spacing:0.08em;margin-bottom:10px;">BADGES</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;padding:4px;width:100%;">${badgeHTML}</div>
-    <div id="leaderboard-section" style="padding-bottom:100px;"></div>
   </div>
+
+  <div class="v3-xp-bar-wrap" style="margin-top:12px;">
+    <div class="v3-xp-bar-top"><span class="v3-xp-level">Level ${level}</span><span class="v3-xp-pts">${xp} XP</span></div>
+    <div class="v3-xp-track"><div class="v3-xp-fill" style="width:${Math.min(100,(xpInLevel/200)*100)}%;"></div></div>
+  </div>
+
+  ${streak > 0 && !studiedToday ? `<div style="background:linear-gradient(135deg,#DC2626,#F97316);border-radius:var(--gm-r-card);padding:16px 18px;margin-top:12px;display:flex;align-items:center;gap:12px;">
+    <div style="font-size:2rem;">\uD83D\uDD25</div>
+    <div style="flex:1;"><div style="font-size:0.95rem;font-weight:700;color:#fff;">Your ${streak}-day streak is at risk!</div><div style="font-size:0.8rem;color:rgba(255,255,255,0.85);font-weight:500;">Study now to keep it alive</div></div>
+    <button onclick="startFlashcards()" style="background:white;color:#DC2626;border:none;border-radius:8px;padding:8px 14px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">Study \u2192</button>
+  </div>` : ''}
+
+  ${new Date().getHours() >= 20 && !studiedToday && !(streak > 0) ? `<div style="background:#FFF7ED;border:1.5px solid var(--gm-orange);border-radius:var(--gm-r-card);padding:12px 16px;margin-top:12px;display:flex;align-items:center;gap:10px;"><span style="font-size:1.2rem;">\u26A0\uFE0F</span><div style="flex:1;font-size:0.85rem;font-weight:700;color:#92400E;">Complete your cards before midnight!</div><button onclick="startFlashcards()" style="background:var(--gm-orange);color:white;border:none;border-radius:8px;padding:7px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">Study \u2192</button></div>` : ''}
+
+  ${STATE.role === 'student' && getPersonalisationProgress() < 43 ? `<div style="background:rgba(33,109,57,0.06);border:1.5px solid rgba(33,109,57,0.2);border-radius:var(--gm-r-card);padding:12px 16px;margin-top:12px;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="showProfile()"><span style="font-size:1.2rem;">\u2728</span><div style="flex:1;"><div style="font-size:0.85rem;font-weight:700;color:var(--gm-forest);">Help your AI Tutor know you better</div><div style="font-size:0.78rem;color:var(--gm-accent);font-weight:500;">Answer a few quick questions \u2192</div></div></div>` : ''}
+
+  <div class="v3-section-label">Today's Cards</div>
+  <div class="v3-subject-grid">${v3SubjectCards}</div>
+  <button onclick="startFlashcards()" style="width:100%;margin-top:12px;height:48px;border:none;border-radius:var(--gm-r-btn);background:var(--gm-forest);color:#fff;font-family:'Plus Jakarta Sans','Nunito',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+    \uD83D\uDCDA Start ${primary ? primary.subj : 'Today'} \u2014 ${primary ? primary.due : totalDue} cards
+  </button>
+
+  <div class="v3-section-label">More ways to study</div>
+  <div class="v3-feature-grid">
+    <div class="v3-feature-card" onclick="startFullSession()"><div class="v3-feature-icon">\uD83C\uDF0A</div><div class="v3-feature-title">Deep Dive</div><div class="v3-feature-desc">Read, practise, brain dump & exam</div></div>
+    <div class="v3-feature-card" onclick="startQuickRevision()"><div class="v3-feature-icon">\u26A1</div><div class="v3-feature-title">Quick Revision</div><div class="v3-feature-desc">Browse all cards at your own pace</div></div>
+    <div class="v3-feature-card" onclick="showStudyHistory()"><div class="v3-feature-icon">\uD83D\uDCCA</div><div class="v3-feature-title">Progress</div><div class="v3-feature-desc">See your mastery by topic</div></div>
+    <div class="v3-feature-card" onclick="showStudyCoachFeed()"><div class="v3-feature-icon">\uD83D\uDCA1</div><div class="v3-feature-title">StudyCoach</div><div class="v3-feature-desc">Brain science revision tips</div></div>
+  </div>
+
+  <div class="v3-section-label">Badges</div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">${badgeHTML}</div>
+
+  <div id="leaderboard-section" style="padding-bottom:24px;"></div>
 </div>`;
 
   render(html);
@@ -20826,21 +21419,25 @@ async function dismissStudentPing(pingId) {
 
 function renderNavBar(active) {
   const streak = STATE.user?.streak || 0;
+  const xp = STATE.user?.xp || 0;
+  const name = STATE.user?.display_name || '';
+  const initials = name.split(' ').map(w => w[0]).filter(Boolean).slice(0,2).join('').toUpperCase() || '?';
   const tabs = [
-    { id: 'home',    label: 'Learn',    fn: 'showHome()' },
-    { id: 'history', label: 'History',  fn: 'showStudyHistory()' },
-    { id: 'ai-chat', label: 'AI Tutor', fn: 'showAIChatTab()' },
-    { id: 'profile', label: 'Profile',  fn: 'showProfile()' },
+    { id: 'home',    label: 'Learn',    icon: '📚', fn: 'showHome()' },
+    { id: 'history', label: 'History',  icon: '📈', fn: 'showStudyHistory()' },
+    { id: 'ai-chat', label: 'AI Tutor', icon: '✨', fn: 'showAIChatTab()' },
+    { id: 'profile', label: 'Profile',  icon: '👤', fn: 'showProfile()' },
   ];
-  return `<nav class="nav">
-    <div class="logo">⚡<span class="logo-text">GradeMastery</span></div>
-    <div class="nav-tabs">
-      ${tabs.map(t => `<button class="nav-tab${active === t.id ? ' active' : ''}" onclick="${t.fn}">${t.label}</button>`).join('')}
+  return `<nav class="v3-nav">
+    <span class="v3-nav-logo">GradeMastery</span>
+    <div class="v3-nav-tabs">
+      ${tabs.map(t => `<button class="v3-nav-tab${active === t.id ? ' active' : ''}" onclick="${t.fn}">${t.label}</button>`).join('')}
     </div>
-    <div class="nav-right">
-      ${streak > 0 ? `<div class="streak-pill"><span class="fire">🔥</span><span>${streak}</span></div>` : ''}
+    <div class="v3-nav-right">
+      ${streak > 0 ? `<div class="v3-streak-pill"><span class="fire">🔥</span><span>${streak}</span></div>` : ''}
+      ${xp > 0 ? `<div class="v3-xp-pill">⚡ ${xp} XP</div>` : ''}
       <div class="profile-wrap">
-        <button class="profile-btn" onclick="toggleProfileDropdown(event)">👤</button>
+        <button class="v3-avatar" onclick="toggleProfileDropdown(event)" title="Account">${initials}</button>
         <div class="profile-dropdown" id="profile-dropdown">
           <button class="pd-item" onclick="closeProfileDropdown();showProfile()">👤 My Profile</button>
           <div class="pd-sep"></div>
@@ -20850,6 +21447,9 @@ function renderNavBar(active) {
         </div>
       </div>
     </div>
+  </nav>
+  <nav class="v3-bottom-nav" aria-label="Mobile navigation">
+    ${tabs.map(t => `<button class="v3-bnav-item${active === t.id ? ' active' : ''}" onclick="${t.fn}"><span class="v3-bnav-icon">${t.icon}</span><span class="v3-bnav-label">${t.label}</span></button>`).join('')}
   </nav>`;
 }
 
@@ -20930,69 +21530,77 @@ function renderFlashcard() {
   const tierLabel = (card.tier === 'H') ? 'Higher' : 'Foundation';
   const tierClass = (card.tier === 'H') ? 'h' : 'f';
 
+  const _v3AiToggleLabel = !aiMode ? 'Self Grade' : aiLimitReached ? '🤖 AI Grading' : '✨ Smart Grading AI';
+  const _v3AiSubmitLabel = !aiMode ? '' : aiLimitReached ? '🤖 AI Grading — Submit Answer' : '✨ Smart Grading AI — Submit Answer';
+  const _v3HasLimit = getAIMarkingLimit() > 0;
+
   const html = `
-<div class="screen" id="screen-flashcards">
-  <div class="session-header">
-    <button class="btn btn-ghost btn-sm" onclick="showHome()">← Home</button>
-    <div class="progress-dots">${dots}</div>
-    ${STATE.sessionPhase === 'quickRevision'
-      ? `<div style="display:flex;align-items:center;gap:6px;">
-           <button onclick="qrPrev()" ${current === 0 ? 'disabled' : ''} style="width:28px;height:28px;border-radius:50%;border:none;background:${current===0?'#E2E8F0':'#6366F1'};color:${current===0?'#94A3B8':'white'};font-size:16px;cursor:${current===0?'default':'pointer'};display:flex;align-items:center;justify-content:center;font-weight:900;padding:0;">‹</button>
-           <span style="font-size:13px;font-weight:700;color:var(--text-secondary);">${current+1}/${total}</span>
-           <button onclick="qrNext()" ${current>=total-1?'disabled':''} style="width:28px;height:28px;border-radius:50%;border:none;background:${current>=total-1?'#E2E8F0':'#6366F1'};color:${current>=total-1?'#94A3B8':'white'};font-size:16px;cursor:${current>=total-1?'default':'pointer'};display:flex;align-items:center;justify-content:center;font-weight:900;padding:0;">›</button>
-         </div>`
-      : `<div style="font-size:13px;font-weight:700;color:var(--text-secondary);">${current+1}/${total}</div>`
-    }
+<div class="v3-screen" id="screen-flashcards" style="padding-top:0;">
+  <!-- Sticky progress header -->
+  <div class="v3-fc-header">
+    <button onclick="showHome()" style="background:none;border:none;cursor:pointer;color:var(--gm-muted);font-size:1.1rem;padding:4px;line-height:1;" title="Back">←</button>
+    <div class="v3-fc-progress-track">
+      <div class="v3-fc-progress-fill" style="width:${total > 0 ? Math.round((current/total)*100) : 0}%;"></div>
+    </div>
+    <span class="v3-fc-counter">${current+1} / ${total}</span>
+    ${STATE.sessionPhase === 'quickRevision' ? `<button onclick="qrPrev()" ${current===0?'disabled':''} style="width:28px;height:28px;border-radius:50%;border:none;background:${current===0?'var(--gm-border)':'var(--gm-forest)'};color:${current===0?'var(--gm-muted)':'#fff'};font-size:1rem;cursor:${current===0?'default':'pointer'};font-weight:900;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;">\u2039</button><button onclick="qrNext()" ${current>=total-1?'disabled':''} style="width:28px;height:28px;border-radius:50%;border:none;background:${current>=total-1?'var(--gm-border)':'var(--gm-forest)'};color:${current>=total-1?'var(--gm-muted)':'#fff'};font-size:1rem;cursor:${current>=total-1?'default':'pointer'};font-weight:900;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;">\u203A</button>` : ''}
   </div>
 
-  <div class="flashcard-area">
-<!-- AI Toggle -->
-    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">
-        <div>
-          <div style="font-size:13px;font-weight:800;">${!aiMode ? '🙋 Self Grade' : aiLimitReached ? 'AI Grading ✨' : '✨ Smart Grading AI'}</div>
-          <div style="font-size:11px;color:#64748B;font-weight:600;">${!aiMode ? 'Reveal and rate yourself honestly' : aiLimitReached ? '' : 'Write your answer — assessed against AQA specification criteria'}</div>
-        </div>
-        <div onclick="toggleAIMode()" style="cursor:pointer;width:48px;height:26px;border-radius:13px;background:${aiMode ? '#22C55E' : '#E2E8F0'};position:relative;transition:background 0.2s;flex-shrink:0;">
-          <div style="position:absolute;top:3px;${aiMode ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:all 0.2s;"></div>
-        </div>
+  <!-- AI mode toggle -->
+  <div style="padding:12px 16px 0;">
+    <div class="v3-ai-toggle-card">
+      <div class="v3-ai-toggle-info">
+        <div class="v3-ai-toggle-name">${_v3AiToggleLabel}</div>
+        <div class="v3-ai-toggle-sub">${!aiMode ? 'Reveal and grade yourself honestly' : aiLimitReached ? '\uD83E\uDD16 Smart matching — no AI calls used' : 'Write your answer — assessed against AQA criteria'}</div>
       </div>
-      ${aiMode ? `<div style="text-align:center;"><span onclick="toggleAIMode()" style="font-size:11px;color:#94A3B8;font-weight:600;cursor:pointer;text-decoration:underline;">Grade yourself instead</span></div>` : ''}
+      <button class="v3-toggle ${aiMode ? 'on' : ''}" onclick="toggleAIMode()" aria-label="Toggle AI mode"></button>
+    </div>
+    ${aiMode ? `<div class="v3-self-grade-link"><span onclick="toggleAIMode()">Grade yourself instead</span></div>` : ''}
+  </div>
+
+  <!-- Card -->
+  <div style="padding:0 16px 12px;">
+    <div class="v3-card">
+      <div class="v3-card-meta">
+        <span class="v3-card-tag" style="color:${subColor};background:${subColor}22;">${card.subject} · ${card.topic_name || card.topic}</span>
+        <span class="v3-card-tag" style="${card.tier === 'H' ? 'background:#FEF3C7;color:#92400E;' : 'background:#F0FDF4;color:#15803D;'}">${card.tier === 'H' ? 'Higher' : 'Foundation'}</span>
+      </div>
+      <div class="v3-card-question">${questionHTML}</div>
+      ${_getSimConfig(card.topic_name || card.topic || '') ? `<button onclick="showSimulationModal('${(card.topic_name||card.topic||'').replace(/'/g,"\'")}'')" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#6366f1;background:none;border:1.5px solid #c7d2fe;border-radius:8px;padding:4px 10px;cursor:pointer;font-family:inherit;margin-bottom:10px;">\u25B6 Watch it</button>` : ''}
     </div>
 
-        <div class="card" id="question-card" style="padding:20px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <span style="font-size:11px;font-weight:800;color:${subColor};background:${subColor}22;padding:3px 10px;border-radius:20px;">${card.subject} · ${card.topic_name || card.topic}</span>
-        <span class="c-tier ${tierClass}">${tierLabel}</span>
-      </div>
-      <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${questionHTML}</div>
-      ${hintHTML}
-      ${_getSimConfig(card.topic_name || card.topic || '') ? `<button onclick="showSimulationModal('${(card.topic_name || card.topic || '').replace(/'/g,"\\'")}'')" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#6366f1;background:none;border:1.5px solid #c7d2fe;border-radius:8px;padding:4px 10px;cursor:pointer;font-family:inherit;margin-top:2px;">▶ Watch it</button>` : ''}
+    <!-- Input or reveal -->
+    ${aiMode ? `<div id="ai-input-area">
+      <textarea id="student-answer" class="v3-textarea" placeholder="Write your answer from memory — assessed against AQA specification criteria"></textarea>
+      ${!aiLimitReached && _v3HasLimit ? `<div class="v3-ai-counter">${_v3AiToggleLabel} \u2014 ${getAIMarkingDailyCount()}/${getAIMarkingLimit()} uses today</div>` : ''}
+      <button class="v3-submit-btn" onclick="submitFlashcardAI()">${_v3AiSubmitLabel}</button>
     </div>
-    ${aiMode ? `<div id="ai-input-area"><textarea id="student-answer" class="input" placeholder="Write your answer using key terms..." rows="3" style="margin-bottom:8px;width:100%;"></textarea>${!aiLimitReached && getAIMarkingLimit() > 0 ? `<div style="text-align:right;font-size:11px;color:#94A3B8;font-weight:700;margin-bottom:6px;">🤖 ${getAIMarkingDailyCount()}/${getAIMarkingLimit()} used today</div>` : ''}<button class="btn btn-primary btn-full" onclick="submitFlashcardAI()">Submit for grading</button></div><div id="ai-result" style="display:none;"></div>` : `<button class="reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">👆 Tap to reveal answer</button>`}
+    <div id="ai-result" style="display:none;"></div>` : `<button class="v3-reveal-btn" id="reveal-btn" onclick="revealFlashcardAnswer()">Tap to reveal answer</button>`}
 
+    <!-- Answer section (hidden until revealed) -->
     <div id="answer-sec" style="display:none;">
-      <div class="card" style="padding:16px;">
-        <div class="ans-lbl">✅ Answer</div>
-        <ul class="ans-list">${answerBullets}</ul>
+      <div class="v3-card" style="margin-top:0;">
+        <div class="v3-answer-label">✅ Answer</div>
+        <ul class="v3-answer-list">${answerBullets}</ul>
       </div>
     </div>
 
-    <div id="rating-wrap" style="display:none;">
-      <div class="rating-prompt">How did you find that?</div>
-      <div class="rating-grid">
-        <button class="rate-btn again" onclick="selfGrade('${card.id}',0)"><span class="em">😵</span>Again</button>
-        <button class="rate-btn hard" onclick="selfGrade('${card.id}',1)"><span class="em">😰</span>Hard</button>
-        <button class="rate-btn good" onclick="selfGrade('${card.id}',2)"><span class="em">🙂</span>Good</button>
-        <button class="rate-btn easy" onclick="selfGrade('${card.id}',3)"><span class="em">🌟</span>Easy!</button>
+    <!-- Rating -->
+    <div id="rating-wrap" style="display:none;margin-top:8px;">
+      <div class="v3-rating-prompt">How did you find that?</div>
+      <div class="v3-rating-grid">
+        <button class="v3-rate-btn again" onclick="selfGrade('${card.id}',0)"><span class="em">😵</span>Again</button>
+        <button class="v3-rate-btn hard" onclick="selfGrade('${card.id}',1)"><span class="em">😰</span>Hard</button>
+        <button class="v3-rate-btn good" onclick="selfGrade('${card.id}',2)"><span class="em">😊</span>Good</button>
+        <button class="v3-rate-btn easy" onclick="selfGrade('${card.id}',3)"><span class="em">😄</span>Easy!</button>
       </div>
 
       ${hasExamQ ? `
-      <button class="exam-reveal-btn" id="exam-reveal-btn" onclick="toggleExamCard()">
-        <span>🎯</span><span style="flex:1;">See the exam question this unlocks</span><span id="exam-chev">▼</span>
+      <button class="exam-reveal-btn" id="exam-reveal-btn" onclick="toggleExamCard()" style="margin-top:12px;">
+        <span>\uD83C\uDFAF</span><span style="flex:1;">See the exam question this unlocks</span><span id="exam-chev">\u25BC</span>
       </button>
       <div class="exam-card" id="exam-card">
-        <div class="exam-wow">💡 WOW moment</div>
+        <div class="exam-wow">\uD83D\uDCA1 WOW moment</div>
         <div style="font-size:12px;font-weight:800;color:#4F46E5;margin-bottom:8px;">That fact unlocks this exam question</div>
         <div class="exam-q-box">${examQText}</div>
         <span class="exam-marks-pill">${examMarks} mark${examMarks != 1 ? 's' : ''}</span>
@@ -23259,7 +23867,7 @@ async function showProgressTracker() {
   allCards.forEach(card => {
     const s = card.subject;
     if (!hier[s]) return;
-    const t = card.topic;
+    const t = card.topic.toUpperCase();
     if (!hier[s].topics[t]) {
       hier[s].topics[t] = { name: card.topic_name || t, cards: [], mem: 0, mas: 0 };
     }
@@ -25484,7 +26092,7 @@ function loadParentTrackerContent() {
   allCards.forEach(function(card) {
     const s = card.subject;
     if (!hier[s]) return;
-    const t = card.topic;
+    const t = card.topic.toUpperCase();
     if (!hier[s].topics[t]) hier[s].topics[t] = { name: card.topic_name || t, cards: [], mem: 0, mas: 0 };
     const st  = cardStats[card.id] || { attempts: 0, good: 0 };
     const mem = st.good >= 1;
