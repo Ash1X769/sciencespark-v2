@@ -16740,14 +16740,14 @@ async function restoreCardProgressFromSupabase(user) {
 function isSubjectLockedToday(subject) {
   const user = STATE.user;
   const subjectKey = { Biology: 'bio', Chemistry: 'chem', Physics: 'phys' }[subject];
-  const limit = (subjectKey && user?.[subjectKey + '_cards_per_day']) || CONFIG.CARDS_PER_SESSION;
+  const limit = (subjectKey && user?.[subjectKey + '_cards_per_day'] != null) ? user[subjectKey + '_cards_per_day'] : CONFIG.CARDS_PER_SESSION;
   return (STATE.todayDone[subject]?.size || 0) >= limit;
 }
 
 function getSubjectLimit(subject) {
   const user = STATE.user;
   const subjectKey = { Biology: 'bio', Chemistry: 'chem', Physics: 'phys' }[subject];
-  return (subjectKey && user?.[subjectKey + '_cards_per_day']) || CONFIG.CARDS_PER_SESSION;
+  return (subjectKey && user?.[subjectKey + '_cards_per_day'] != null) ? user[subjectKey + '_cards_per_day'] : CONFIG.CARDS_PER_SESSION;
 }
 
 function getRemainingCards(subject) {
@@ -18507,6 +18507,12 @@ ${renderNavBar('profile')}
           </div>
         `).join('')}
       </div>
+    </div>
+
+    <div style="padding:16px;margin:16px;text-align:center;">
+      <button onclick="doLogout()" style="background:transparent;border:1.5px solid var(--gm-border,#E2E8F0);color:var(--gm-muted,#64748B);border-radius:12px;padding:12px 32px;font-size:14px;font-weight:600;cursor:pointer;width:100%;">
+        Sign Out
+      </button>
     </div>
   </div>
 
@@ -21925,14 +21931,14 @@ async function restoreCardProgressFromSupabase(user) {
 function isSubjectLockedToday(subject) {
   const user = STATE.user;
   const subjectKey = { Biology: 'bio', Chemistry: 'chem', Physics: 'phys' }[subject];
-  const limit = (subjectKey && user?.[subjectKey + '_cards_per_day']) || CONFIG.CARDS_PER_SESSION;
+  const limit = (subjectKey && user?.[subjectKey + '_cards_per_day'] != null) ? user[subjectKey + '_cards_per_day'] : CONFIG.CARDS_PER_SESSION;
   return (STATE.todayDone[subject]?.size || 0) >= limit;
 }
 
 function getSubjectLimit(subject) {
   const user = STATE.user;
   const subjectKey = { Biology: 'bio', Chemistry: 'chem', Physics: 'phys' }[subject];
-  return (subjectKey && user?.[subjectKey + '_cards_per_day']) || CONFIG.CARDS_PER_SESSION;
+  return (subjectKey && user?.[subjectKey + '_cards_per_day'] != null) ? user[subjectKey + '_cards_per_day'] : CONFIG.CARDS_PER_SESSION;
 }
 
 function getRemainingCards(subject) {
@@ -22149,15 +22155,20 @@ function getMasteryForTopic(topicKey) {
 }
 
 function startQuickRevision(topicKey) {
-  const key = topicKey.toUpperCase();
-  const topicCards = SAMPLE_CARDS.filter(c => c.topic.toUpperCase() === key);
-  if (topicCards.length === 0) { showToast('No cards found for this topic'); return; }
-  const shuffled = [...topicCards].sort(() => Math.random() - 0.5);
-  STATE.cardQueue = shuffled;
+  let cards;
+  if (!topicKey) {
+    cards = [...SAMPLE_CARDS].sort(() => Math.random() - 0.5);
+  } else {
+    const key = topicKey.toUpperCase();
+    cards = SAMPLE_CARDS.filter(c => c.topic.toUpperCase() === key);
+    if (cards.length === 0) { showToast('No cards found for this topic'); return; }
+    cards = [...cards].sort(() => Math.random() - 0.5);
+  }
+  STATE.cardQueue = cards;
   STATE.currentCardIndex = 0;
   STATE.sessionPhase = 'quickRevision';
   STATE.screen = 'quickRevision';
-  STATE._quickRevisionTopic = key;
+  STATE._quickRevisionTopic = topicKey ? topicKey.toUpperCase() : null;
   STATE._quickRevisionResults = [];
   showAIChatWidget();
   renderFlashcard();
@@ -23770,6 +23781,12 @@ ${renderNavBar('profile')}
           </div>
         `).join('')}
       </div>
+    </div>
+
+    <div style="padding:16px;margin:16px;text-align:center;">
+      <button onclick="doLogout()" style="background:transparent;border:1.5px solid var(--gm-border,#E2E8F0);color:var(--gm-muted,#64748B);border-radius:12px;padding:12px 32px;font-size:14px;font-weight:600;cursor:pointer;width:100%;">
+        Sign Out
+      </button>
     </div>
   </div>
 
