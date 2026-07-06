@@ -15287,7 +15287,7 @@ async function loadUserPaidStatus() {
   if (!user?.token || !user?.id) return;
   try {
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id,tier,ai_tutor_daily_count,ai_tutor_weekly_count,ai_marking_daily_count,ai_last_reset_date',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id,linked_student_ids,linked_student_id,tier,ai_tutor_daily_count,ai_tutor_weekly_count,ai_marking_daily_count,ai_last_reset_date',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     const profiles = res.ok ? await res.json() : [];
@@ -15315,6 +15315,8 @@ async function loadUserPaidStatus() {
       STATE.user.tutor_notes = p.tutor_notes || null;
       STATE.user.exam_dates = p.exam_dates || {};
       STATE.user.linked_parent_id = p.linked_parent_id || null;
+      STATE.user.linked_student_ids = Array.isArray(p.linked_student_ids) ? p.linked_student_ids : [];
+      STATE.user.linked_student_id = p.linked_student_id || null;
       if (p.tier) STATE.user.tier = p.tier;
       STATE.user.ai_tutor_daily_count   = p.ai_tutor_daily_count   || 0;
       STATE.user.ai_tutor_weekly_count  = p.ai_tutor_weekly_count  || 0;
@@ -20497,7 +20499,7 @@ async function loadUserPaidStatus() {
   if (!user?.token || !user?.id) return;
   try {
     const res = await fetch(
-      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id,tier,ai_tutor_daily_count,ai_tutor_weekly_count,ai_marking_daily_count,ai_last_reset_date',
+      CONFIG.SUPABASE_URL + '/rest/v1/profiles?user_id=eq.' + user.id + '&select=is_paid,trial_ends_at,primary_subject,display_name,bio_cards_per_day,chem_cards_per_day,phys_cards_per_day,bio_frequency,chem_frequency,phys_frequency,schedule_locked,locked_topics,target_grade,dream_job,salary_aspiration,study_blocker,learner_type,learning_preference,science_feeling,tutor_notes,exam_dates,linked_parent_id,linked_student_ids,linked_student_id,tier,ai_tutor_daily_count,ai_tutor_weekly_count,ai_marking_daily_count,ai_last_reset_date',
       { headers: { 'apikey': CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + user.token } }
     );
     const profiles = res.ok ? await res.json() : [];
@@ -20525,6 +20527,8 @@ async function loadUserPaidStatus() {
       STATE.user.tutor_notes = p.tutor_notes || null;
       STATE.user.exam_dates = p.exam_dates || {};
       STATE.user.linked_parent_id = p.linked_parent_id || null;
+      STATE.user.linked_student_ids = Array.isArray(p.linked_student_ids) ? p.linked_student_ids : [];
+      STATE.user.linked_student_id = p.linked_student_id || null;
       if (p.tier) STATE.user.tier = p.tier;
       STATE.user.ai_tutor_daily_count   = p.ai_tutor_daily_count   || 0;
       STATE.user.ai_tutor_weekly_count  = p.ai_tutor_weekly_count  || 0;
@@ -25713,10 +25717,15 @@ async function showParentPortal() {
     const pp = ppRes.ok ? await ppRes.json() : [];
     console.log('[ParentPortal] parent profile:', JSON.stringify(pp), 'status:', ppRes.status);
 
-    // linked_student_ids array is the source of truth; linked_student_id is legacy fallback
+    // linked_student_ids array is the source of truth; linked_student_id is legacy fallback.
+    // If the live fetch comes back empty (e.g. slow token/RLS on cold load), fall back to the
+    // linkage cached on STATE.user by loadUserPaidStatus so we don't re-show the "enter code" screen.
+    const cachedIds = Array.isArray(STATE.user.linked_student_ids) && STATE.user.linked_student_ids.length > 0
+      ? STATE.user.linked_student_ids
+      : (STATE.user.linked_student_id ? [STATE.user.linked_student_id] : []);
     const idsArray = (Array.isArray(pp[0]?.linked_student_ids) && pp[0].linked_student_ids.length > 0)
       ? pp[0].linked_student_ids
-      : (pp[0]?.linked_student_id ? [pp[0].linked_student_id] : []);
+      : (pp[0]?.linked_student_id ? [pp[0].linked_student_id] : cachedIds);
 
     STATE.parentAllLinkedIds = idsArray;
     linkedStudentId = STATE.parentActiveChildId || idsArray[0] || null;
@@ -25724,7 +25733,14 @@ async function showParentPortal() {
 
     STATE._parentLastInsightAt = pp[0]?.parent_last_insight_at || null;
     STATE._parentHasPushSub   = !!(pp[0]?.push_subscription);
-  } catch(e) { console.error('[ParentPortal] parent profile fetch error:', e); }
+  } catch(e) {
+    console.error('[ParentPortal] parent profile fetch error:', e);
+    const cachedIds = Array.isArray(STATE.user.linked_student_ids) && STATE.user.linked_student_ids.length > 0
+      ? STATE.user.linked_student_ids
+      : (STATE.user.linked_student_id ? [STATE.user.linked_student_id] : []);
+    STATE.parentAllLinkedIds = cachedIds;
+    linkedStudentId = STATE.parentActiveChildId || cachedIds[0] || null;
+  }
 
   // ── 3. Fetch child profile + history ──
   let child = { name: 'Your Child', streak: 0, xp: 0, level: 1, tier: '', year_group: null, exam_board: 'AQA', user_id: null };
