@@ -2572,7 +2572,8 @@ let STATE = {
   sessionDuration: 10,
   flashcardFlipped: false,
   pendingAnswerTime: null,
-  todayDone: {}, // { [subject: string]: Set<cardId> } — cards graded today, keyed by subject
+  todayDone: {}, // { [subject: string]: Set<cardId> } — NEW cards graded today, keyed by subject (gates new-card intro in getDueCards)
+  todayGraded: {}, // { [subject: string]: number } — TOTAL cards (new + review) graded today, keyed by subject (gates daily-limit display/lock)
 };
 
 const _expandedTopics = new Set(); // tracks which topic rows have their subtopics panel open
@@ -21774,6 +21775,10 @@ function recordAndAdvance(cardId, grade) {
       if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
       STATE.todayDone[card.subject].add(cardId);
     }
+    // All graded cards (new + review) count toward the daily display/lock limit
+    if (card?.subject) {
+      STATE.todayGraded[card.subject] = (STATE.todayGraded[card.subject] || 0) + 1;
+    }
     incrementCardCount();
   } else {
     // Track result for quick revision end summary
@@ -21937,6 +21942,7 @@ async function restoreCardProgressFromSupabase(user) {
     if (res2.ok) {
       const todayRows = await res2.json();
       const todayDone = {};
+      const todayGraded = {};
       const localProgress = LS.get('card_progress') || {};
       (todayRows || []).forEach(r => {
         if (!r.subject) return;
@@ -21947,8 +21953,11 @@ async function restoreCardProgressFromSupabase(user) {
           if (!todayDone[r.subject]) todayDone[r.subject] = new Set();
           todayDone[r.subject].add(r.card_id);
         }
+        // All cards graded today (new + review) count toward the daily display/lock limit
+        todayGraded[r.subject] = (todayGraded[r.subject] || 0) + 1;
       });
       STATE.todayDone = todayDone;
+      STATE.todayGraded = todayGraded;
     }
   } catch(e) {}
 }
@@ -21957,7 +21966,7 @@ function isSubjectLockedToday(subject) {
   const user = STATE.user;
   const subjectKey = { Biology: 'bio', Chemistry: 'chem', Physics: 'phys' }[subject];
   const limit = (subjectKey && user?.[subjectKey + '_cards_per_day'] != null) ? user[subjectKey + '_cards_per_day'] : CONFIG.CARDS_PER_SESSION;
-  return (STATE.todayDone[subject]?.size || 0) >= limit;
+  return (STATE.todayGraded[subject] || 0) >= limit;
 }
 
 function getSubjectLimit(subject) {
@@ -21967,7 +21976,7 @@ function getSubjectLimit(subject) {
 }
 
 function getRemainingCards(subject) {
-  return Math.max(0, getSubjectLimit(subject) - (STATE.todayDone[subject]?.size || 0));
+  return Math.max(0, getSubjectLimit(subject) - (STATE.todayGraded[subject] || 0));
 }
 
 function startFlashcardsForSubject(subject) {
@@ -22434,6 +22443,10 @@ function recordGrade(cardId, grade, aiGraded) {
     if (wasNew && card?.subject) {
       if (!STATE.todayDone[card.subject]) STATE.todayDone[card.subject] = new Set();
       STATE.todayDone[card.subject].add(cardId);
+    }
+    // All graded cards (new + review) count toward the daily display/lock limit
+    if (card?.subject) {
+      STATE.todayGraded[card.subject] = (STATE.todayGraded[card.subject] || 0) + 1;
     }
     incrementCardCount();
   } else if (isQR) {
@@ -24343,6 +24356,7 @@ function doLogout() {
   STATE.cardQueue = [];
   STATE.currentCardIndex = 0;
   STATE.todayDone = {};
+  STATE.todayGraded = {};
   showAuth();
 }
 
